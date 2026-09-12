@@ -1,0 +1,208 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "hash",
+ "creation": "2026-09-12 23:30:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "enabled",
+  "applies_to",
+  "role",
+  "designation",
+  "department",
+  "team",
+  "user",
+  "column_break_scope",
+  "scope",
+  "sop",
+  "space",
+  "how_section",
+  "method",
+  "due_days",
+  "column_break_how",
+  "requires_assessment",
+  "pass_mark",
+  "refresher_months"
+ ],
+ "fields": [
+  {
+   "default": "1",
+   "fieldname": "enabled",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Enabled"
+  },
+  {
+   "default": "Role",
+   "fieldname": "applies_to",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Applies To",
+   "options": "Role\nDesignation\nDepartment\nTeam\nUser",
+   "reqd": 1
+  },
+  {
+   "depends_on": "eval:doc.applies_to=='Role'",
+   "fieldname": "role",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Role",
+   "mandatory_depends_on": "eval:doc.applies_to=='Role'",
+   "options": "Role"
+  },
+  {
+   "depends_on": "eval:doc.applies_to=='Designation'",
+   "fieldname": "designation",
+   "fieldtype": "Link",
+   "label": "Designation",
+   "mandatory_depends_on": "eval:doc.applies_to=='Designation'",
+   "options": "Designation"
+  },
+  {
+   "depends_on": "eval:doc.applies_to=='Department'",
+   "fieldname": "department",
+   "fieldtype": "Link",
+   "label": "Department",
+   "mandatory_depends_on": "eval:doc.applies_to=='Department'",
+   "options": "Department"
+  },
+  {
+   "depends_on": "eval:doc.applies_to=='Team'",
+   "fieldname": "team",
+   "fieldtype": "Link",
+   "label": "Team",
+   "mandatory_depends_on": "eval:doc.applies_to=='Team'",
+   "options": "SOP Team"
+  },
+  {
+   "depends_on": "eval:doc.applies_to=='User'",
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "label": "Person",
+   "mandatory_depends_on": "eval:doc.applies_to=='User'",
+   "options": "User"
+  },
+  {
+   "fieldname": "column_break_scope",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Procedure",
+   "fieldname": "scope",
+   "fieldtype": "Select",
+   "label": "Covers",
+   "options": "Procedure\nSpace",
+   "reqd": 1
+  },
+  {
+   "depends_on": "eval:doc.scope=='Procedure'",
+   "fieldname": "sop",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Procedure",
+   "mandatory_depends_on": "eval:doc.scope=='Procedure'",
+   "options": "SOP"
+  },
+  {
+   "depends_on": "eval:doc.scope=='Space'",
+   "fieldname": "space",
+   "fieldtype": "Link",
+   "label": "Space",
+   "mandatory_depends_on": "eval:doc.scope=='Space'",
+   "options": "SOP Space"
+  },
+  {
+   "fieldname": "how_section",
+   "fieldtype": "Section Break",
+   "label": "How"
+  },
+  {
+   "default": "Read & Understand",
+   "fieldname": "method",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Method",
+   "options": "Read & Understand\nClassroom\nOn the Job\nAssessment",
+   "reqd": 1
+  },
+  {
+   "default": "14",
+   "description": "Counted from the day the training is assigned.",
+   "fieldname": "due_days",
+   "fieldtype": "Int",
+   "label": "Complete Within (Days)"
+  },
+  {
+   "fieldname": "column_break_how",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "requires_assessment",
+   "fieldtype": "Check",
+   "label": "Requires Assessment"
+  },
+  {
+   "default": "80",
+   "depends_on": "eval:doc.requires_assessment",
+   "fieldname": "pass_mark",
+   "fieldtype": "Percent",
+   "label": "Pass Mark"
+  },
+  {
+   "default": "12",
+   "description": "0 means train once and never again.",
+   "fieldname": "refresher_months",
+   "fieldtype": "Int",
+   "label": "Refresher Every (Months)"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-09-12 23:30:00.000000",
+ "modified_by": "Administrator",
+ "module": "SOP",
+ "name": "SOP Training Requirement",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "SOP Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "SOP Trainer",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "SOP Author",
+   "share": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

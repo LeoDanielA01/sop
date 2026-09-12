@@ -1,0 +1,45 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-09-12 22:30:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "user",
+  "team_role"
+ ],
+ "fields": [
+  {
+   "columns": 4,
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "User",
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "columns": 3,
+   "default": "Reader",
+   "fieldname": "team_role",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Role in Team",
+   "options": "Reader\nAuthor\nReviewer\nApprover"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-09-12 22:30:00.000000",
+ "modified_by": "Administrator",
+ "module": "SOP",
+ "name": "SOP Team Member",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

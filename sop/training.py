@@ -1,0 +1,222 @@
+# Copyright (c) 2026, Leo Daniel and contributors
+# For license information, please see license.txt
+
+"""Who has to be trained on what, and when it comes round again.
+
+Acknowledgement answers "did you read it". Training answers "are you competent",
+which needs an assessor, an outcome, and a date it expires.
+"""
+
+import frappe
+from frappe import _
+from frappe.utils import add_days, add_months, getdate, nowdate
+
+OPEN_STATES = ("Assigned", "In Progress", "Overdue")
+
+TASKS_BY_METHOD = {
+	"Read & Understand": [("Read the procedure", "Read Procedure")],
+	"Classroom": [
+		("Read the procedure", "Read Procedure"),
+		("Attend the training session", "Attend Session"),
+	],
+	"On the Job": [
+		("Read the procedure", "Read Procedure"),
+		("Carry out the procedure under supervision", "Practical"),
+		("Supervisor confirms competence", "Verification"),
+	],
+	"Assessment": [
+		("Read the procedure", "Read Procedure"),
+		("Sit the assessment", "Assessment"),
+	],
+}
+
+
+def assign_for_procedure(sop, cause=None):
+	"""Called when a procedure becomes effective, or a material revision publishes."""
+	doc = frappe.get_doc("SOP", sop)
+	created = []
+
+	for requirement in requirements_for(doc):
+		for user in expand(requirement):
+			assignment = create_assignment(doc, requirement, user, cause)
+			if assignment:
+				created.append(assignment)
+
+	return created
+
+
+def requirements_for(doc):
+	rows = frappe.get_all(
+		"SOP Training Requirement",
+		filters={"enabled": 1, "scope": "Procedure", "sop": doc.name},
+		fields=["name"],
+	)
+	rows += frappe.get_all(
+		"SOP Training Requirement",
+		filters={"enabled": 1, "scope": "Space", "space": doc.space},
+		fields=["name"],
+	)
+	return [frappe.get_doc("SOP Training Requirement", row.name) for row in rows]
+
+
+def expand(requirement):
+	"""A requirement names a group; training is assigned to people."""
+	if requirement.applies_to == "User":
+		return [requirement.user] if requirement.user else []
+
+	if requirement.applies_to == "Role":
+		return frappe.get_all(
+			"Has Role",
+			filters={"role": requirement.role, "parenttype": "User"},
+			pluck="parent",
+		)
+
+	if requirement.applies_to == "Team":
+		return frappe.get_all(
+			"SOP Team Member", filters={"parent": requirement.team}, pluck="user"
+		)
+
+	field = "designation" if requirement.applies_to == "Designation" else "department"
+	value = requirement.designation if field == "designation" else requirement.department
+
+	return frappe.get_all(
+		"Employee",
+		filters={field: value, "status": "Active", "user_id": ("is", "set")},
+		pluck="user_id",
+	)
+
+
+def create_assignment(doc, requirement, user, cause=None, is_refresher=0, supersedes=None):
+	if not user or not frappe.db.exists("User", user):
+		return None
+
+	# One open assignment per person per revision. Re-publishing must not
+	# bury someone under duplicates.
+	if frappe.db.exists(
+		"SOP Training Assignment",
+		{"sop": doc.name, "version": doc.version, "trainee": user, "status": ("in", OPEN_STATES)},
+	):
+		return None
+
+	assignment = frappe.get_doc(
+		{
+			"doctype": "SOP Training Assignment",
+			"sop": doc.name,
+			"version": doc.version,
+			"trainee": user,
+			"requirement": requirement.name if requirement else None,
+			"method": requirement.method if requirement else "Read & Understand",
+			"assigned_on": nowdate(),
+			"due_on": add_days(nowdate(), (requirement.due_days if requirement else 14) or 14),
+			"requires_assessment": requirement.requires_assessment if requirement else 0,
+			"pass_mark": requirement.pass_mark if requirement else 0,
+			"is_refresher": is_refresher,
+			"supersedes": supersedes,
+			"remarks": cause,
+		}
+	)
+
+	for task, task_type in TASKS_BY_METHOD.get(assignment.method, TASKS_BY_METHOD["Read & Understand"]):
+		assignment.append(
+			"tasks", {"task": task, "task_type": task_type, "due_on": assignment.due_on}
+		)
+
+	assignment.insert(ignore_permissions=True)
+	notify(assignment)
+
+	return assignment.name
+
+
+def notify(assignment):
+	frappe.get_doc(
+		{
+			"doctype": "Notification Log",
+			"subject": _("Training assigned: {0}").format(assignment.sop),
+			"for_user": assignment.trainee,
+			"type": "Assignment",
+			"document_type": "SOP Training Assignment",
+			"document_name": assignment.name,
+		}
+	).insert(ignore_permissions=True)
+
+
+def mark_overdue():
+	"""Daily. An assignment past its date is overdue whether or not anyone opened it."""
+	names = frappe.get_all(
+		"SOP Training Assignment",
+		filters={"status": ("in", ("Assigned", "In Progress")), "due_on": ("<", nowdate())},
+		pluck="name",
+	)
+
+	for name in names:
+		frappe.db.set_value("SOP Training Assignment", name, "status", "Overdue", update_modified=False)
+
+	return len(names)
+
+
+def schedule_refreshers():
+	"""Daily. Competence expires; this is what an auditor checks first."""
+	created = []
+
+	rows = frappe.get_all(
+		"SOP Training Assignment",
+		filters={"status": "Completed", "outcome": "Competent"},
+		fields=["name", "sop", "trainee", "requirement", "completed_on"],
+	)
+
+	for row in rows:
+		if not row.requirement or not row.completed_on:
+			continue
+
+		requirement = frappe.get_doc("SOP Training Requirement", row.requirement)
+		if not requirement.enabled or not requirement.refresher_months:
+			continue
+
+		due = add_months(getdate(row.completed_on), requirement.refresher_months)
+		if getdate(nowdate()) < getdate(due):
+			continue
+
+		doc = frappe.get_doc("SOP", row.sop)
+		name = create_assignment(
+			doc, requirement, row.trainee, cause=_("Refresher"), is_refresher=1, supersedes=row.name
+		)
+		if name:
+			created.append(name)
+
+	return created
+
+
+def matrix(space=None):
+	"""People down the side, procedures across the top: the audit view."""
+	filters = {"status": "Effective"}
+	if space:
+		filters["space"] = space
+
+	procedures = frappe.get_all(
+		"SOP", filters=filters, fields=["name", "sop_no", "title"], order_by="sop_no asc"
+	)
+	if not procedures:
+		return {"procedures": [], "people": []}
+
+	rows = frappe.get_all(
+		"SOP Training Assignment",
+		filters={"sop": ("in", [p.name for p in procedures])},
+		fields=["sop", "trainee", "status", "outcome", "due_on", "completed_on"],
+	)
+
+	people = {}
+	for row in rows:
+		person = people.setdefault(row.trainee, {"user": row.trainee, "cells": {}})
+		current = person["cells"].get(row.sop)
+
+		# The latest word wins: a completed refresher outranks an open assignment.
+		if not current or rank(row) > rank(current):
+			person["cells"][row.sop] = row
+
+	return {"procedures": procedures, "people": sorted(people.values(), key=lambda p: p["user"])}
+
+
+def rank(row):
+	return {"Completed": 3, "In Progress": 2, "Assigned": 1, "Overdue": 1, "Waived": 2}.get(
+		row.get("status"), 0
+	)

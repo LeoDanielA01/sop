@@ -1,0 +1,79 @@
+@import 'frappe-ui/src/styles/preflight.css';
+@import 'frappe-ui/src/styles/fonts.css';
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+/* Procedure body. The editor writes plain HTML, so the reader styles it here
+   rather than carrying classes through every saved document. */
+.prose-sop > * + * {
+  margin-top: 0.9em;
+}
+.prose-sop h2 {
+  margin-top: 1.6em;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--ink-gray-8);
+}
+.prose-sop h3 {
+  margin-top: 1.3em;
+  font-weight: 600;
+}
+.prose-sop ul,
+.prose-sop ol {
+  padding-left: 1.4em;
+}
+.prose-sop ul {
+  list-style: disc;
+}
+.prose-sop ol {
+  list-style: decimal;
+}
+.prose-sop table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.prose-sop th,
+.prose-sop td {
+  border: 1px solid var(--outline-gray-2);
+  padding: 6px 10px;
+  text-align: left;
+}
+
+@media print {
+  .sop-no-print {
+    display: none !important;
+  }
+}
+
+/* Blocks the procedure editor inserts. Stored as plain HTML with data
+   attributes, so the reader, the print view and any future exporter can all
+   render them without the editor being present. */
+.prose-sop [data-sop='step'] {
+  border-left: 2px solid var(--outline-gray-3);
+  padding-left: 0.9em;
+}
+.prose-sop [data-sop='step-meta'] {
+  font-size: 0.8125rem;
+  color: var(--ink-gray-5);
+}
+.prose-sop [data-sop='callout'] {
+  border: 1px solid var(--outline-amber-2);
+  background: var(--surface-amber-1);
+  border-radius: 6px;
+  padding: 0.7em 0.9em;
+}
+.prose-sop [data-sop='callout'][data-tone='critical'] {
+  border-color: var(--outline-red-2);
+  background: var(--surface-red-1);
+}
+.prose-sop [data-mention] {
+  white-space: nowrap;
+}
+.prose-sop [data-block]::before {
+  content: 'Shared block';
+  font-size: 0.6875rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-gray-4);
+}

@@ -1,0 +1,47 @@
+import { createResource } from 'frappe-ui'
+import { computed, ref } from 'vue'
+
+export const activeSpace = ref(null)
+
+export const spacesResource = createResource({
+  url: 'sop.api.procedures.spaces',
+  auto: true,
+  onSuccess(data) {
+    if (!activeSpace.value && data.length) activeSpace.value = data[0].name
+  },
+})
+
+export const spaces = computed(() => spacesResource.data || [])
+
+export const viewsResource = createResource({
+  url: 'sop.api.procedures.counts',
+  auto: true,
+  makeParams: () => ({ space: activeSpace.value }),
+})
+
+/** The four questions someone actually opens this app to answer. */
+export const views = computed(() => {
+  const counts = viewsResource.data || {}
+  return [
+    { label: 'Awaiting my approval', value: 'approval', icon: 'lucide-stamp', count: counts.approval },
+    { label: 'My drafts', value: 'drafts', icon: 'lucide-pencil-line', count: counts.drafts },
+    {
+      label: 'Unacknowledged',
+      value: 'unacknowledged',
+      icon: 'lucide-check-check',
+      count: counts.unacknowledged,
+    },
+    {
+      label: 'Due for review',
+      value: 'review',
+      icon: 'lucide-calendar-clock',
+      count: counts.review,
+      tone: 'overdue',
+    },
+  ]
+})
+
+export function setSpace(name) {
+  activeSpace.value = name
+  viewsResource.reload()
+}

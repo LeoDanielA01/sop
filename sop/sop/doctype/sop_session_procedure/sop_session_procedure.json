@@ -1,0 +1,45 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-09-12 23:30:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "sop",
+  "title"
+ ],
+ "fields": [
+  {
+   "columns": 6,
+   "fieldname": "sop",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Procedure",
+   "options": "SOP",
+   "reqd": 1
+  },
+  {
+   "columns": 6,
+   "fetch_from": "sop.title",
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Title",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-09-12 23:30:00.000000",
+ "modified_by": "Administrator",
+ "module": "SOP",
+ "name": "SOP Session Procedure",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}
