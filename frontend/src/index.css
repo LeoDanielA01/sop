@@ -1,8 +1,4 @@
-@import 'frappe-ui/src/styles/preflight.css';
-@import 'frappe-ui/src/styles/fonts.css';
-@import 'tailwindcss/base';
-@import 'tailwindcss/components';
-@import 'tailwindcss/utilities';
+@import 'frappe-ui/style.css';
 
 /* Procedure body. The editor writes plain HTML, so the reader styles it here
    rather than carrying classes through every saved document. */

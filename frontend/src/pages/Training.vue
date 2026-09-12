@@ -8,7 +8,7 @@ import {
   FormControl,
   PageHeader,
   PageHeaderTitle,
-  ProgressBar,
+  Progress,
   TabButtons,
   Tooltip,
   createResource,
@@ -117,7 +117,7 @@ onMounted(() => assignments.reload())
 
         <ListCell class="hidden w-40 sm:flex">
           <!-- Progress is tasks ticked, not time elapsed. -->
-          <ProgressBar :value="row.progress" size="sm" class="w-full" />
+          <Progress :value="row.progress" size="sm" class="w-full" />
         </ListCell>
 
         <ListCell class="justify-end">

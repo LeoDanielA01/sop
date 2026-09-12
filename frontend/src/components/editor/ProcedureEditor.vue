@@ -1,15 +1,8 @@
 <script setup>
-/**
- * The procedure editor.
- *
- * A thin wrapper over frappe-ui's TextEditor with the built-in menus turned
- * off: tools arrive on right-click through ToolPalette, or docked when pinned.
- * Everything SOP-specific — steps, hazard callouts, live mentions, shared
- * blocks — is inserted as plain HTML with data attributes, so the stored
- * document stays portable and the reader can render it without this component.
- */
-import { onMounted, ref, watch } from 'vue'
-import { Dialog, TextEditor, createResource } from 'frappe-ui'
+
+import { ref, watch } from 'vue'
+import { Dialog, createResource } from 'frappe-ui'
+import { EditorContent, RichTextKit, useEditor } from 'frappe-ui/editor'
 import ToolPalette from './ToolPalette.vue'
 
 const content = defineModel({ type: String, default: '' })
@@ -20,10 +13,18 @@ const props = defineProps({
 
 const emit = defineEmits(['change'])
 
-const textEditor = ref(null)
 const palette = ref(null)
-const editor = ref(null)
 const pinned = ref(localStorage.getItem('sop:editor-tools-pinned') === '1')
+
+const editor = useEditor({
+  content,
+  editable: () => props.editable,
+  placeholder: props.placeholder,
+  extensions: [RichTextKit],
+  onUpdate() {
+    emit('change', content.value)
+  },
+})
 
 const picker = ref({ open: false, kind: null, query: '', results: [] })
 
@@ -32,10 +33,6 @@ const search = createResource({
   onSuccess(rows) {
     picker.value.results = rows
   },
-})
-
-onMounted(() => {
-  editor.value = textEditor.value?.editor || null
 })
 
 watch(content, () => emit('change', content.value))
@@ -118,14 +115,9 @@ const api = { insertStep, insertCallout, promptLink, pastePlain, pickRecord, pic
   >
     <ToolPalette ref="palette" v-model:pinned="pinned" :editor="editor" :api="api" />
 
-    <TextEditor
-      ref="textEditor"
-      v-model:content="content"
-      :editable="editable"
-      :placeholder="placeholder"
-      :fixed-menu="false"
-      :bubble-menu="false"
-      editor-class="prose-sop min-h-[60vh] px-4 py-4 text-base text-ink-gray-8 focus:outline-none"
+    <EditorContent
+      :editor="editor"
+      class="prose-sop min-h-[60vh] px-4 py-4 text-base text-ink-gray-8 focus:outline-none"
     />
 
     <div

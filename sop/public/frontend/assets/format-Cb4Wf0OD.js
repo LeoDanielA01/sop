@@ -1,0 +1,1 @@
+const n={Draft:"gray","In Review":"amber",Approved:"blue",Effective:"green","Under Revision":"amber",Retired:"red"};function t(e){return e?new Date(e).toLocaleDateString(void 0,{day:"2-digit",month:"short",year:"numeric"}):""}function i(e){if(!e)return null;const r=Math.ceil((new Date(e)-new Date)/864e5);return r<0?"red":r<=30?"amber":null}export{n as S,i as r,t as s};

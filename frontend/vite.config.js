@@ -12,6 +12,7 @@ export default defineConfig({
       // The built index.html is written straight into the app's www folder,
       // so Frappe serves the SPA at /sop with boot data already injected.
       buildConfig: {
+        outDir: '../sop/public/frontend',
         indexHtmlPath: '../sop/www/sop.html',
       },
     }),
@@ -26,8 +27,5 @@ export default defineConfig({
     outDir: '../sop/public/frontend',
     emptyOutDir: true,
     chunkSizeWarningLimit: 1000,
-  },
-  optimizeDeps: {
-    include: ['feather-icons', 'showdown', 'tailwind.config.js'],
   },
 })
