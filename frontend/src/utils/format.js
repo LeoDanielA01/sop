@@ -20,3 +20,7 @@ export function reviewTone(due) {
   if (days <= 30) return 'amber'
   return null
 }
+
+export function today() {
+  return new Date().toISOString().slice(0, 10)
+}

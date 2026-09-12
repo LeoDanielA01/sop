@@ -199,7 +199,23 @@ def matrix(space=None):
 		if not current or rank(row) > rank(current):
 			person["cells"][row.sop] = row
 
-	return {"procedures": procedures, "people": sorted(people.values(), key=lambda p: p["user"])}
+	names = {
+		row.name: row
+		for row in frappe.get_all(
+			"User",
+			filters={"name": ("in", list(people))},
+			fields=["name", "full_name", "user_image"],
+		)
+	}
+
+	for user, person in people.items():
+		person["full_name"] = names.get(user, {}).get("full_name") or user
+		person["user_image"] = names.get(user, {}).get("user_image")
+
+	return {
+		"procedures": procedures,
+		"people": sorted(people.values(), key=lambda p: p["full_name"]),
+	}
 
 
 def rank(row):

@@ -7,6 +7,7 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "naming_series",
   "title",
   "trainer",
   "status",
@@ -21,6 +22,17 @@
   "notes"
  ],
  "fields": [
+  {
+   "default": "TRS-.YYYY.-",
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "hidden": 1,
+   "label": "Series",
+   "no_copy": 1,
+   "options": "TRS-.YYYY.-",
+   "print_hide": 1,
+   "set_only_once": 1
+  },
   {
    "fieldname": "title",
    "fieldtype": "Data",

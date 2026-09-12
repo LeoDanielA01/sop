@@ -10,6 +10,7 @@
   "title",
   "sop_no",
   "space",
+  "process",
   "column_break_head",
   "status",
   "version",
@@ -61,6 +62,14 @@
    "label": "Space",
    "options": "SOP Space",
    "reqd": 1
+  },
+  {
+   "fieldname": "process",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Process",
+   "options": "SOP Process",
+   "depends_on": "space"
   },
   {
    "fieldname": "column_break_head",

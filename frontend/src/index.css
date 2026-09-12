@@ -1,7 +1,5 @@
 @import 'frappe-ui/style.css';
 
-/* Procedure body. The editor writes plain HTML, so the reader styles it here
-   rather than carrying classes through every saved document. */
 .prose-sop > * + * {
   margin-top: 0.9em;
 }
@@ -36,15 +34,49 @@
   text-align: left;
 }
 
-@media print {
-  .sop-no-print {
-    display: none !important;
-  }
+.prose-sop blockquote {
+  border-left: 2px solid var(--outline-gray-3);
+  padding-left: 0.9em;
+  color: var(--ink-gray-7);
+}
+.prose-sop pre {
+  border: 1px solid var(--outline-gray-2);
+  border-radius: 6px;
+  background: var(--surface-gray-1);
+  padding: 0.7em 0.9em;
+  overflow-x: auto;
+  font-size: 0.8125rem;
+}
+.prose-sop code {
+  font-size: 0.875em;
+}
+.prose-sop hr {
+  border: 0;
+  border-top: 1px solid var(--outline-gray-2);
+}
+.prose-sop ul[data-type='taskList'] {
+  padding-left: 0;
+  list-style: none;
+}
+.prose-sop ul[data-type='taskList'] li {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5em;
+}
+.prose-sop img {
+  max-width: 100%;
+  border-radius: 6px;
+}
+.prose-sop .tableWrapper {
+  overflow-x: auto;
+}
+.prose-sop [style*='text-align: center'] {
+  text-align: center;
+}
+.prose-sop [style*='text-align: right'] {
+  text-align: right;
 }
 
-/* Blocks the procedure editor inserts. Stored as plain HTML with data
-   attributes, so the reader, the print view and any future exporter can all
-   render them without the editor being present. */
 .prose-sop [data-sop='step'] {
   border-left: 2px solid var(--outline-gray-3);
   padding-left: 0.9em;
@@ -59,6 +91,10 @@
   border-radius: 6px;
   padding: 0.7em 0.9em;
 }
+.prose-sop [data-sop='callout'][data-tone='note'] {
+  border-color: var(--outline-gray-2);
+  background: var(--surface-gray-1);
+}
 .prose-sop [data-sop='callout'][data-tone='critical'] {
   border-color: var(--outline-red-2);
   background: var(--surface-red-1);
@@ -72,4 +108,10 @@
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--ink-gray-4);
+}
+
+@media print {
+  .sop-no-print {
+    display: none !important;
+  }
 }

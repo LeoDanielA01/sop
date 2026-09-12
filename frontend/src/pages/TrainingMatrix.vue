@@ -2,20 +2,22 @@
   <PageHeader>
     <PageHeaderTitle>Training matrix</PageHeaderTitle>
     <Button
-      variant="ghost"
-      icon-left="lucide-refresh-cw"
-      label="Refresh"
-      :loading="matrix.loading"
-      @click="matrix.submit({ space: activeSpace })"
+      variant="solid"
+      icon-left="lucide-user-plus"
+      label="Assign training"
+      :disabled="!procedures.length"
+      @click="showAssign = true"
     />
   </PageHeader>
 
   <div class="mx-auto mt-5 w-full max-w-[1200px] px-3 pb-10 sm:px-5">
-        <div class="overflow-x-auto rounded-lg border border-outline-gray-2">
+    <div class="overflow-x-auto rounded-lg border border-outline-gray-2">
       <table class="w-full border-collapse text-sm">
         <thead>
           <tr class="bg-surface-gray-1">
-            <th class="sticky left-0 z-10 bg-surface-gray-1 px-3 py-2 text-left font-medium text-ink-gray-7">
+            <th
+              class="sticky left-0 z-10 bg-surface-gray-1 px-3 py-2 text-left font-medium text-ink-gray-7"
+            >
               Person
             </th>
             <th
@@ -31,13 +33,12 @@
           </tr>
         </thead>
         <tbody>
-          <tr
-            v-for="person in people"
-            :key="person.user"
-            class="border-t border-outline-gray-1"
-          >
+          <tr v-for="person in people" :key="person.user" class="border-t border-outline-gray-1">
             <td class="sticky left-0 z-10 bg-surface-base px-3 py-2 text-ink-gray-8">
-              {{ person.user }}
+              <div class="flex items-center gap-2">
+                <Avatar :image="person.user_image" :label="person.full_name" size="sm" />
+                <span class="truncate">{{ person.full_name }}</span>
+              </div>
             </td>
             <td v-for="procedure in procedures" :key="procedure.name" class="px-2 py-2 text-center">
               <Tooltip
@@ -53,7 +54,7 @@
                   aria-hidden="true"
                 />
               </Tooltip>
-                            <Tooltip v-else text="Not assigned">
+              <Tooltip v-else text="Not assigned">
                 <span class="text-ink-gray-3">·</span>
               </Tooltip>
             </td>
@@ -67,18 +68,31 @@
       </table>
     </div>
 
-    <p v-if="!matrix.loading && !people.length" class="mt-16 text-center text-base text-ink-gray-5">
-      No training assigned in this space yet. Add a training requirement and it fills in when a
-      procedure is published.
+    <p
+      v-if="!matrix.loading && !people.length"
+      class="mt-16 px-6 text-center text-base text-ink-gray-5"
+    >
+      <template v-if="procedures.length">
+        Nobody is training on these yet. Assign someone, or set a training requirement so it happens
+        on its own when a procedure comes into force.
+      </template>
+      <template v-else>
+        Nothing in force in this space yet — the matrix fills in once a procedure is published.
+      </template>
     </p>
   </div>
+
+  <AssignTrainingDialog v-model:open="showAssign" :procedures="procedures" @assigned="reload" />
 </template>
 
 <script setup>
-import { computed, onMounted } from 'vue'
-import { Badge, Button, PageHeader, PageHeaderTitle, Tooltip } from 'frappe-ui'
+import { computed, onMounted, ref, watch } from 'vue'
+import { Avatar, Badge, Button, PageHeader, PageHeaderTitle, Tooltip } from 'frappe-ui'
+import AssignTrainingDialog from '@/components/AssignTrainingDialog.vue'
 import { activeSpace } from '@/data/navigation'
-import { matrix } from '@/data/training'
+import { matrix, trainingCounts } from '@/data/training'
+
+const showAssign = ref(false)
 
 const procedures = computed(() => matrix.data?.procedures || [])
 const people = computed(() => matrix.data?.people || [])
@@ -102,5 +116,11 @@ function gaps(person) {
   }).length
 }
 
-onMounted(() => matrix.submit({ space: activeSpace.value }))
+function reload() {
+  matrix.submit({ space: activeSpace.value })
+  trainingCounts.reload()
+}
+
+watch(activeSpace, reload)
+onMounted(reload)
 </script>

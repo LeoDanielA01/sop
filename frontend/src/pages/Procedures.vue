@@ -1,12 +1,33 @@
 <template>
   <PageHeader>
-    <div class="flex items-center gap-1">
-      <PageHeaderTitle>{{ space?.title || 'All procedures' }}</PageHeaderTitle>
-      <Dropdown :options="spaceActions">
-        <Button variant="ghost" icon="lucide-ellipsis" label="Space actions" />
-      </Dropdown>
+    <div class="flex min-w-0 flex-col gap-0.5">
+      <PageHeaderTitle>{{ heading }}</PageHeaderTitle>
+      <div v-if="trail.length" class="flex min-w-0 items-center gap-1 text-sm text-ink-gray-5">
+        <Button
+          variant="ghost"
+          size="sm"
+          :label="space?.title || 'Space'"
+          @click="clearProcess"
+        />
+        <template v-for="(step, index) in trail" :key="step.name">
+          <span class="lucide-chevron-right size-3.5 shrink-0" aria-hidden="true" />
+          <Button
+            variant="ghost"
+            size="sm"
+            :label="step.title"
+            :disabled="index === trail.length - 1"
+            @click="setProcess(step.name)"
+          />
+        </template>
+      </div>
     </div>
-    <Button label="New procedure" icon-left="lucide-plus" @click="router.push('/new')" />
+    <Button
+      v-if="spaces.length"
+      variant="solid"
+      label="New procedure"
+      icon-left="lucide-plus"
+      @click="router.push('/new')"
+    />
   </PageHeader>
 
   <div class="mx-auto mt-5 w-full max-w-[940px] px-3 pb-10 sm:px-5">
@@ -23,7 +44,7 @@
       </span>
     </div>
 
-        <List class="-mx-3 sm:list-gap-4">
+    <List class="-mx-3 sm:list-gap-4">
       <ListRow
         v-for="procedure in rows"
         :key="procedure.name"
@@ -40,7 +61,7 @@
 
         <ListCell>
           <div class="min-w-0 flex-1">
-                        <div class="truncate leading-none text-ink-gray-8">
+            <div class="truncate leading-none text-ink-gray-8">
               <span :class="procedure.unacknowledged ? 'text-base-semibold' : 'text-base'">
                 {{ procedure.title }}
               </span>
@@ -83,19 +104,39 @@
       </ListRow>
     </List>
 
-    <Pagination v-if="total > pageLength" v-model:page="page" v-model:page-length="pageLength" :total="total" />
+    <Pagination
+      v-if="total > pageLength"
+      v-model:page="page"
+      v-model:page-length="pageLength"
+      :total="total"
+    />
 
     <div
       v-if="!procedures.loading && !rows.length"
-      class="mt-16 flex flex-col items-center gap-3 text-center text-base text-ink-gray-5"
+      class="mt-16 flex flex-col items-center gap-3 px-6 text-center text-base text-ink-gray-5"
     >
-      <span>No procedures in this space yet.</span>
-      <Button
-        variant="solid"
-        icon-left="lucide-plus"
-        label="Write the first one"
-        @click="router.push('/new')"
-      />
+      <template v-if="spaces.length">
+        <span v-if="activeProcess">Nothing filed under {{ heading }} yet.</span>
+        <span v-else>Nothing here yet.</span>
+        <Button
+          variant="solid"
+          icon-left="lucide-plus"
+          label="Write the first procedure"
+          @click="router.push('/new')"
+        />
+      </template>
+      <template v-else>
+        <span>
+          Start with a space. It is the binder a procedure lives in — QA, Production, HR — and its
+          code becomes the procedure number.
+        </span>
+        <Button
+          variant="solid"
+          icon-left="lucide-plus"
+          label="Create a space"
+          @click="spaceDialog = true"
+        />
+      </template>
     </div>
   </div>
 </template>
@@ -107,22 +148,21 @@ import {
   Avatar,
   Badge,
   Button,
-  Dropdown,
   PageHeader,
   PageHeaderTitle,
   TabButtons,
   Tooltip,
+  createResource,
 } from 'frappe-ui'
 import { List, ListCell, ListRow } from 'frappe-ui/list'
 import Pagination from '@/components/Pagination.vue'
 import { procedures, page, pageLength, view } from '@/data/procedures'
-import { activeSpace, spaces } from '@/data/navigation'
+import { activeSpace, setSpace, spaces } from '@/data/navigation'
+import { activeProcess, setProcess } from '@/data/processes'
+import { spaceDialog } from '@/data/ui'
 import { STATUS_THEME, reviewTone, shortDate } from '@/utils/format'
 
-defineProps({
-  spaceActions: { type: Array, default: () => [] },
-  compact: { type: Boolean, default: false },
-})
+defineProps({ compact: { type: Boolean, default: false } })
 
 const route = useRoute()
 const router = useRouter()
@@ -130,9 +170,39 @@ const router = useRouter()
 const scope = ref('All')
 const space = computed(() => spaces.value.find((s) => s.name === activeSpace.value))
 
+const trailResource = createResource({ url: 'sop.api.processes.trail' })
+
+const trail = computed(() => (activeProcess.value ? trailResource.data || [] : []))
+
+const heading = computed(
+  () => trail.value[trail.value.length - 1]?.title || space.value?.title || 'All procedures',
+)
+
+function clearProcess() {
+  setProcess(null)
+  router.push({ path: '/', query: { space: activeSpace.value } })
+}
+
 watch(
   () => route.query.view,
   (value) => (view.value = value || 'all'),
+  { immediate: true },
+)
+
+watch(
+  () => route.query.space,
+  (value) => {
+    if (value && value !== activeSpace.value) setSpace(value)
+  },
+  { immediate: true },
+)
+
+watch(
+  () => route.query.process,
+  (value) => {
+    if ((value || null) !== activeProcess.value) setProcess(value || null)
+    if (value) trailResource.submit({ process: value })
+  },
   { immediate: true },
 )
 

@@ -45,7 +45,20 @@ export const views = computed(() => {
   ]
 })
 
+export const createSpace = createResource({
+  url: 'sop.api.procedures.create_space',
+  onSuccess(space) {
+    spacesResource.reload()
+    setSpace(space.name)
+  },
+})
+
 export function setSpace(name) {
   activeSpace.value = name
   viewsResource.reload()
+}
+
+export function refreshCounts() {
+  viewsResource.reload()
+  spacesResource.reload()
 }

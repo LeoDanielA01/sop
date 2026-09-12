@@ -1,9 +1,10 @@
 import { createResource } from 'frappe-ui'
 import { ref, watch } from 'vue'
 import { activeSpace } from '@/data/navigation'
+import { activeProcess } from '@/data/processes'
 
 export const page = ref(1)
-export const pageLength = ref(10)
+export const pageLength = ref(Number(localStorage.getItem('sop:page-length')) || 10)
 export const view = ref('all')
 export const search = ref('')
 
@@ -12,6 +13,7 @@ export const procedures = createResource({
   auto: true,
   makeParams: () => ({
     space: activeSpace.value,
+    process: activeProcess.value || undefined,
     view: view.value,
     search: search.value || undefined,
     start: (page.value - 1) * pageLength.value,
@@ -19,9 +21,11 @@ export const procedures = createResource({
   }),
 })
 
+watch(pageLength, (value) => localStorage.setItem('sop:page-length', String(value)))
+
 watch([page, pageLength], () => procedures.reload())
 
-watch([activeSpace, view, search], () => {
+watch([activeSpace, activeProcess, view, search], () => {
   page.value = 1
   procedures.reload()
 })

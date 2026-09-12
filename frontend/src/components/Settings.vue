@@ -8,12 +8,6 @@
           </template>
           Preferences
         </SettingsNavItem>
-        <SettingsNavItem value="notifications">
-          <template #prefix>
-            <span class="lucide-bell size-4 shrink-0 text-ink-gray-6" />
-          </template>
-          Notifications
-        </SettingsNavItem>
       </SettingsNavGroup>
 
       <SettingsNavGroup label="Administration">
@@ -61,47 +55,26 @@
         </SettingsBody>
       </SettingsPanel>
 
-      <SettingsPanel value="notifications">
-        <SettingsHeader title="Notifications" />
-        <SettingsBody>
-          <div class="divide-y divide-outline-gray-1 pt-6">
-            <SettingsRow
-              title="Approval requests"
-              description="Email me when a procedure is waiting for my sign-off"
-            >
-              <Switch v-model="emailOnApproval" />
-            </SettingsRow>
-            <SettingsRow
-              title="Newly effective procedures"
-              description="Email me when a procedure I must follow comes into force"
-            >
-              <Switch v-model="emailOnPublish" />
-            </SettingsRow>
-            <SettingsRow
-              title="Training reminders"
-              description="Email me before training falls overdue"
-            >
-              <Switch v-model="emailOnTraining" />
-            </SettingsRow>
-            <SettingsRow title="Review digest" description="A summary of what is due for review">
-              <Select v-model="digest" :options="['Off', 'Weekly', 'Monthly']" />
-            </SettingsRow>
-          </div>
-        </SettingsBody>
-      </SettingsPanel>
-
       <SettingsPanel value="spaces">
-        <SettingsHeader title="Spaces">
+        <SettingsHeader
+          title="Spaces"
+          description="A space is a binder, and it numbers everything inside it"
+        >
           <template #actions>
-            <Button icon-left="lucide-plus" label="New space" />
+            <Button variant="solid" icon-left="lucide-plus" label="New space" @click="newSpace" />
           </template>
         </SettingsHeader>
         <SettingsBody>
-          <List class="-mx-3 pt-4" :columns="['minmax(0,1fr)', '8rem', '3rem']" :row-height="56">
+          <List
+            v-if="spaces.length"
+            class="-mx-3 pt-4"
+            :columns="['minmax(0,1fr)', '8rem', '8rem']"
+            :row-height="56"
+          >
             <ListHeader>
               <ListHeaderCell>Space</ListHeaderCell>
               <ListHeaderCell>Visibility</ListHeaderCell>
-              <ListHeaderCell />
+              <ListHeaderCell>Needs review</ListHeaderCell>
             </ListHeader>
             <ListRows :items="spaces" v-slot="{ item: space }">
               <ListRow>
@@ -117,16 +90,18 @@
                 <ListCell>
                   <span class="text-base text-ink-gray-7">{{ space.visibility }}</span>
                 </ListCell>
-                <ListCell class="justify-end">
-                  <Button variant="ghost" icon="lucide-ellipsis" label="Space options" />
+                <ListCell>
+                  <Badge v-if="space.overdue" theme="red" variant="subtle" size="sm">
+                    {{ space.overdue }} overdue
+                  </Badge>
+                  <span v-else class="text-base text-ink-gray-5">Up to date</span>
                 </ListCell>
               </ListRow>
             </ListRows>
           </List>
 
-          <p v-if="!spaces.length" class="px-3 py-8 text-center text-base text-ink-gray-5">
-            No spaces yet. A space is a binder — QA, Production, HR — and it sets the procedure
-            numbering for everything inside it.
+          <p v-else class="px-3 py-10 text-center text-base text-ink-gray-5">
+            No spaces yet. Create one and its code — QA, PROD, HR — becomes the procedure number.
           </p>
         </SettingsBody>
       </SettingsPanel>
@@ -134,16 +109,45 @@
       <SettingsPanel value="mentions">
         <SettingsHeader
           title="Mention chips"
-          description="Choose what a mentioned record shows inside a procedure"
+          description="What a mentioned record shows to whoever reads the procedure"
         >
           <template #actions>
-            <Button icon-left="lucide-plus" label="Add doctype" />
+            <Button icon-left="lucide-plus" label="Add doctype" @click="addMentionConfig" />
           </template>
         </SettingsHeader>
         <SettingsBody>
-          <p class="pt-6 text-base text-ink-gray-5">
-            Pick a doctype, a status field and up to three badges, and every mention of that record
-            shows them — without a developer.
+          <List
+            v-if="configs.length"
+            class="-mx-3 pt-4"
+            :columns="['minmax(0,1fr)', '10rem', '6rem']"
+            :row-height="52"
+          >
+            <ListHeader>
+              <ListHeaderCell>Doctype</ListHeaderCell>
+              <ListHeaderCell>Status field</ListHeaderCell>
+              <ListHeaderCell>State</ListHeaderCell>
+            </ListHeader>
+            <ListRows :items="configs" v-slot="{ item: config }">
+              <ListRow @click="editMentionConfig(config)">
+                <ListCell>
+                  <span class="truncate text-base text-ink-gray-8">{{ config.document_type }}</span>
+                </ListCell>
+                <ListCell>
+                  <span class="truncate text-base text-ink-gray-6">
+                    {{ config.status_field || 'None' }}
+                  </span>
+                </ListCell>
+                <ListCell>
+                  <Badge :theme="config.enabled ? 'green' : 'gray'" variant="subtle" size="sm">
+                    {{ config.enabled ? 'On' : 'Off' }}
+                  </Badge>
+                </ListCell>
+              </ListRow>
+            </ListRows>
+          </List>
+
+          <p v-else class="px-3 py-10 text-center text-base text-ink-gray-5">
+            Nothing configured. Until a doctype is set up here, a mention reads as plain text.
           </p>
         </SettingsBody>
       </SettingsPanel>
@@ -152,9 +156,10 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import {
   Avatar,
+  Badge,
   Button,
   Select,
   SettingsBody,
@@ -166,13 +171,14 @@ import {
   SettingsPanel,
   SettingsRow,
   SettingsSidebar,
-  Switch,
   TabButtons,
+  createResource,
   useColorScheme,
 } from 'frappe-ui'
 
 import { List, ListCell, ListHeader, ListHeaderCell, ListRow, ListRows } from 'frappe-ui/list'
 import { spaces } from '@/data/navigation'
+import { spaceDialog } from '@/data/ui'
 import { pageLength } from '@/data/procedures'
 
 const open = defineModel('open', { type: Boolean, default: false })
@@ -183,8 +189,31 @@ const { colorScheme, setColorScheme } = useColorScheme()
 const rowsPerPage = ref(String(pageLength.value))
 watch(rowsPerPage, (value) => (pageLength.value = Number(value)))
 
-const emailOnApproval = ref(true)
-const emailOnPublish = ref(true)
-const emailOnTraining = ref(true)
-const digest = ref('Weekly')
+const mentionConfigs = createResource({
+  url: 'frappe.client.get_list',
+  makeParams: () => ({
+    doctype: 'SOP Mention Config',
+    fields: ['name', 'document_type', 'status_field', 'enabled'],
+    limit_page_length: 50,
+  }),
+})
+
+const configs = computed(() => mentionConfigs.data || [])
+
+function newSpace() {
+  open.value = false
+  spaceDialog.value = true
+}
+
+function addMentionConfig() {
+  window.open('/app/sop-mention-config/new', '_blank')
+}
+
+function editMentionConfig(config) {
+  window.open(`/app/sop-mention-config/${encodeURIComponent(config.name)}`, '_blank')
+}
+
+watch(open, (value) => {
+  if (value) mentionConfigs.reload()
+})
 </script>

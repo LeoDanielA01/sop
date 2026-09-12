@@ -2,6 +2,7 @@
   <PageHeader>
     <PageHeaderTitle>My training</PageHeaderTitle>
     <Button
+      v-if="compact"
       variant="ghost"
       icon-left="lucide-grid-3x3"
       label="Training matrix"
@@ -180,6 +181,8 @@ import {
 } from 'frappe-ui'
 import { List, ListCell, ListRow } from 'frappe-ui/list'
 import { shortDate } from '@/utils/format'
+
+defineProps({ compact: { type: Boolean, default: false } })
 
 const router = useRouter()
 

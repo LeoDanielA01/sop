@@ -1,5 +1,7 @@
 import frappe
 
+from sop import demo
+
 ROLES = [
 	("SOP Reader", "Reads effective procedures and acknowledges them."),
 	("SOP Author", "Writes and edits drafts."),
@@ -17,6 +19,7 @@ def after_install():
 
 def after_migrate():
 	create_roles()
+	demo.after_migrate()
 
 
 def create_roles():

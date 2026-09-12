@@ -22,13 +22,29 @@
         variant="solid"
         label="Save draft"
         :loading="save.loading"
-        :disabled="!draft.title"
+        :disabled="!draft.title || !spaces.length"
         @click="submit"
       />
     </div>
   </PageHeader>
 
   <div class="mx-auto mt-5 w-full max-w-[820px] px-3 pb-16 sm:px-5">
+    <div
+      v-if="!spaces.length"
+      class="mt-12 flex flex-col items-center gap-3 px-6 text-center text-base text-ink-gray-5"
+    >
+      <span>
+        A procedure needs a space to live in — its code becomes the procedure number.
+      </span>
+      <Button
+        variant="solid"
+        icon-left="lucide-plus"
+        label="Create a space"
+        @click="spaceDialog = true"
+      />
+    </div>
+
+    <template v-else>
     <ErrorMessage :message="save.error?.messages?.[0]" class="mb-3" />
 
     <div class="mb-4 flex flex-col gap-3">
@@ -41,15 +57,23 @@
       <div class="grid gap-3 sm:grid-cols-2">
         <FormControl type="select" label="Space" :options="spaceOptions" v-model="draft.space" />
         <FormControl
-          type="text"
-          label="Summary"
-          placeholder="One line, shown in search results"
-          v-model="draft.summary"
+          type="select"
+          label="Process"
+          :options="processOptions"
+          v-model="draft.process"
         />
       </div>
+
+      <FormControl
+        type="text"
+        label="Summary"
+        placeholder="One line, shown in search results"
+        v-model="draft.summary"
+      />
     </div>
 
     <ProcedureEditor v-model="draft.content" />
+    </template>
   </div>
 </template>
 
@@ -67,6 +91,8 @@ import {
 } from 'frappe-ui'
 import ProcedureEditor from '@/components/editor/ProcedureEditor.vue'
 import { activeSpace, spaces } from '@/data/navigation'
+import { activeProcess, flatten, processes } from '@/data/processes'
+import { spaceDialog } from '@/data/ui'
 
 const route = useRoute()
 const router = useRouter()
@@ -76,6 +102,7 @@ const draft = reactive({
   summary: '',
   content: '',
   space: null,
+  process: null,
   sop_no: null,
   status: 'Draft',
 })
@@ -87,6 +114,14 @@ let loading = false
 const isNew = computed(() => !route.params.name)
 const spaceOptions = computed(() => spaces.value.map((s) => ({ label: s.title, value: s.name })))
 
+const processOptions = computed(() => [
+  { label: 'Not filed under a process', value: null },
+  ...flatten(processes.value).map((node) => ({
+    label: `${'— '.repeat(node.depth)}${node.title}`,
+    value: node.name,
+  })),
+])
+
 const load = createResource({
   url: 'sop.api.procedures.get_procedure',
   onSuccess(doc) {
@@ -96,6 +131,7 @@ const load = createResource({
       summary: doc.summary,
       content: doc.content,
       space: doc.space,
+      process: doc.process,
       sop_no: doc.sop_no,
       status: doc.status,
     })
@@ -122,6 +158,7 @@ function submit() {
     title: draft.title,
     summary: draft.summary,
     content: draft.content,
+    process: draft.process || undefined,
   })
 }
 
@@ -137,7 +174,16 @@ watch(
 )
 
 onMounted(() => {
-  if (!isNew.value) load.submit({ name: route.params.name })
-  else draft.space = activeSpace.value
+  if (!isNew.value) {
+    load.submit({ name: route.params.name })
+    return
+  }
+
+  draft.space = activeSpace.value || spaces.value[0]?.name
+  draft.process = activeProcess.value
+})
+
+watch(spaces, (list) => {
+  if (isNew.value && !draft.space) draft.space = activeSpace.value || list[0]?.name
 })
 </script>

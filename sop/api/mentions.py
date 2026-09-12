@@ -28,6 +28,56 @@ def resolve(references):
 	return resolved
 
 
+@frappe.whitelist()
+def targets():
+	rows = frappe.get_all(
+		"SOP Mention Config",
+		filters={"enabled": 1},
+		fields=["document_type", "title_field"],
+		order_by="document_type asc",
+	)
+
+	return [
+		{"doctype": row.document_type, "title_field": row.title_field}
+		for row in rows
+		if frappe.has_permission(row.document_type, "read")
+	]
+
+
+@frappe.whitelist()
+def find(doctype, text=None, limit=10):
+	if not frappe.has_permission(doctype, "read"):
+		frappe.throw(_("You are not allowed to read {0}.").format(doctype), frappe.PermissionError)
+
+	title_field = frappe.db.get_value("SOP Mention Config", doctype, "title_field")
+	title_field = title_field or frappe.get_meta(doctype).title_field
+
+	fields = ["name"]
+	if title_field and title_field != "name":
+		fields.append(title_field)
+
+	filters = {}
+	or_filters = {}
+	if text:
+		like = f"%{text}%"
+		or_filters["name"] = ("like", like)
+		if title_field and title_field != "name":
+			or_filters[title_field] = ("like", like)
+
+	rows = frappe.get_list(
+		doctype,
+		filters=filters,
+		or_filters=or_filters or None,
+		fields=fields,
+		limit_page_length=frappe.utils.cint(limit) or 10,
+	)
+
+	return [
+		{"name": row.name, "label": (row.get(title_field) if title_field else None) or row.name}
+		for row in rows
+	]
+
+
 def resolve_doctype(doctype, names):
 	out = []
 	pending = []

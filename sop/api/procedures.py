@@ -1,10 +1,13 @@
 # Copyright (c) 2026, Leo Daniel and contributors
 # For license information, please see license.txt
 
+import re
+
 import frappe
 from frappe import _
 from frappe.utils import add_days, nowdate
 
+from sop.api.lifecycle import actions_for, approvals_of
 from sop.api.mentions import resolve
 
 
@@ -80,6 +83,7 @@ LIST_FIELDS = [
 	"status",
 	"version",
 	"space",
+	"process",
 	"process_owner",
 	"effective_from",
 	"review_due",
@@ -88,8 +92,11 @@ LIST_FIELDS = [
 
 
 @frappe.whitelist()
-def list_procedures(space=None, view="all", search=None, start=0, page_length=20):
+def list_procedures(space=None, view="all", process=None, search=None, start=0, page_length=20):
 	filters = view_filters(space, view)
+
+	if process:
+		filters["process"] = ("in", process_scope(process))
 
 	if search:
 		filters["search_text"] = ("like", f"%{search}%")
@@ -111,6 +118,12 @@ def list_procedures(space=None, view="all", search=None, start=0, page_length=20
 		row.is_mine = row.process_owner == frappe.session.user
 
 	return {"rows": rows, "total": total, "start": frappe.utils.cint(start)}
+
+
+def process_scope(process):
+	from sop.api.processes import scope_of
+
+	return scope_of(process)
 
 
 def view_filters(space, view):
@@ -175,6 +188,8 @@ def get_procedure(name, revision=None):
 		"version": version,
 		"effective_revision": doc.version,
 		"space": doc.space,
+		"process": doc.process,
+		"process_trail": process_trail(doc.process),
 		"content": content,
 		"steps": [step.as_dict() for step in doc.steps],
 		"tags": [row.tag for row in doc.tags],
@@ -194,7 +209,18 @@ def get_procedure(name, revision=None):
 		"acknowledged_on": signed.acknowledged_at if signed else None,
 		"acknowledged_version": signed.version if signed else None,
 		"can_edit": doc.is_editable() and doc.has_permission("write"),
+		"approvals": approvals_of(doc),
+		"actions": actions_for(doc),
 	}
+
+
+def process_trail(process):
+	if not process:
+		return []
+
+	from sop.api.processes import trail
+
+	return trail(process)
 
 
 def served_content(doc, revision=None):
@@ -251,7 +277,7 @@ def last_acknowledgement(sop):
 
 
 @frappe.whitelist()
-def save_draft(space, title, name=None, summary=None, content=None):
+def save_draft(space, title, name=None, summary=None, content=None, process=None):
 	if name:
 		doc = frappe.get_doc("SOP", name)
 		doc.check_permission("write")
@@ -270,10 +296,76 @@ def save_draft(space, title, name=None, summary=None, content=None):
 	doc.title = title
 	doc.summary = summary
 	doc.content = content
+	doc.process = process or None
 	doc.save()
 
 	return {"name": doc.name, "sop_no": doc.sop_no, "status": doc.status, "version": doc.version}
 
+
+@frappe.whitelist()
+def create_space(
+	title, space_code=None, visibility="Public", review_interval_months=12, template=None, with_drafts=0
+):
+	if not frappe.has_permission("SOP Space", "create"):
+		frappe.throw(_("You are not allowed to create a space."), frappe.PermissionError)
+
+	code = (space_code or initials(title)).strip().upper()
+	if not code:
+		frappe.throw(_("A space needs a short code — it becomes the procedure number."))
+
+	if frappe.db.exists("SOP Space", code):
+		frappe.throw(_("A space with the code {0} already exists.").format(code))
+
+	doc = frappe.get_doc(
+		{
+			"doctype": "SOP Space",
+			"title": title,
+			"space_code": code,
+			"visibility": visibility or "Public",
+			"review_interval_months": frappe.utils.cint(review_interval_months) or 12,
+		}
+	).insert()
+
+	seeded = {}
+	if template:
+		from sop.templates import apply_template
+
+		seeded = apply_template(doc.name, template, with_drafts=frappe.utils.cint(with_drafts))
+
+	return {
+		"name": doc.name,
+		"title": doc.title,
+		"space_code": doc.space_code,
+		"total": seeded.get("drafts", 0),
+		"overdue": 0,
+		"seeded": seeded,
+	}
+
+
+def initials(title):
+	words = [word for word in re.split(r"[^A-Za-z0-9]+", title or "") if word]
+	if not words:
+		return ""
+
+	if len(words) == 1:
+		return words[0][:3]
+
+	return "".join(word[0] for word in words)[:4]
+
+
+@frappe.whitelist()
+def people(search=None, limit=10):
+	filters = {"enabled": 1, "user_type": "System User"}
+	if search:
+		filters["full_name"] = ("like", f"%{search}%")
+
+	return frappe.get_all(
+		"User",
+		filters=filters,
+		fields=["name", "full_name", "user_image"],
+		order_by="full_name asc",
+		limit_page_length=frappe.utils.cint(limit),
+	)
 
 @frappe.whitelist()
 def acknowledge(sop, version):
