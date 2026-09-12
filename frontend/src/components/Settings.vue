@@ -1,36 +1,3 @@
-<script setup>
-import { ref, watch } from 'vue'
-import {
-  Avatar,
-  Button,
-  Select,
-  SettingsBody,
-  SettingsContent,
-  SettingsDialog,
-  SettingsHeader,
-  SettingsNavGroup,
-  SettingsNavItem,
-  SettingsPanel,
-  SettingsRow,
-  SettingsSidebar,
-  Switch,
-} from 'frappe-ui'
-import { List, ListCell, ListHeader, ListHeaderCell, ListRow, ListRows } from 'frappe-ui/list'
-import { spaces } from '@/data/navigation'
-import { pageLength } from '@/data/procedures'
-import { setTheme, theme } from '@/composables/useTheme'
-
-const open = defineModel('open', { type: Boolean, default: false })
-const tab = ref('spaces')
-
-const rowsPerPage = ref(String(pageLength.value))
-watch(rowsPerPage, (value) => (pageLength.value = Number(value)))
-
-const emailOnApproval = ref(true)
-const emailOnPublish = ref(true)
-const digest = ref('Weekly')
-</script>
-
 <template>
   <SettingsDialog v-model:open="open" v-model:tab="tab" size="5xl">
     <SettingsSidebar>
@@ -74,34 +41,7 @@ const digest = ref('Weekly')
               title="Appearance"
               description="Choose a light, dark, or system-matched interface"
             >
-              <Select
-                :modelValue="theme"
-                :options="[
-                  { label: 'Light', value: 'light' },
-                  { label: 'Dark', value: 'dark' },
-                  { label: 'System Default', value: 'system' },
-                ]"
-                @update:modelValue="setTheme"
-              >
-                <template #item-prefix="{ item }">
-                  <div
-                    v-if="item.value === 'system'"
-                    class="flex size-3 overflow-hidden rounded-full border border-outline-gray-2"
-                  >
-                    <div class="w-1/2 bg-white" />
-                    <div class="w-1/2 bg-gray-950" />
-                  </div>
-                  <div
-                    v-else
-                    class="size-3 rounded-full border"
-                    :class="
-                      item.value === 'light'
-                        ? 'border-outline-gray-2 bg-white'
-                        : 'bg-gray-950'
-                    "
-                  />
-                </template>
-              </Select>
+              <ThemeSwitcher />
             </SettingsRow>
             <SettingsRow
               title="Rows per page"
@@ -128,6 +68,12 @@ const digest = ref('Weekly')
               description="Email me when a procedure I must follow comes into force"
             >
               <Switch v-model="emailOnPublish" />
+            </SettingsRow>
+            <SettingsRow
+              title="Training reminders"
+              description="Email me before training falls overdue"
+            >
+              <Switch v-model="emailOnTraining" />
             </SettingsRow>
             <SettingsRow title="Review digest" description="A summary of what is due for review">
               <Select v-model="digest" :options="['Off', 'Weekly', 'Monthly']" />
@@ -169,6 +115,11 @@ const digest = ref('Weekly')
               </ListRow>
             </ListRows>
           </List>
+
+          <p v-if="!spaces.length" class="px-3 py-8 text-center text-base text-ink-gray-5">
+            No spaces yet. A space is a binder — QA, Production, HR — and it sets the procedure
+            numbering for everything inside it.
+          </p>
         </SettingsBody>
       </SettingsPanel>
 
@@ -183,11 +134,45 @@ const digest = ref('Weekly')
         </SettingsHeader>
         <SettingsBody>
           <p class="pt-6 text-base text-ink-gray-5">
-            Phase 3 fills this: pick a doctype, a status field and up to three badges, and every
-            mention of that record shows them — without a developer.
+            Pick a doctype, a status field and up to three badges, and every mention of that record
+            shows them — without a developer.
           </p>
         </SettingsBody>
       </SettingsPanel>
     </SettingsContent>
   </SettingsDialog>
 </template>
+
+<script setup>
+import { ref, watch } from 'vue'
+import {
+  Avatar,
+  Button,
+  Select,
+  SettingsBody,
+  SettingsContent,
+  SettingsDialog,
+  SettingsHeader,
+  SettingsNavGroup,
+  SettingsNavItem,
+  SettingsPanel,
+  SettingsRow,
+  SettingsSidebar,
+  Switch,
+  ThemeSwitcher,
+} from 'frappe-ui'
+import { List, ListCell, ListHeader, ListHeaderCell, ListRow, ListRows } from 'frappe-ui/list'
+import { spaces } from '@/data/navigation'
+import { pageLength } from '@/data/procedures'
+
+const open = defineModel('open', { type: Boolean, default: false })
+const tab = ref('preferences')
+
+const rowsPerPage = ref(String(pageLength.value))
+watch(rowsPerPage, (value) => (pageLength.value = Number(value)))
+
+const emailOnApproval = ref(true)
+const emailOnPublish = ref(true)
+const emailOnTraining = ref(true)
+const digest = ref('Weekly')
+</script>

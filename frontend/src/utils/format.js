@@ -13,7 +13,6 @@ export function shortDate(value) {
   return d.toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
-/** Red once a review is overdue, amber inside 30 days, nothing before that. */
 export function reviewTone(due) {
   if (!due) return null
   const days = Math.ceil((new Date(due) - new Date()) / 86400000)

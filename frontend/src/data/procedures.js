@@ -21,8 +21,6 @@ export const procedures = createResource({
 
 watch([page, pageLength], () => procedures.reload())
 
-// Changing what you are looking at always returns you to the first page —
-// landing on page 7 of a different list is disorienting.
 watch([activeSpace, view, search], () => {
   page.value = 1
   procedures.reload()
@@ -37,7 +35,6 @@ export const acknowledge = createResource({
   onSuccess: () => procedure.reload(),
 })
 
-/** One call for every chip on the page, never one call per chip. */
 export const resolveMentions = createResource({
   url: 'sop.api.mentions.resolve',
 })

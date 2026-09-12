@@ -1,11 +1,3 @@
-/**
- * What the palette can do, and when each tool is worth offering.
- *
- * `when` decides whether a tool appears for the thing under the pointer, so a
- * right-click inside a table offers table tools and a right-click on an empty
- * line offers the blocks you would actually insert there. A palette that always
- * shows everything is just a toolbar in a worse position.
- */
 
 export const CONTEXTS = {
   TEXT: 'text',
@@ -91,7 +83,6 @@ export const GROUPS = [
     ],
   },
   {
-    // The reason this editor exists rather than a generic one.
     name: 'Procedure',
     when: always,
     tools: [
@@ -174,7 +165,6 @@ export const GROUPS = [
   },
 ]
 
-/** What is under the pointer decides which groups are offered. */
 export function contextAt(editor) {
   if (!editor) return { kind: CONTEXTS.EMPTY }
 

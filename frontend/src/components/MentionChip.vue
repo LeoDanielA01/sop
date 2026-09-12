@@ -1,5 +1,29 @@
-<script setup>
+<template>
+  <Teleport v-if="target" :to="target">
+    <a
+      :href="reference.url"
+      target="_blank"
+      class="inline-flex items-center gap-1.5 rounded border border-outline-gray-2 bg-surface-gray-1 px-1.5 py-px align-baseline text-ink-gray-8 no-underline hover:bg-surface-gray-2"
+    >
+      <span class="text-xs uppercase tracking-wide text-ink-gray-5">
+        {{ reference.short_type || reference.reference_doctype }}
+      </span>
+      <span>{{ reference.label || reference.reference_name }}</span>
 
+            <Tooltip
+        v-for="badge in reference.badges || []"
+        :key="badge.label"
+        :text="badge.hint || ''"
+      >
+        <Badge :theme="tone[badge.tone] || 'gray'" variant="subtle" size="sm">
+          {{ badge.label }}
+        </Badge>
+      </Tooltip>
+    </a>
+  </Teleport>
+</template>
+
+<script setup>
 import { computed } from 'vue'
 import { Badge, Tooltip } from 'frappe-ui'
 
@@ -22,30 +46,3 @@ const tone = {
   neutral: 'gray',
 }
 </script>
-
-<template>
-  <Teleport v-if="target" :to="target">
-    <a
-      :href="reference.url"
-      target="_blank"
-      class="inline-flex items-center gap-1.5 rounded border border-outline-gray-2 bg-surface-gray-1 px-1.5 py-px align-baseline text-ink-gray-8 no-underline hover:bg-surface-gray-2"
-    >
-      <span class="text-xs uppercase tracking-wide text-ink-gray-5">
-        {{ reference.short_type || reference.reference_doctype }}
-      </span>
-      <span>{{ reference.label || reference.reference_name }}</span>
-
-      <!-- Badges are what the reader needs to decide, not a field dump.
-           A reader without permission gets the label and nothing else. -->
-      <Tooltip
-        v-for="badge in reference.badges || []"
-        :key="badge.label"
-        :text="badge.hint || ''"
-      >
-        <Badge :theme="tone[badge.tone] || 'gray'" variant="subtle" size="sm">
-          {{ badge.label }}
-        </Badge>
-      </Tooltip>
-    </a>
-  </Teleport>
-</template>

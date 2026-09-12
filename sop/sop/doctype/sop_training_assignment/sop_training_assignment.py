@@ -31,7 +31,6 @@ class SOPTrainingAssignment(Document):
 			self.status = "Completed"
 			self.completed_on = self.completed_on or now_datetime()
 		elif self.progress >= 100:
-			# Every task done but nobody has judged it yet: the assessor still owes an outcome.
 			self.status = "In Progress" if self.requires_outcome() else "Completed"
 		elif self.progress > 0:
 			self.status = "In Progress"

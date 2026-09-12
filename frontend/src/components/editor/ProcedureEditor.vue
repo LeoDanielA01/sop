@@ -1,110 +1,3 @@
-<script setup>
-
-import { ref, watch } from 'vue'
-import { Dialog, createResource } from 'frappe-ui'
-import { EditorContent, RichTextKit, useEditor } from 'frappe-ui/editor'
-import ToolPalette from './ToolPalette.vue'
-
-const content = defineModel({ type: String, default: '' })
-const props = defineProps({
-  placeholder: { type: String, default: 'Write the procedure…' },
-  editable: { type: Boolean, default: true },
-})
-
-const emit = defineEmits(['change'])
-
-const palette = ref(null)
-const pinned = ref(localStorage.getItem('sop:editor-tools-pinned') === '1')
-
-const editor = useEditor({
-  content,
-  editable: () => props.editable,
-  placeholder: props.placeholder,
-  extensions: [RichTextKit],
-  onUpdate() {
-    emit('change', content.value)
-  },
-})
-
-const picker = ref({ open: false, kind: null, query: '', results: [] })
-
-const search = createResource({
-  url: 'frappe.client.get_list',
-  onSuccess(rows) {
-    picker.value.results = rows
-  },
-})
-
-watch(content, () => emit('change', content.value))
-
-/* ── what the palette can ask for ──────────────────────────────────────── */
-
-function insertStep() {
-  editor.value
-    ?.chain()
-    .focus()
-    .insertContent(
-      '<div data-sop="step"><p><strong>Step</strong> — what is done</p>' +
-        '<p data-sop="step-meta">Responsible: role · Records: document</p></div><p></p>',
-    )
-    .run()
-}
-
-function insertCallout(kind) {
-  editor.value
-    ?.chain()
-    .focus()
-    .insertContent(`<div data-sop="callout" data-tone="${kind}"><p>Hazard or caution</p></div><p></p>`)
-    .run()
-}
-
-function promptLink() {
-  const url = window.prompt('Link to')
-  if (url) editor.value?.chain().focus().setLink({ href: url }).run()
-}
-
-function pastePlain() {
-  navigator.clipboard?.readText().then((text) => {
-    editor.value?.chain().focus().insertContent(text).run()
-  })
-}
-
-function openPicker(kind, doctype, fields) {
-  picker.value = { open: true, kind, query: '', results: [], doctype, fields }
-  runSearch()
-}
-
-function runSearch() {
-  const { doctype, fields, query } = picker.value
-  search.submit({
-    doctype,
-    fields,
-    filters: query ? [[fields[1] || 'name', 'like', `%${query}%`]] : undefined,
-    limit_page_length: 10,
-  })
-}
-
-const pickRecord = () => openPicker('record', 'Item', ['name', 'item_name'])
-const pickPerson = () => openPicker('person', 'User', ['name', 'full_name'])
-const pickBlock = () => openPicker('block', 'SOP Block', ['name', 'title'])
-
-/** Mentions are stored as spans carrying the reference, never as loose text. */
-function choose(row) {
-  const { kind, doctype } = picker.value
-  const label = row.item_name || row.full_name || row.title || row.name
-
-  const html =
-    kind === 'block'
-      ? `<div data-block="${row.name}" data-pin="latest"></div><p></p>`
-      : `<span data-mention="${kind}" data-doctype="${doctype}" data-name="${row.name}">${label}</span>&nbsp;`
-
-  editor.value?.chain().focus().insertContent(html).run()
-  picker.value.open = false
-}
-
-const api = { insertStep, insertCallout, promptLink, pastePlain, pickRecord, pickPerson, pickBlock }
-</script>
-
 <template>
   <div
     class="rounded-lg border border-outline-gray-2 bg-surface-base"
@@ -161,10 +54,119 @@ const api = { insertStep, insertCallout, promptLink, pastePlain, pickRecord, pic
           </span>
           <span class="ml-2 truncate font-mono text-xs text-ink-gray-4">{{ row.name }}</span>
         </Button>
-        <p v-if="!search.loading && !picker.results.length" class="px-2 py-6 text-center text-sm text-ink-gray-5">
+
+        <p
+          v-if="!search.loading && !picker.results.length"
+          class="px-2 py-6 text-center text-sm text-ink-gray-5"
+        >
           Nothing matches that.
         </p>
       </div>
     </template>
   </Dialog>
 </template>
+
+<script setup>
+import { ref, watch } from 'vue'
+import { Button, Dialog, FormControl, createResource } from 'frappe-ui'
+import { EditorContent, RichTextKit, useEditor } from 'frappe-ui/editor'
+import ToolPalette from './ToolPalette.vue'
+
+const content = defineModel({ type: String, default: '' })
+const props = defineProps({
+  placeholder: { type: String, default: 'Write the procedure…' },
+  editable: { type: Boolean, default: true },
+})
+
+const emit = defineEmits(['change'])
+
+const palette = ref(null)
+const pinned = ref(localStorage.getItem('sop:editor-tools-pinned') === '1')
+
+const editor = useEditor({
+  content,
+  editable: () => props.editable,
+  placeholder: props.placeholder,
+  extensions: [RichTextKit],
+  onUpdate() {
+    emit('change', content.value)
+  },
+})
+
+const picker = ref({ open: false, kind: null, query: '', results: [] })
+
+const search = createResource({
+  url: 'frappe.client.get_list',
+  onSuccess(rows) {
+    picker.value.results = rows
+  },
+})
+
+watch(content, () => emit('change', content.value))
+
+function insertStep() {
+  editor.value
+    ?.chain()
+    .focus()
+    .insertContent(
+      '<div data-sop="step"><p><strong>Step</strong> — what is done</p>' +
+        '<p data-sop="step-meta">Responsible: role · Records: document</p></div><p></p>',
+    )
+    .run()
+}
+
+function insertCallout(kind) {
+  editor.value
+    ?.chain()
+    .focus()
+    .insertContent(
+      `<div data-sop="callout" data-tone="${kind}"><p>Hazard or caution</p></div><p></p>`,
+    )
+    .run()
+}
+
+function promptLink() {
+  const url = window.prompt('Link to')
+  if (url) editor.value?.chain().focus().setLink({ href: url }).run()
+}
+
+function pastePlain() {
+  navigator.clipboard?.readText().then((text) => {
+    editor.value?.chain().focus().insertContent(text).run()
+  })
+}
+
+function openPicker(kind, doctype, fields) {
+  picker.value = { open: true, kind, query: '', results: [], doctype, fields }
+  runSearch()
+}
+
+function runSearch() {
+  const { doctype, fields, query } = picker.value
+  search.submit({
+    doctype,
+    fields,
+    filters: query ? [[fields[1] || 'name', 'like', `%${query}%`]] : undefined,
+    limit_page_length: 10,
+  })
+}
+
+const pickRecord = () => openPicker('record', 'Item', ['name', 'item_name'])
+const pickPerson = () => openPicker('person', 'User', ['name', 'full_name'])
+const pickBlock = () => openPicker('block', 'SOP Block', ['name', 'title'])
+
+function choose(row) {
+  const { kind, doctype } = picker.value
+  const label = row.item_name || row.full_name || row.title || row.name
+
+  const html =
+    kind === 'block'
+      ? `<div data-block="${row.name}" data-pin="latest"></div><p></p>`
+      : `<span data-mention="${kind}" data-doctype="${doctype}" data-name="${row.name}">${label}</span>&nbsp;`
+
+  editor.value?.chain().focus().insertContent(html).run()
+  picker.value.open = false
+}
+
+const api = { insertStep, insertCallout, promptLink, pastePlain, pickRecord, pickPerson, pickBlock }
+</script>

@@ -1,50 +1,3 @@
-<script setup>
-import { computed } from 'vue'
-import { Button, Select } from 'frappe-ui'
-
-const props = defineProps({
-  total: { type: Number, default: 0 },
-  /** How many page numbers to show either side of the current one. */
-  spread: { type: Number, default: 1 },
-})
-
-const page = defineModel('page', { type: Number, default: 1 })
-const pageLength = defineModel('pageLength', { type: Number, default: 10 })
-
-const totalPages = computed(() => Math.max(1, Math.ceil(props.total / pageLength.value)))
-const first = computed(() => (props.total ? (page.value - 1) * pageLength.value + 1 : 0))
-const last = computed(() => Math.min(page.value * pageLength.value, props.total))
-
-/** 1 … 7 [8] 9 … 24 — never more than a handful of buttons, whatever the total. */
-const pages = computed(() => {
-  const count = totalPages.value
-  const current = page.value
-  const out = []
-  let previous = 0
-
-  for (let i = 1; i <= count; i++) {
-    const near = Math.abs(i - current) <= props.spread
-    const edge = i === 1 || i === count
-    if (!near && !edge) continue
-
-    if (previous && i - previous > 1) out.push('gap-' + i)
-    out.push(i)
-    previous = i
-  }
-
-  return out
-})
-
-function go(to) {
-  page.value = Math.min(Math.max(1, to), totalPages.value)
-}
-
-function setLength(value) {
-  pageLength.value = Number(value)
-  page.value = 1
-}
-</script>
-
 <template>
   <div
     class="flex flex-col gap-3 border-t border-outline-gray-1 px-2 py-2.5 sm:flex-row sm:items-center sm:justify-between"
@@ -80,8 +33,6 @@ function setLength(value) {
         @click="go(page - 1)"
       />
 
-      <!-- Numbers are a desktop affordance; on a phone the arrows and the
-           "page x of y" label carry the same information without wrapping. -->
       <div class="hidden items-center gap-1 sm:flex">
         <template v-for="entry in pages" :key="entry">
           <span
@@ -116,3 +67,48 @@ function setLength(value) {
     </div>
   </div>
 </template>
+
+<script setup>
+import { computed } from 'vue'
+import { Button, Select } from 'frappe-ui'
+
+const props = defineProps({
+  total: { type: Number, default: 0 },
+  spread: { type: Number, default: 1 },
+})
+
+const page = defineModel('page', { type: Number, default: 1 })
+const pageLength = defineModel('pageLength', { type: Number, default: 10 })
+
+const totalPages = computed(() => Math.max(1, Math.ceil(props.total / pageLength.value)))
+const first = computed(() => (props.total ? (page.value - 1) * pageLength.value + 1 : 0))
+const last = computed(() => Math.min(page.value * pageLength.value, props.total))
+
+const pages = computed(() => {
+  const count = totalPages.value
+  const current = page.value
+  const out = []
+  let previous = 0
+
+  for (let i = 1; i <= count; i++) {
+    const near = Math.abs(i - current) <= props.spread
+    const edge = i === 1 || i === count
+    if (!near && !edge) continue
+
+    if (previous && i - previous > 1) out.push('gap-' + i)
+    out.push(i)
+    previous = i
+  }
+
+  return out
+})
+
+function go(to) {
+  page.value = Math.min(Math.max(1, to), totalPages.value)
+}
+
+function setLength(value) {
+  pageLength.value = Number(value)
+  page.value = 1
+}
+</script>

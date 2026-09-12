@@ -10,7 +10,6 @@ from sop import training
 
 @frappe.whitelist()
 def my_training(status=None, limit=50):
-	"""What this person still owes, most urgent first."""
 	filters = {"trainee": frappe.session.user}
 	if status:
 		filters["status"] = status
@@ -84,7 +83,6 @@ def complete_task(name, idx):
 
 @frappe.whitelist()
 def record_outcome(name, outcome, score=None, remarks=None):
-	"""The trainer's judgement. The trainee cannot sign their own competence."""
 	doc = frappe.get_doc("SOP Training Assignment", name)
 
 	if not can_assess(doc):
@@ -104,7 +102,6 @@ def record_outcome(name, outcome, score=None, remarks=None):
 
 @frappe.whitelist()
 def assign(sop, trainees, method="Read & Understand", due_days=14):
-	"""Assign training by hand, outside any requirement."""
 	if isinstance(trainees, str):
 		trainees = frappe.parse_json(trainees)
 

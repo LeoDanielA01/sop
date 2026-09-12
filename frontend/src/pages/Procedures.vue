@@ -1,51 +1,3 @@
-<script setup>
-import { computed, ref, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import {
-  Avatar,
-  Badge,
-  Button,
-  Dropdown,
-  PageHeader,
-  PageHeaderTitle,
-  TabButtons,
-  Tooltip,
-} from 'frappe-ui'
-import { List, ListCell, ListRow } from 'frappe-ui/list'
-import Pagination from '@/components/Pagination.vue'
-import { procedures, page, pageLength, view } from '@/data/procedures'
-import { activeSpace, spaces } from '@/data/navigation'
-import { STATUS_THEME, reviewTone, shortDate } from '@/utils/format'
-
-defineProps({
-  spaceActions: { type: Array, default: () => [] },
-  compact: { type: Boolean, default: false },
-})
-
-const route = useRoute()
-const router = useRouter()
-
-const scope = ref('All')
-const space = computed(() => spaces.value.find((s) => s.name === activeSpace.value))
-
-watch(
-  () => route.query.view,
-  (value) => (view.value = value || 'all'),
-  { immediate: true },
-)
-
-const rows = computed(() => {
-  const all = procedures.data?.rows || []
-  return scope.value === 'Mine' ? all.filter((p) => p.is_mine) : all
-})
-
-const total = computed(() => procedures.data?.total || 0)
-
-function open(procedure) {
-  router.push(`/${procedure.name}`)
-}
-</script>
-
 <template>
   <PageHeader>
     <div class="flex items-center gap-1">
@@ -71,9 +23,7 @@ function open(procedure) {
       </span>
     </div>
 
-    <!-- -mx-3 lets the row hover surface bleed past the text edge while the
-         content stays aligned with the container. -->
-    <List class="-mx-3 sm:list-gap-4">
+        <List class="-mx-3 sm:list-gap-4">
       <ListRow
         v-for="procedure in rows"
         :key="procedure.name"
@@ -90,9 +40,7 @@ function open(procedure) {
 
         <ListCell>
           <div class="min-w-0 flex-1">
-            <!-- The sized text sits in an inner span so `truncate` cannot
-                 shear the descenders off the line above. -->
-            <div class="truncate leading-none text-ink-gray-8">
+                        <div class="truncate leading-none text-ink-gray-8">
               <span :class="procedure.unacknowledged ? 'text-base-semibold' : 'text-base'">
                 {{ procedure.title }}
               </span>
@@ -151,3 +99,51 @@ function open(procedure) {
     </div>
   </div>
 </template>
+
+<script setup>
+import { computed, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import {
+  Avatar,
+  Badge,
+  Button,
+  Dropdown,
+  PageHeader,
+  PageHeaderTitle,
+  TabButtons,
+  Tooltip,
+} from 'frappe-ui'
+import { List, ListCell, ListRow } from 'frappe-ui/list'
+import Pagination from '@/components/Pagination.vue'
+import { procedures, page, pageLength, view } from '@/data/procedures'
+import { activeSpace, spaces } from '@/data/navigation'
+import { STATUS_THEME, reviewTone, shortDate } from '@/utils/format'
+
+defineProps({
+  spaceActions: { type: Array, default: () => [] },
+  compact: { type: Boolean, default: false },
+})
+
+const route = useRoute()
+const router = useRouter()
+
+const scope = ref('All')
+const space = computed(() => spaces.value.find((s) => s.name === activeSpace.value))
+
+watch(
+  () => route.query.view,
+  (value) => (view.value = value || 'all'),
+  { immediate: true },
+)
+
+const rows = computed(() => {
+  const all = procedures.data?.rows || []
+  return scope.value === 'Mine' ? all.filter((p) => p.is_mine) : all
+})
+
+const total = computed(() => procedures.data?.total || 0)
+
+function open(procedure) {
+  router.push(`/${procedure.name}`)
+}
+</script>

@@ -10,7 +10,6 @@ from sop.api.mentions import resolve
 
 @frappe.whitelist()
 def spaces():
-	"""Binders the signed-in user may open, with the number that gets people chased."""
 	rows = frappe.get_list(
 		"SOP Space",
 		fields=["name", "title", "space_code", "visibility", "icon"],
@@ -90,7 +89,6 @@ LIST_FIELDS = [
 
 @frappe.whitelist()
 def list_procedures(space=None, view="all", search=None, start=0, page_length=20):
-	"""One page of rows plus the real total, so the pager can say 'page 2 of 9'."""
 	filters = view_filters(space, view)
 
 	if search:
@@ -116,7 +114,6 @@ def list_procedures(space=None, view="all", search=None, start=0, page_length=20
 
 
 def view_filters(space, view):
-	"""Every view narrows in SQL, so paging and counting agree with each other."""
 	filters = {}
 	if space:
 		filters["space"] = space
@@ -201,7 +198,6 @@ def get_procedure(name, revision=None):
 
 
 def served_content(doc, revision=None):
-	"""Readers get the approved revision. Only editors see the working draft."""
 	if revision:
 		row = frappe.db.get_value(
 			"SOP Revision", {"sop": doc.name, "version": revision}, ["content", "version"], as_dict=True
@@ -256,7 +252,6 @@ def last_acknowledgement(sop):
 
 @frappe.whitelist()
 def save_draft(space, title, name=None, summary=None, content=None):
-	"""Create or update a draft. Only states that are meant to be edited accept it."""
 	if name:
 		doc = frappe.get_doc("SOP", name)
 		doc.check_permission("write")

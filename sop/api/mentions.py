@@ -64,7 +64,6 @@ def resolve_doctype(doctype, names):
 
 
 def resolver_for(doctype):
-	"""Registered resolver, then no-code config, then the doctype's own meta."""
 	registered = (frappe.get_hooks("sop_mention_resolvers") or {}).get(doctype)
 	if registered:
 		return frappe.get_attr(registered[0] if isinstance(registered, list) else registered)
@@ -128,7 +127,6 @@ def generic(doctype, names):
 
 
 def plain(doctype, name):
-	"""No permission, or nothing useful to say: the name alone."""
 	return chip(doctype, name, name, [], url=None)
 
 

@@ -34,7 +34,6 @@ class SOP(Document):
 			self.review_due = None
 
 	def build_search_text(self):
-		"""One flattened field so title, body, steps and tags answer a single query."""
 		parts = [self.sop_no, self.title, self.summary, strip_html(self.content or "")]
 		parts += [strip_html(row.instruction or "") for row in self.steps]
 		parts += [row.tag for row in self.tags]
@@ -50,7 +49,6 @@ class SOP(Document):
 		return self.status in EDITABLE_STATES
 
 	def effective_revision(self):
-		"""What a reader is served. Never SOP.content, which may be an unapproved draft."""
 		if not self.version:
 			return None
 

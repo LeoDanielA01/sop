@@ -1,72 +1,3 @@
-<script setup>
-import { computed, onMounted, reactive, ref, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { Badge, Button, FormControl, PageHeader, PageHeaderTitle, createResource } from 'frappe-ui'
-import ProcedureEditor from '@/components/editor/ProcedureEditor.vue'
-import { activeSpace, spaces } from '@/data/navigation'
-
-const route = useRoute()
-const router = useRouter()
-
-const draft = reactive({ title: '', summary: '', content: '', space: null, sop_no: null, status: 'Draft' })
-const dirty = ref(false)
-const savedAt = ref(null)
-
-const isNew = computed(() => !route.params.name)
-const spaceOptions = computed(() => spaces.value.map((s) => ({ label: s.title, value: s.name })))
-
-const load = createResource({
-  url: 'sop.api.procedures.get_procedure',
-  onSuccess(doc) {
-    Object.assign(draft, {
-      title: doc.title,
-      summary: doc.summary,
-      content: doc.content,
-      space: doc.space,
-      sop_no: doc.sop_no,
-      status: doc.status,
-    })
-    dirty.value = false
-  },
-})
-
-const save = createResource({
-  url: 'sop.api.procedures.save_draft',
-  onSuccess(doc) {
-    dirty.value = false
-    savedAt.value = new Date()
-    if (isNew.value) router.replace(`/${doc.name}/edit`)
-  },
-})
-
-function submit() {
-  save.submit({
-    name: route.params.name,
-    space: draft.space || activeSpace.value,
-    title: draft.title,
-    summary: draft.summary,
-    content: draft.content,
-  })
-}
-
-// Autosave is a promise the editor makes: nobody should lose a paragraph to a
-// closed tab. Two seconds after typing stops, not on every keystroke.
-let timer = null
-watch(
-  () => [draft.title, draft.summary, draft.content],
-  () => {
-    dirty.value = true
-    clearTimeout(timer)
-    if (draft.title) timer = setTimeout(submit, 2000)
-  },
-)
-
-onMounted(() => {
-  if (!isNew.value) load.submit({ name: route.params.name })
-  else draft.space = activeSpace.value
-})
-</script>
-
 <template>
   <PageHeader>
     <div class="flex min-w-0 items-center gap-2">
@@ -98,6 +29,8 @@ onMounted(() => {
   </PageHeader>
 
   <div class="mx-auto mt-5 w-full max-w-[820px] px-3 pb-16 sm:px-5">
+    <ErrorMessage :message="save.error?.messages?.[0]" class="mb-3" />
+
     <div class="mb-4 flex flex-col gap-3">
       <FormControl
         type="text"
@@ -106,12 +39,7 @@ onMounted(() => {
         v-model="draft.title"
       />
       <div class="grid gap-3 sm:grid-cols-2">
-        <FormControl
-          type="select"
-          label="Space"
-          :options="spaceOptions"
-          v-model="draft.space"
-        />
+        <FormControl type="select" label="Space" :options="spaceOptions" v-model="draft.space" />
         <FormControl
           type="text"
           label="Summary"
@@ -124,3 +52,92 @@ onMounted(() => {
     <ProcedureEditor v-model="draft.content" />
   </div>
 </template>
+
+<script setup>
+import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import {
+  Badge,
+  Button,
+  ErrorMessage,
+  FormControl,
+  PageHeader,
+  PageHeaderTitle,
+  createResource,
+} from 'frappe-ui'
+import ProcedureEditor from '@/components/editor/ProcedureEditor.vue'
+import { activeSpace, spaces } from '@/data/navigation'
+
+const route = useRoute()
+const router = useRouter()
+
+const draft = reactive({
+  title: '',
+  summary: '',
+  content: '',
+  space: null,
+  sop_no: null,
+  status: 'Draft',
+})
+
+const dirty = ref(false)
+const savedAt = ref(null)
+let loading = false
+
+const isNew = computed(() => !route.params.name)
+const spaceOptions = computed(() => spaces.value.map((s) => ({ label: s.title, value: s.name })))
+
+const load = createResource({
+  url: 'sop.api.procedures.get_procedure',
+  onSuccess(doc) {
+    loading = true
+    Object.assign(draft, {
+      title: doc.title,
+      summary: doc.summary,
+      content: doc.content,
+      space: doc.space,
+      sop_no: doc.sop_no,
+      status: doc.status,
+    })
+    dirty.value = false
+    loading = false
+  },
+})
+
+const save = createResource({
+  url: 'sop.api.procedures.save_draft',
+  onSuccess(doc) {
+    dirty.value = false
+    savedAt.value = new Date()
+    draft.sop_no = doc.sop_no
+    draft.status = doc.status
+    if (isNew.value) router.replace(`/${doc.name}/edit`)
+  },
+})
+
+function submit() {
+  save.submit({
+    name: route.params.name,
+    space: draft.space || activeSpace.value,
+    title: draft.title,
+    summary: draft.summary,
+    content: draft.content,
+  })
+}
+
+let timer = null
+watch(
+  () => [draft.title, draft.summary, draft.content],
+  () => {
+    if (loading) return
+    dirty.value = true
+    clearTimeout(timer)
+    if (draft.title) timer = setTimeout(submit, 2000)
+  },
+)
+
+onMounted(() => {
+  if (!isNew.value) load.submit({ name: route.params.name })
+  else draft.space = activeSpace.value
+})
+</script>

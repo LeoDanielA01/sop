@@ -1,38 +1,3 @@
-<script setup>
-/**
- * People down the side, procedures across the top. The view an auditor asks for
- * and the one that shows a manager where the gaps are, in one screen.
- */
-import { computed, onMounted } from 'vue'
-import { Badge, Button, PageHeader, PageHeaderTitle, Tooltip } from 'frappe-ui'
-import { activeSpace } from '@/data/navigation'
-import { matrix } from '@/data/training'
-
-const procedures = computed(() => matrix.data?.procedures || [])
-const people = computed(() => matrix.data?.people || [])
-
-const MARK = {
-  Completed: { icon: 'lucide-circle-check-big', tone: 'text-ink-green-3', label: 'Trained' },
-  'In Progress': { icon: 'lucide-circle-dashed', tone: 'text-ink-amber-3', label: 'In progress' },
-  Assigned: { icon: 'lucide-circle', tone: 'text-ink-gray-4', label: 'Assigned' },
-  Overdue: { icon: 'lucide-circle-alert', tone: 'text-ink-red-3', label: 'Overdue' },
-  Waived: { icon: 'lucide-circle-minus', tone: 'text-ink-gray-4', label: 'Waived' },
-}
-
-function cell(person, sop) {
-  return person.cells?.[sop] || null
-}
-
-function gaps(person) {
-  return procedures.value.filter((p) => {
-    const c = cell(person, p.name)
-    return !c || c.status !== 'Completed'
-  }).length
-}
-
-onMounted(() => matrix.submit({ space: activeSpace.value }))
-</script>
-
 <template>
   <PageHeader>
     <PageHeaderTitle>Training matrix</PageHeaderTitle>
@@ -46,9 +11,7 @@ onMounted(() => matrix.submit({ space: activeSpace.value }))
   </PageHeader>
 
   <div class="mx-auto mt-5 w-full max-w-[1200px] px-3 pb-10 sm:px-5">
-    <!-- Wide on purpose: the grid scrolls inside its own container so the page
-         never scrolls sideways. -->
-    <div class="overflow-x-auto rounded-lg border border-outline-gray-2">
+        <div class="overflow-x-auto rounded-lg border border-outline-gray-2">
       <table class="w-full border-collapse text-sm">
         <thead>
           <tr class="bg-surface-gray-1">
@@ -90,9 +53,7 @@ onMounted(() => matrix.submit({ space: activeSpace.value }))
                   aria-hidden="true"
                 />
               </Tooltip>
-              <!-- No assignment at all is different from one not yet done, and
-                   it is usually the more serious finding. -->
-              <Tooltip v-else text="Not assigned">
+                            <Tooltip v-else text="Not assigned">
                 <span class="text-ink-gray-3">·</span>
               </Tooltip>
             </td>
@@ -112,3 +73,34 @@ onMounted(() => matrix.submit({ space: activeSpace.value }))
     </p>
   </div>
 </template>
+
+<script setup>
+import { computed, onMounted } from 'vue'
+import { Badge, Button, PageHeader, PageHeaderTitle, Tooltip } from 'frappe-ui'
+import { activeSpace } from '@/data/navigation'
+import { matrix } from '@/data/training'
+
+const procedures = computed(() => matrix.data?.procedures || [])
+const people = computed(() => matrix.data?.people || [])
+
+const MARK = {
+  Completed: { icon: 'lucide-circle-check-big', tone: 'text-ink-green-3', label: 'Trained' },
+  'In Progress': { icon: 'lucide-circle-dashed', tone: 'text-ink-amber-3', label: 'In progress' },
+  Assigned: { icon: 'lucide-circle', tone: 'text-ink-gray-4', label: 'Assigned' },
+  Overdue: { icon: 'lucide-circle-alert', tone: 'text-ink-red-3', label: 'Overdue' },
+  Waived: { icon: 'lucide-circle-minus', tone: 'text-ink-gray-4', label: 'Waived' },
+}
+
+function cell(person, sop) {
+  return person.cells?.[sop] || null
+}
+
+function gaps(person) {
+  return procedures.value.filter((p) => {
+    const c = cell(person, p.name)
+    return !c || c.status !== 'Completed'
+  }).length
+}
+
+onMounted(() => matrix.submit({ space: activeSpace.value }))
+</script>

@@ -1,12 +1,6 @@
 # Copyright (c) 2026, Leo Daniel and contributors
 # For license information, please see license.txt
 
-"""Who has to be trained on what, and when it comes round again.
-
-Acknowledgement answers "did you read it". Training answers "are you competent",
-which needs an assessor, an outcome, and a date it expires.
-"""
-
 import frappe
 from frappe import _
 from frappe.utils import add_days, add_months, getdate, nowdate
@@ -32,7 +26,6 @@ TASKS_BY_METHOD = {
 
 
 def assign_for_procedure(sop, cause=None):
-	"""Called when a procedure becomes effective, or a material revision publishes."""
 	doc = frappe.get_doc("SOP", sop)
 	created = []
 
@@ -60,7 +53,6 @@ def requirements_for(doc):
 
 
 def expand(requirement):
-	"""A requirement names a group; training is assigned to people."""
 	if requirement.applies_to == "User":
 		return [requirement.user] if requirement.user else []
 
@@ -90,8 +82,6 @@ def create_assignment(doc, requirement, user, cause=None, is_refresher=0, supers
 	if not user or not frappe.db.exists("User", user):
 		return None
 
-	# One open assignment per person per revision. Re-publishing must not
-	# bury someone under duplicates.
 	if frappe.db.exists(
 		"SOP Training Assignment",
 		{"sop": doc.name, "version": doc.version, "trainee": user, "status": ("in", OPEN_STATES)},
@@ -141,7 +131,6 @@ def notify(assignment):
 
 
 def mark_overdue():
-	"""Daily. An assignment past its date is overdue whether or not anyone opened it."""
 	names = frappe.get_all(
 		"SOP Training Assignment",
 		filters={"status": ("in", ("Assigned", "In Progress")), "due_on": ("<", nowdate())},
@@ -155,7 +144,6 @@ def mark_overdue():
 
 
 def schedule_refreshers():
-	"""Daily. Competence expires; this is what an auditor checks first."""
 	created = []
 
 	rows = frappe.get_all(
@@ -187,7 +175,6 @@ def schedule_refreshers():
 
 
 def matrix(space=None):
-	"""People down the side, procedures across the top: the audit view."""
 	filters = {"status": "Effective"}
 	if space:
 		filters["space"] = space
@@ -209,7 +196,6 @@ def matrix(space=None):
 		person = people.setdefault(row.trainee, {"user": row.trainee, "cells": {}})
 		current = person["cells"].get(row.sop)
 
-		# The latest word wins: a completed refresher outranks an open assignment.
 		if not current or rank(row) > rank(current):
 			person["cells"][row.sop] = row
 

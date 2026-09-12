@@ -1,6 +1,11 @@
 import { createResource } from 'frappe-ui'
 import { computed, ref } from 'vue'
 
+export const SECTIONS = [
+  { key: 'procedures', label: 'Procedures', icon: 'lucide-library', route: '/' },
+  { key: 'training', label: 'Training', icon: 'lucide-graduation-cap', route: '/training' },
+]
+
 export const activeSpace = ref(null)
 
 export const spacesResource = createResource({
@@ -19,7 +24,6 @@ export const viewsResource = createResource({
   makeParams: () => ({ space: activeSpace.value }),
 })
 
-/** The four questions someone actually opens this app to answer. */
 export const views = computed(() => {
   const counts = viewsResource.data || {}
   return [

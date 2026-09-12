@@ -1,81 +1,3 @@
-<script setup>
-import { computed, onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
-import {
-  Badge,
-  Button,
-  Dialog,
-  FormControl,
-  PageHeader,
-  PageHeaderTitle,
-  Progress,
-  TabButtons,
-  Tooltip,
-  createResource,
-} from 'frappe-ui'
-import { List, ListCell, ListRow } from 'frappe-ui/list'
-import { shortDate } from '@/utils/format'
-
-const router = useRouter()
-
-const tab = ref('Open')
-const detail = ref(null)
-const outcome = ref({ open: false, value: 'Competent', score: null, remarks: '' })
-
-const assignments = createResource({
-  url: 'sop.api.training.my_training',
-  auto: true,
-  makeParams: () => ({ status: tab.value === 'Done' ? 'Completed' : undefined }),
-})
-
-const one = createResource({
-  url: 'sop.api.training.assignment',
-  onSuccess: (data) => (detail.value = data),
-})
-
-const tick = createResource({
-  url: 'sop.api.training.complete_task',
-  onSuccess: () => {
-    one.reload()
-    assignments.reload()
-  },
-})
-
-const judge = createResource({
-  url: 'sop.api.training.record_outcome',
-  onSuccess: () => {
-    outcome.value.open = false
-    one.reload()
-    assignments.reload()
-  },
-})
-
-const rows = computed(() => assignments.data || [])
-
-const TONE = { Overdue: 'red', 'In Progress': 'amber', Assigned: 'gray', Completed: 'green', Waived: 'gray' }
-const OUTCOME_TONE = {
-  Competent: 'green',
-  'Needs More Practice': 'amber',
-  'Not Competent': 'red',
-  Pending: 'gray',
-}
-
-function open(row) {
-  one.submit({ name: row.name })
-}
-
-function save() {
-  judge.submit({
-    name: detail.value.name,
-    outcome: outcome.value.value,
-    score: outcome.value.score,
-    remarks: outcome.value.remarks,
-  })
-}
-
-onMounted(() => assignments.reload())
-</script>
-
 <template>
   <PageHeader>
     <PageHeaderTitle>My training</PageHeaderTitle>
@@ -116,7 +38,6 @@ onMounted(() => assignments.reload())
         </ListCell>
 
         <ListCell class="hidden w-40 sm:flex">
-          <!-- Progress is tasks ticked, not time elapsed. -->
           <Progress :value="row.progress" size="sm" class="w-full" />
         </ListCell>
 
@@ -131,7 +52,10 @@ onMounted(() => assignments.reload())
       </ListRow>
     </List>
 
-    <p v-if="!assignments.loading && !rows.length" class="mt-16 text-center text-base text-ink-gray-5">
+    <p
+      v-if="!assignments.loading && !rows.length"
+      class="mt-16 text-center text-base text-ink-gray-5"
+    >
       Nothing outstanding. Training lands here when a procedure you follow is published or expires.
     </p>
   </div>
@@ -213,6 +137,7 @@ onMounted(() => assignments.reload())
   <Dialog v-model="outcome.open" :options="{ title: 'Record outcome', size: 'sm' }">
     <template #body-content>
       <div class="flex flex-col gap-3">
+        <ErrorMessage :message="judge.error?.messages?.[0]" />
         <FormControl
           type="select"
           label="Outcome"
@@ -236,3 +161,89 @@ onMounted(() => assignments.reload())
     </template>
   </Dialog>
 </template>
+
+<script setup>
+import { computed, onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
+import {
+  Badge,
+  Button,
+  Dialog,
+  ErrorMessage,
+  FormControl,
+  PageHeader,
+  PageHeaderTitle,
+  Progress,
+  TabButtons,
+  Tooltip,
+  createResource,
+} from 'frappe-ui'
+import { List, ListCell, ListRow } from 'frappe-ui/list'
+import { shortDate } from '@/utils/format'
+
+const router = useRouter()
+
+const tab = ref('Open')
+const detail = ref(null)
+const outcome = ref({ open: false, value: 'Competent', score: null, remarks: '' })
+
+const assignments = createResource({
+  url: 'sop.api.training.my_training',
+  auto: true,
+  makeParams: () => ({ status: tab.value === 'Done' ? 'Completed' : undefined }),
+})
+
+const one = createResource({
+  url: 'sop.api.training.assignment',
+  onSuccess: (data) => (detail.value = data),
+})
+
+const tick = createResource({
+  url: 'sop.api.training.complete_task',
+  onSuccess: () => {
+    one.reload()
+    assignments.reload()
+  },
+})
+
+const judge = createResource({
+  url: 'sop.api.training.record_outcome',
+  onSuccess: () => {
+    outcome.value.open = false
+    one.reload()
+    assignments.reload()
+  },
+})
+
+const rows = computed(() => assignments.data || [])
+
+const TONE = {
+  Overdue: 'red',
+  'In Progress': 'amber',
+  Assigned: 'gray',
+  Completed: 'green',
+  Waived: 'gray',
+}
+
+const OUTCOME_TONE = {
+  Competent: 'green',
+  'Needs More Practice': 'amber',
+  'Not Competent': 'red',
+  Pending: 'gray',
+}
+
+function open(row) {
+  one.submit({ name: row.name })
+}
+
+function save() {
+  judge.submit({
+    name: detail.value.name,
+    outcome: outcome.value.value,
+    score: outcome.value.score,
+    remarks: outcome.value.remarks,
+  })
+}
+
+onMounted(() => assignments.reload())
+</script>
