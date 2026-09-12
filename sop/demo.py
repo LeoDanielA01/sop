@@ -333,7 +333,7 @@ def build(definition, spaces, people):
 			"doctype": "SOP",
 			"title": definition["title"],
 			"space": space,
-			"process": process,
+			"sop_process": process,
 			"summary": definition["summary"],
 			"content": definition["content"],
 			"process_owner": people[1],

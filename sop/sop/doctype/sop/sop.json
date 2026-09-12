@@ -10,7 +10,7 @@
   "title",
   "sop_no",
   "space",
-  "process",
+  "sop_process",
   "column_break_head",
   "status",
   "version",
@@ -64,7 +64,7 @@
    "reqd": 1
   },
   {
-   "fieldname": "process",
+   "fieldname": "sop_process",
    "fieldtype": "Link",
    "in_standard_filter": 1,
    "label": "Process",

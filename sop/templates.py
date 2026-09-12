@@ -134,7 +134,7 @@ def ensure_process(space, title, parent, sequence):
 
 
 def ensure_draft(space, process, title):
-	if frappe.db.exists("SOP", {"space": space, "process": process}):
+	if frappe.db.exists("SOP", {"space": space, "sop_process": process}):
 		return None
 
 	doc = frappe.get_doc(
@@ -142,7 +142,7 @@ def ensure_draft(space, process, title):
 			"doctype": "SOP",
 			"title": title,
 			"space": space,
-			"process": process,
+			"sop_process": process,
 			"status": "Draft",
 			"process_owner": frappe.session.user,
 			"summary": _("Outline to be written by whoever owns {0}.").format(title.lower()),

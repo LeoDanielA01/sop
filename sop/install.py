@@ -15,11 +15,22 @@ ROLES = [
 def after_install():
 	create_roles()
 	create_default_space()
+	seed_demo()
 
 
 def after_migrate():
 	create_roles()
-	demo.after_migrate()
+	seed_demo()
+
+
+def seed_demo():
+	frappe.db.savepoint("sop_demo")
+
+	try:
+		demo.after_migrate()
+	except Exception:
+		frappe.db.rollback(save_point="sop_demo")
+		frappe.log_error(title="SOP demo data could not be created")
 
 
 def create_roles():

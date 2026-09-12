@@ -83,7 +83,7 @@ LIST_FIELDS = [
 	"status",
 	"version",
 	"space",
-	"process",
+	"sop_process",
 	"process_owner",
 	"effective_from",
 	"review_due",
@@ -96,7 +96,7 @@ def list_procedures(space=None, view="all", process=None, search=None, start=0, 
 	filters = view_filters(space, view)
 
 	if process:
-		filters["process"] = ("in", process_scope(process))
+		filters["sop_process"] = ("in", process_scope(process))
 
 	if search:
 		filters["search_text"] = ("like", f"%{search}%")
@@ -188,8 +188,8 @@ def get_procedure(name, revision=None):
 		"version": version,
 		"effective_revision": doc.version,
 		"space": doc.space,
-		"process": doc.process,
-		"process_trail": process_trail(doc.process),
+		"process": doc.sop_process,
+		"process_trail": process_trail(doc.sop_process),
 		"content": content,
 		"steps": [step.as_dict() for step in doc.steps],
 		"tags": [row.tag for row in doc.tags],
@@ -296,7 +296,7 @@ def save_draft(space, title, name=None, summary=None, content=None, process=None
 	doc.title = title
 	doc.summary = summary
 	doc.content = content
-	doc.process = process or None
+	doc.sop_process = process or None
 	doc.save()
 
 	return {"name": doc.name, "sop_no": doc.sop_no, "status": doc.status, "version": doc.version}

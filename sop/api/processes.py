@@ -57,11 +57,11 @@ def procedure_counts(space=None):
 	filters = {"space": space} if space else {}
 	rows = frappe.get_all(
 		"SOP",
-		filters=dict(filters, process=("is", "set")),
-		fields=["process", "count(name) as total"],
-		group_by="process",
+		filters=dict(filters, sop_process=("is", "set")),
+		fields=["sop_process", "count(name) as total"],
+		group_by="sop_process",
 	)
-	return {row.process: row.total for row in rows}
+	return {row.sop_process: row.total for row in rows}
 
 
 @frappe.whitelist()
