@@ -41,7 +41,15 @@
               title="Appearance"
               description="Choose a light, dark, or system-matched interface"
             >
-              <ThemeSwitcher />
+              <TabButtons
+                :buttons="[
+                  { label: 'Light', value: 'light' },
+                  { label: 'Dark', value: 'dark' },
+                  { label: 'System', value: 'system' },
+                ]"
+                :model-value="colorScheme"
+                @update:model-value="setColorScheme"
+              />
             </SettingsRow>
             <SettingsRow
               title="Rows per page"
@@ -159,14 +167,18 @@ import {
   SettingsRow,
   SettingsSidebar,
   Switch,
-  ThemeSwitcher,
+  TabButtons,
+  useColorScheme,
 } from 'frappe-ui'
+
 import { List, ListCell, ListHeader, ListHeaderCell, ListRow, ListRows } from 'frappe-ui/list'
 import { spaces } from '@/data/navigation'
 import { pageLength } from '@/data/procedures'
 
 const open = defineModel('open', { type: Boolean, default: false })
 const tab = ref('preferences')
+
+const { colorScheme, setColorScheme } = useColorScheme()
 
 const rowsPerPage = ref(String(pageLength.value))
 watch(rowsPerPage, (value) => (pageLength.value = Number(value)))
