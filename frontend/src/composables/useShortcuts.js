@@ -85,7 +85,7 @@ export function useShortcuts() {
 
     if (key === 'i') {
       event.preventDefault()
-      ui.notificationsDialog = true
+      ui.notificationsPanel = !ui.notificationsPanel
     }
 
     if (key === '?') {

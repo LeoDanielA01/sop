@@ -56,6 +56,7 @@ def feed(kind=None, limit=30, unread_only=0):
 				"subject": frappe.utils.strip_html(row.subject or ""),
 				"kind": KINDS.get(row.document_type, "procedure"),
 				"read": row.read,
+				"creation": row.creation,
 				"when": pretty_date(row.creation),
 				"actor": actors.get(row.from_user, {}).get("full_name"),
 				"actor_image": actors.get(row.from_user, {}).get("user_image"),

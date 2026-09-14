@@ -235,7 +235,6 @@ def get_procedure(name, revision=None):
 		"risk_level": doc.risk_level,
 		"is_controlled": doc.is_controlled,
 		"content": content,
-		"steps": [step.as_dict() for step in doc.steps],
 		"tags": [tag for tag in (doc._user_tags or "").split(",") if tag],
 		"references": resolve(references_of(doc)),
 		"process_owner": doc.process_owner,

@@ -147,7 +147,7 @@ const jumpTo = computed(() => [
     title: 'Spaces',
     items: spaces.value.map((space) => ({
       label: space.title,
-      icon: 'lucide-library',
+      icon: 'lucide-book-text',
       description: `${space.space_code} · ${space.total ?? 0} procedures`,
       route: `/?space=${space.name}`,
     })),

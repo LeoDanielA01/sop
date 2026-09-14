@@ -2,7 +2,7 @@
   <nav class="space-y-0.5">
     <SidebarItem :active="isAll" @click="showEverything">
       <template #prefix>
-        <span class="lucide-library size-4" aria-hidden="true" />
+        <span class="lucide-book-text size-4" aria-hidden="true" />
       </template>
       <span class="flex-1 truncate text-sm">All procedures</span>
     </SidebarItem>
@@ -107,7 +107,7 @@
       v-else-if="!spaces.length"
       class="mt-1 flex flex-col items-center gap-2 rounded-4 border border-dashed border-outline-gray-2 px-3 py-5 text-center"
     >
-      <span class="lucide-library size-5 text-ink-gray-4" aria-hidden="true" />
+      <span class="lucide-book-text size-5 text-ink-gray-4" aria-hidden="true" />
       <div>
         <p class="text-base text-ink-gray-7">No spaces yet</p>
         <p class="mt-0.5 text-sm text-ink-gray-5">

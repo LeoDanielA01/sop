@@ -28,13 +28,6 @@ PROCEDURES = [
 		"summary": "What two people must confirm before any material reaches a clean line.",
 		"state": "effective",
 		"tags": ["gmp", "batch-start"],
-		"steps": [
-			("Stop the line and hang the CLEARANCE IN PROGRESS board.", "Operator", None),
-			("Remove every component, label and printed record from the previous batch.", "Operator", None),
-			("Wipe contact surfaces and check the line is visibly clean and dry.", "Operator", None),
-			("A second person checks independently and signs the clearance record.", "Line supervisor", None),
-			("Release the line and record the clearance time on the batch record.", "Line supervisor", None),
-		],
 		"content": """<h2>Purpose</h2>
 <p>No batch starts on a line that still holds anything from the batch before it. Line clearance is the check that proves it, and it is signed by two people.</p>
 <h2>Scope</h2>
@@ -64,13 +57,6 @@ PROCEDURES = [
 		"state": "effective",
 		"effective_since": -380,
 		"tags": ["gmp"],
-		"steps": [
-			("Check the balance calibration sticker is in date.", "Operator", None),
-			("Confirm the material, lot and quantity against the batch record.", "Operator", None),
-			("Weigh into a clean container and label it with material, lot, weight and batch.", "Operator", None),
-			("A second person verifies the weight and signs.", "Line supervisor", None),
-			("Reconcile what was issued against what was returned.", "Operator", None),
-		],
 		"content": """<h2>Purpose</h2>
 <p>Every gram that enters a batch is traceable to a material, a lot and the person who weighed it.</p>
 <h2>Scope</h2>
@@ -93,12 +79,6 @@ PROCEDURES = [
 		"summary": "Stripping, cleaning and re-setting the filler between products.",
 		"state": "in_review",
 		"tags": ["maintenance"],
-		"steps": [
-			("Isolate the machine and apply lockout.", "Line supervisor", None),
-			("Strip change parts and send them for cleaning.", "Operator", None),
-			("Fit the change parts for the next product and set the fill weight.", "Operator", None),
-			("Run five containers and check the fill weight before release.", "Line supervisor", None),
-		],
 		"content": """<h2>Purpose</h2>
 <p>A changeover is finished when the line is clean, the right parts are fitted, and the first containers are within the fill tolerance.</p>
 <h2>Procedure</h2>
@@ -116,12 +96,6 @@ PROCEDURES = [
 		"summary": "What to do in the first hour after something does not go to plan.",
 		"state": "approved",
 		"tags": ["gmp", "quality"],
-		"steps": [
-			("Stop and make the material safe.", "Operator", None),
-			("Tell the shift supervisor and Quality within the hour.", "Operator", None),
-			("Write down what happened, when, and what was affected.", "Line supervisor", None),
-			("Quality decides whether the batch continues.", None, None),
-		],
 		"content": """<h2>Purpose</h2>
 <p>A deviation is anything that did not happen the way a procedure says. Reporting it quickly is what keeps a batch defensible.</p>
 <h2>Scope</h2>
@@ -140,12 +114,6 @@ PROCEDURES = [
 		"summary": "The order the change room is used, and what never goes past the step-over bench.",
 		"state": "draft",
 		"tags": ["hygiene"],
-		"steps": [
-			("Remove outdoor clothing and jewellery in the grey side.", None, None),
-			("Wash and dry hands.", None, None),
-			("Gown in order: hairnet, coverall, overshoes, gloves.", None, None),
-			("Cross the step-over bench without touching the floor behind you.", None, None),
-		],
 		"content": """<h2>Purpose</h2>
 <p>The change room only works if it is used in one direction, in one order.</p>
 <h2>Procedure</h2>
@@ -161,7 +129,6 @@ PROCEDURES = [
 		"summary": "Superseded by the sampling and testing procedure.",
 		"state": "retired",
 		"tags": ["quality"],
-		"steps": [("Keep two units per batch in the sample store.", None, None)],
 		"content": """<h2>Purpose</h2>
 <p>Replaced. Retained samples are now covered by the sampling and testing procedure for the whole plant.</p>""",
 	},
@@ -200,7 +167,6 @@ SHAPES = {
 		"tasks": [("Read the procedure", "Read Procedure", False)],
 	},
 }
-
 
 
 def after_migrate():
@@ -339,10 +305,6 @@ def build(definition, spaces, people):
 			"process_owner": people[1],
 			"is_controlled": 1,
 			"risk_level": "High" if definition["space"] == "MFG" else "Medium",
-			"steps": [
-				{"instruction": text, "responsible_role": role_of(role), "record_to_capture": record}
-				for text, role, record in definition["steps"]
-			],
 		}
 	)
 	doc.insert(ignore_permissions=True)
@@ -353,10 +315,6 @@ def build(definition, spaces, people):
 	advance(doc, definition["state"], people, definition.get("effective_since", -40))
 
 	return doc.name
-
-
-def role_of(role):
-	return role if role and frappe.db.exists("Role", role) else None
 
 
 def add_tag(tag, doctype, name):

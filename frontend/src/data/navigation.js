@@ -3,7 +3,7 @@ import { computed, ref, watch } from 'vue'
 import { createRetryingResource } from '@/data/resource'
 
 export const SECTIONS = [
-  { key: 'procedures', label: 'Procedures', icon: 'lucide-library', route: '/' },
+  { key: 'procedures', label: 'Procedures', icon: 'lucide-book-text', route: '/' },
   { key: 'training', label: 'Training', icon: 'lucide-graduation-cap', route: '/training' },
 ]
 

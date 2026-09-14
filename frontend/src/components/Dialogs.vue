@@ -4,7 +4,7 @@
   <ProcessDialog />
   <TemplateDialog />
   <FindReplaceDialog v-model:open="ui.replaceDialog" />
-  <NotificationsDialog v-model:open="ui.notificationsDialog" />
+  <NotificationsPanel v-model:open="ui.notificationsPanel" />
   <ProfileDialog v-model:open="ui.profileDialog" />
   <Settings v-model:open="ui.settingsDialog" />
 </template>
@@ -12,7 +12,7 @@
 <script setup>
 import CommandPalette from '@/components/CommandPalette.vue'
 import FindReplaceDialog from '@/components/FindReplaceDialog.vue'
-import NotificationsDialog from '@/components/NotificationsDialog.vue'
+import NotificationsPanel from '@/components/NotificationsPanel.vue'
 import ProcessDialog from '@/components/ProcessDialog.vue'
 import ProfileDialog from '@/components/ProfileDialog.vue'
 import Settings from '@/components/Settings.vue'

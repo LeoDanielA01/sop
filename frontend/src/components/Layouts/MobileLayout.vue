@@ -22,6 +22,16 @@
       <div class="flex-1" />
 
       <Button variant="ghost" icon="lucide-search" label="Search" @click="ui.searchDialog = true" />
+      <Button variant="ghost" label="Notifications" @click="ui.notificationsPanel = true">
+        <span class="relative">
+          <span class="lucide-bell size-5 text-ink-gray-7" aria-hidden="true" />
+          <span
+            v-if="unreadCount"
+            class="absolute -right-1 -top-1 size-2 rounded-full bg-surface-red-5"
+            aria-hidden="true"
+          />
+        </span>
+      </Button>
       <Button variant="ghost" label="Account" @click="ui.profileDialog = true">
         <Avatar :image="session.user.image" :label="session.user.full_name" size="sm" />
       </Button>
@@ -117,6 +127,7 @@ import { Avatar, Button, Dialog } from 'frappe-ui'
 import { useSection } from '@/composables/useSection'
 import { activeSpace, setSpace, spaces, views } from '@/data/navigation'
 import { activeProcess, flatten, processes, setProcess } from '@/data/processes'
+import { unreadCount } from '@/data/notifications'
 import { session } from '@/data/session'
 import { trainingCounts } from '@/data/training'
 import { useUI } from '@/stores/ui'
@@ -132,7 +143,7 @@ const tree = computed(() => flatten(processes.value))
 
 
 const bottom = computed(() => [
-  { label: 'Procedures', icon: 'lucide-library', value: 'all' },
+  { label: 'Procedures', icon: 'lucide-book-text', value: 'all' },
   { label: 'Approvals', icon: 'lucide-stamp', value: 'approval', count: views.value[0]?.count },
   {
     label: 'Training',

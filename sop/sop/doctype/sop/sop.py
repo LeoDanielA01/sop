@@ -23,7 +23,6 @@ class SOP(Document):
 		self.collect_mentions()
 		self.set_review_dates()
 		self.build_search_text()
-		self.validate_steps()
 
 	def validate_process(self):
 		if not self.sop_process:
@@ -80,15 +79,10 @@ class SOP(Document):
 
 	def build_search_text(self):
 		parts = [self.sop_no, self.title, self.summary, strip_html(self.content or "")]
-		parts += [strip_html(row.instruction or "") for row in self.steps]
 		parts.append((self._user_tags or "").replace(",", " "))
 
 		text = " ".join(part for part in parts if part)
 		self.search_text = re.sub(r"\s+", " ", text).strip()[:100000]
-
-	def validate_steps(self):
-		for idx, row in enumerate(self.steps, start=1):
-			row.step_no = idx
 
 	def is_editable(self):
 		return self.status in EDITABLE_STATES

@@ -25,7 +25,7 @@
       <SettingsNavGroup label="Administration">
         <SettingsNavItem value="spaces">
           <template #prefix>
-            <span class="lucide-library size-4 shrink-0 text-ink-gray-6" />
+            <span class="lucide-book-text size-4 shrink-0 text-ink-gray-6" />
           </template>
           Spaces
         </SettingsNavItem>

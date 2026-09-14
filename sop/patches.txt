@@ -2,3 +2,4 @@
 sop.patches.move_tags_to_frappe
 
 [post_model_sync]
+sop.patches.drop_sop_steps

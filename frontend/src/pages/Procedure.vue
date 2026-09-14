@@ -47,22 +47,18 @@
     </div>
   </PageHeader>
 
-  <div class="mx-auto mt-5 w-full max-w-[1400px] px-3 pb-24 sm:px-5">
+  <div class="w-full px-4 pb-24 pt-5 sm:px-6">
     <ErrorMessage :message="lastError" class="mb-4" />
 
-    <h1 class="text-2xl font-semibold tracking-tight text-ink-gray-9">{{ doc.title }}</h1>
-
-    <p v-if="doc.summary" class="mb-5 mt-1.5 text-lg text-ink-gray-7">{{ doc.summary }}</p>
-
-    <div v-if="!doc.summary" class="mb-5" />
-
-    <div class="flex flex-col gap-6 lg:grid lg:grid-cols-[minmax(0,1fr)_17rem] lg:items-start lg:gap-7">
-      <aside class="order-first min-w-0 lg:order-last lg:sticky lg:top-6">
-        <div class="overflow-hidden rounded-4 border border-outline-gray-2">
+    <div class="flex flex-col gap-6 lg:grid lg:grid-cols-[minmax(0,1fr)_18rem] lg:items-start lg:gap-7">
+      <aside
+        class="order-first min-w-0 lg:sticky lg:top-[4.25rem] lg:order-last lg:h-[calc(100vh-5.5rem)]"
+      >
+        <div class="flex h-full flex-col overflow-hidden rounded-4 border border-outline-gray-2">
           <div
             v-if="!isEffective"
             role="status"
-            class="flex items-center gap-2 px-4 py-2.5 text-sm font-medium"
+            class="flex shrink-0 items-center gap-2 px-4 py-2.5 text-sm font-medium"
             :class="
               doc.status === 'Retired'
                 ? 'bg-surface-red-1 text-ink-red-6'
@@ -73,7 +69,7 @@
             {{ doc.status }} — not in force
           </div>
 
-          <div class="border-b border-outline-gray-1 px-4 py-3">
+          <div class="shrink-0 border-b border-outline-gray-1 px-4 py-3">
             <div class="flex items-start gap-2">
               <p class="min-w-0 flex-1 text-base font-semibold text-ink-gray-9">
                 {{ doc.title }}
@@ -113,7 +109,7 @@
             <p class="mt-0.5 font-mono text-sm text-ink-gray-5">{{ doc.sop_no }}</p>
           </div>
 
-          <div class="divide-y divide-outline-gray-1 border-b border-outline-gray-1">
+          <div class="shrink-0 divide-y divide-outline-gray-1 border-b border-outline-gray-1">
             <button
               v-for="row in quick"
               :key="row.label"
@@ -128,7 +124,7 @@
             </button>
           </div>
 
-          <dl class="divide-y divide-outline-gray-1">
+          <dl class="min-h-0 flex-1 divide-y divide-outline-gray-1 overflow-y-auto">
             <div v-for="row in facts" :key="row.label" class="px-4 py-2.5">
               <dt class="text-sm text-ink-gray-5">{{ row.label }}</dt>
               <dd class="mt-0.5 flex min-w-0 items-center gap-1.5 text-base" :class="row.tone || 'text-ink-gray-8'">
@@ -154,6 +150,12 @@
       </aside>
 
       <div class="min-w-0">
+      <h1 class="text-2xl font-semibold tracking-tight text-ink-gray-9">{{ doc.title }}</h1>
+
+      <p v-if="doc.summary" class="mb-5 mt-1.5 text-lg text-ink-gray-7">{{ doc.summary }}</p>
+
+      <div v-else class="mb-5" />
+
       <article
         ref="body"
         class="prose-sop max-w-[68ch] text-base leading-relaxed text-ink-gray-8 lg:max-w-none"
@@ -210,28 +212,6 @@
         @count="(value) => (openComments = value)"
       />
 
-      <section v-if="doc.steps?.length" class="mt-10">
-        <h2 class="text-lg-semibold text-ink-gray-8">Steps</h2>
-        <ol class="mt-3 space-y-3">
-          <li v-for="step in doc.steps" :key="step.step_no" class="flex gap-3">
-            <span
-              class="mt-0.5 grid size-6 shrink-0 place-content-center rounded-full bg-surface-gray-2 text-sm text-ink-gray-7"
-            >
-              {{ step.step_no }}
-            </span>
-            <div class="min-w-0">
-              <div class="text-base text-ink-gray-8" v-html="step.instruction" />
-              <div
-                v-if="step.responsible_role || step.record_to_capture"
-                class="mt-1 flex flex-wrap gap-x-4 text-sm text-ink-gray-5"
-              >
-                <span v-if="step.responsible_role">{{ step.responsible_role }}</span>
-                <span v-if="step.record_to_capture">Records: {{ step.record_to_capture }}</span>
-              </div>
-            </div>
-          </li>
-        </ol>
-      </section>
       </div>
     </div>
   </div>
@@ -240,7 +220,7 @@
     v-if="doc.actions?.decide"
     class="sticky bottom-0 border-t border-outline-gray-1 bg-surface-base px-4 py-3 sm:px-6"
   >
-    <div class="mx-auto flex max-w-[1400px] items-center justify-between gap-4">
+    <div class="flex w-full items-center justify-between gap-4">
       <p class="text-sm text-ink-gray-6">Your approval is what this one is waiting on.</p>
       <div class="flex items-center gap-2">
         <Button

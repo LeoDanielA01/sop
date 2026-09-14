@@ -22,7 +22,7 @@
         icon="lucide-bell"
         :badge="unreadCount || undefined"
         badge-style="count"
-        @click="ui.notificationsDialog = true"
+        @click="ui.notificationsPanel = !ui.notificationsPanel"
       />
 
       <SidebarRailItem
@@ -34,12 +34,11 @@
     </div>
 
     <div class="flex flex-col items-center gap-2.5">
-      <SidebarRailItem
-        label="New procedure"
-        variant="ghost"
-        icon="lucide-plus"
-        @click="router.push('/new')"
-      />
+      <Dropdown :options="createOptions" side="right" align="end" :offset="8">
+        <span class="flex">
+          <SidebarRailItem label="Create" variant="ghost" icon="lucide-plus" />
+        </span>
+      </Dropdown>
       <SidebarRailItem
         :label="ui.sidebarCollapsed ? 'Show the sidebar' : 'Hide the sidebar'"
         variant="ghost"
@@ -74,10 +73,10 @@
 <script setup>
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { Avatar, SidebarRail, SidebarRailItem } from 'frappe-ui'
+import { Avatar, Dropdown, SidebarRail, SidebarRailItem } from 'frappe-ui'
 import mark from '@/assets/sop-mark.svg'
 import { useSection } from '@/composables/useSection'
-import { SECTIONS, attention } from '@/data/navigation'
+import { SECTIONS, activeSpace, attention } from '@/data/navigation'
 import { unreadCount } from '@/data/notifications'
 import { session } from '@/data/session'
 import { trainingCounts } from '@/data/training'
@@ -91,6 +90,44 @@ const badges = computed(() => ({
   procedures: attention.value || undefined,
   training: trainingCounts.data?.open || undefined,
 }))
+
+const createOptions = computed(() => [
+  {
+    label: 'Procedure',
+    icon: 'lucide-file-plus-2',
+    onClick: () => router.push('/new'),
+  },
+  {
+    label: 'Procedure from a template',
+    icon: 'lucide-sparkles',
+    onClick: () => (ui.templateDialog = true),
+    condition: () => !!activeSpace.value,
+  },
+  {
+    label: 'Process',
+    icon: 'lucide-workflow',
+    onClick: () => ui.askForProcess({ space: activeSpace.value }),
+    condition: () => !!activeSpace.value,
+  },
+  {
+    label: 'Space',
+    icon: 'lucide-folder-plus',
+    onClick: () => (ui.spaceDialog = true),
+  },
+  {
+    label: 'Training session',
+    icon: 'lucide-calendar-plus',
+    onClick: () => {
+      router.push('/training/sessions')
+      ui.sessionDialog = true
+    },
+  },
+  {
+    label: 'Training rule',
+    icon: 'lucide-scroll-text',
+    onClick: () => router.push('/training/rules'),
+  },
+])
 
 function railLabel(item) {
   const count = badges.value[item.key]

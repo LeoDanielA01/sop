@@ -15,7 +15,7 @@ class SOPSQLiteSearch(SQLiteSearch):
 	INDEX_NAME = "sop_search.db"
 
 	INDEX_SCHEMA: ClassVar[dict] = {
-		"text_fields": ["title", "summary", "content", "steps"],
+		"text_fields": ["title", "summary", "content"],
 		"metadata_fields": [
 			"doctype",
 			"name",
@@ -56,7 +56,6 @@ class SOPSQLiteSearch(SQLiteSearch):
 			return prepared
 
 		prepared["content"] = plain(prepared.get("content"))
-		prepared["steps"] = steps_of(doc.get("name"))
 
 		return prepared
 
@@ -66,25 +65,6 @@ def plain(html):
 		return ""
 
 	return SPACE.sub(" ", TAG.sub(" ", html)).strip()
-
-
-def steps_of(sop):
-	if not sop:
-		return ""
-
-	rows = frappe.get_all(
-		"SOP Step",
-		filters={"parent": sop, "parenttype": "SOP"},
-		fields=["instruction", "responsible_role", "record_to_capture"],
-		order_by="idx asc",
-		limit_page_length=0,
-	)
-
-	return plain(
-		" ".join(
-			" ".join(str(value) for value in row.values() if value) for row in rows
-		)
-	)
 
 
 def build():

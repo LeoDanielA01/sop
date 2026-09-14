@@ -18,8 +18,6 @@
   "content_section",
   "summary",
   "content",
-  "steps_section",
-  "steps",
   "control_section",
   "process_owner",
   "department",
@@ -114,19 +112,6 @@
    "fieldname": "content",
    "fieldtype": "Text Editor",
    "label": "Content"
-  },
-  {
-   "collapsible": 1,
-   "description": "Optional. Use for procedures where each step has an owner or a record to capture.",
-   "fieldname": "steps_section",
-   "fieldtype": "Section Break",
-   "label": "Steps"
-  },
-  {
-   "fieldname": "steps",
-   "fieldtype": "Table",
-   "label": "Steps",
-   "options": "SOP Step"
   },
   {
    "fieldname": "control_section",

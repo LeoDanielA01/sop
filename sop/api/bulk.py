@@ -227,12 +227,6 @@ def apply(find, replace, names, match_case=0, whole_word=0, start_revision=0, pi
 		)
 		hits += found
 
-		for step in doc.steps:
-			step.instruction, found, seen = replace_in(
-				step.instruction, find, replace, match_case, whole_word, only, seen
-			)
-			hits += found
-
 		if not hits:
 			continue
 
