@@ -1,5 +1,5 @@
 <template>
-  <Dialog v-model:open="open" title="Find and replace" size="2xl">
+  <Dialog v-model:open="open" :title="__('Find and replace')" size="2xl">
     <template #default>
       <div class="flex flex-col gap-4">
         <ErrorMessage
@@ -19,20 +19,20 @@
         <div class="grid gap-3 sm:grid-cols-2">
           <FormControl
             type="text"
-            label="Find"
-            placeholder="Mixer A"
+            :label="__('Find')"
+            :placeholder="__('Mixer A')"
             v-model="find"
             @keyup.enter="look"
           />
-          <FormControl type="text" label="Replace with" placeholder="Mixer B" v-model="replace" />
+          <FormControl type="text" :label="__('Replace with')" :placeholder="__('Mixer B')" v-model="replace" />
         </div>
 
         <div class="flex flex-wrap items-center gap-4">
-          <FormControl type="checkbox" label="Match case" v-model="matchCase" />
-          <FormControl type="checkbox" label="Whole word only" v-model="wholeWord" />
-          <FormControl type="checkbox" label="This space only" v-model="thisSpace" />
+          <FormControl type="checkbox" :label="__('Match case')" v-model="matchCase" />
+          <FormControl type="checkbox" :label="__('Whole word only')" v-model="wholeWord" />
+          <FormControl type="checkbox" :label="__('This space only')" v-model="thisSpace" />
 
-          <span v-if="preview.loading" class="ml-auto text-sm text-ink-gray-5">Searching…</span>
+          <span v-if="preview.loading" class="ml-auto text-sm text-ink-gray-5">{{ __('Searching…') }}</span>
         </div>
 
         <div
@@ -64,7 +64,7 @@
                 :modelValue="allPicked"
                 @update:modelValue="toggleAll"
               />
-              Select all
+              {{ __('Select all') }}
             </label>
             <span class="text-sm text-ink-gray-5">
               {{ hits }} match{{ hits === 1 ? '' : 'es' }} in {{ rows.length }} procedure{{

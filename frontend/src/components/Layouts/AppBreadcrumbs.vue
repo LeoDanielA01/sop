@@ -10,6 +10,7 @@ import { useSection } from '@/composables/useSection'
 import { activeSpace } from '@/data/navigation'
 import { trail } from '@/data/processes'
 import { procedure } from '@/data/procedures'
+import { translate as __ } from '@/translation'
 
 const props = defineProps({
   tail: { type: Array, default: () => [] },
@@ -27,7 +28,7 @@ const doc = computed(() => {
 
 const items = computed(() => {
   if (section.value === 'training') {
-    return [{ label: 'Training', route: '/training' }, ...props.tail]
+    return [{ label: __('Training'), route: '/training' }, ...props.tail]
   }
 
   const crumbs = [{ label: 'Procedures', route: '/' }]

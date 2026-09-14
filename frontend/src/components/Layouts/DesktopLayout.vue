@@ -1,5 +1,5 @@
 <template>
-  <DesktopShell>
+  <DesktopShell :scroll="ui.pageScroll">
     <template #rail>
       <AppRail v-if="!ui.fullScreen" />
     </template>

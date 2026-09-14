@@ -8,7 +8,7 @@
   >
     <ToolPalette ref="palette" v-model:pinned="ui.editorToolsPinned" :editor="editor" :api="api" />
 
-    <EditorBubbleMenu v-if="editor && editable" :editor="editor" :items="BUBBLE_ITEMS" />
+    <EditorBubbleMenu v-if="editor && editable" :editor="editor" :items="bubbleItems()" />
     <MentionSuggest :editor="editor" />
     <EditorTableMenu v-if="editor && editable" :editor="editor" />
 
@@ -22,8 +22,7 @@
       class="flex items-center gap-1.5 border-t border-outline-gray-1 px-3 py-1.5 text-sm text-ink-gray-5"
     >
       <span class="lucide-mouse-pointer-click size-3.5 shrink-0" aria-hidden="true" />
-      Right-click for tools · long press on a phone · select text for the quick bar · pin the tools
-      to keep a toolbar
+      {{ __('Right-click for tools · long press on a phone · select text for the quick bar · pin the tools to keep a toolbar') }}
     </div>
   </div>
 </template>
@@ -41,7 +40,7 @@ import {
 import MentionSuggest from './MentionSuggest.vue'
 import ToolPalette from './ToolPalette.vue'
 import { useUI } from '@/stores/ui'
-import { BUBBLE_ITEMS } from './tools'
+import { bubbleItems } from './tools'
 
 const content = defineModel({ type: String, default: '' })
 const props = defineProps({

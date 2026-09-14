@@ -336,7 +336,16 @@ def last_acknowledgement(sop):
 
 
 @frappe.whitelist()
-def save_draft(space, title, name=None, summary=None, content=None, process=None):
+def save_draft(
+	space,
+	title,
+	name=None,
+	summary=None,
+	content=None,
+	process=None,
+	risk_level=None,
+	is_controlled=None,
+):
 	if name:
 		doc = frappe.get_doc("SOP", name)
 		doc.check_permission("write")
@@ -356,6 +365,13 @@ def save_draft(space, title, name=None, summary=None, content=None, process=None
 	doc.summary = summary
 	doc.content = content
 	doc.sop_process = process or None
+
+	if risk_level:
+		doc.risk_level = risk_level
+
+	if is_controlled is not None:
+		doc.is_controlled = frappe.utils.cint(is_controlled)
+
 	doc.save()
 
 	return {"name": doc.name, "sop_no": doc.sop_no, "status": doc.status, "version": doc.version}
@@ -363,7 +379,13 @@ def save_draft(space, title, name=None, summary=None, content=None, process=None
 
 @frappe.whitelist()
 def create_space(
-	title, space_code=None, visibility="Public", review_interval_months=12, template=None, with_drafts=0
+	title,
+	space_code=None,
+	visibility="Public",
+	review_interval_months=12,
+	template=None,
+	with_drafts=0,
+	description=None,
 ):
 	if not frappe.has_permission("SOP Space", "create"):
 		frappe.throw(_("You are not allowed to create a space."), frappe.PermissionError)
@@ -382,6 +404,7 @@ def create_space(
 			"space_code": code,
 			"visibility": visibility or "Public",
 			"review_interval_months": frappe.utils.cint(review_interval_months) or 12,
+			"description": description,
 		}
 	).insert()
 

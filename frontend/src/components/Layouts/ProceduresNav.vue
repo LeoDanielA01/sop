@@ -4,12 +4,12 @@
       <template #prefix>
         <span class="lucide-book-text size-4" aria-hidden="true" />
       </template>
-      <span class="flex-1 truncate text-sm">All procedures</span>
+      <span class="flex-1 truncate text-sm">{{ __('All procedures') }}</span>
     </SidebarItem>
   </nav>
 
   <div class="mt-4 flex h-7 items-center justify-between">
-    <SidebarLabel>Spaces</SidebarLabel>
+    <SidebarLabel>{{ __('Spaces') }}</SidebarLabel>
 
     <div class="flex items-center">
       <Tooltip :text="anyExpanded ? 'Collapse every process' : 'Expand every process'">
@@ -21,12 +21,12 @@
           @click="toggleAll"
         />
       </Tooltip>
-      <Tooltip text="New space">
+      <Tooltip :text="__('New space')">
         <Button
           variant="ghost"
           size="sm"
           icon="lucide-plus"
-          label="New space"
+          :label="__('New space')"
           @click="ui.spaceDialog = true"
         />
       </Tooltip>
@@ -49,13 +49,13 @@
         </template>
         <span class="flex-1 truncate text-sm">{{ space.title }}</span>
         <template #suffix>
-          <Tooltip text="Add a process to this space">
+          <Tooltip :text="__('Add a process to this space')">
             <Button
               variant="ghost"
               size="sm"
               class="!size-5 !p-0 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100"
               icon="lucide-plus"
-              label="Add a process"
+              :label="__('Add a process')"
               @click.stop="add(space, null)"
             />
           </Tooltip>
@@ -83,12 +83,12 @@
           v-if="!processTree.loading && !processes.length"
           class="flex flex-col items-start gap-1 py-1.5 pl-2 pr-2"
         >
-          <p class="text-sm text-ink-gray-5">No processes yet.</p>
+          <p class="text-sm text-ink-gray-5">{{ __('No processes yet.') }}</p>
           <Button
             variant="ghost"
             size="sm"
             icon-left="lucide-sparkles"
-            label="Start from a template"
+            :label="__('Start from a template')"
             @click="ui.templateDialog = true"
           />
         </div>
@@ -100,7 +100,7 @@
     </div>
 
     <p v-else-if="spacesResource.error" class="px-2 py-2 text-sm text-ink-gray-5">
-      Spaces are not reachable right now.
+      {{ __('Spaces are not reachable right now.') }}
     </p>
 
     <div
@@ -109,23 +109,22 @@
     >
       <span class="lucide-book-text size-5 text-ink-gray-4" aria-hidden="true" />
       <div>
-        <p class="text-base text-ink-gray-7">No spaces yet</p>
+        <p class="text-base text-ink-gray-7">{{ __('No spaces yet') }}</p>
         <p class="mt-0.5 text-sm text-ink-gray-5">
-          A space is a binder — QA, Manufacturing, HR — and its code numbers every procedure inside
-          it.
+          {{ __('A space is a binder — QA, Manufacturing, HR — and its code numbers every procedure inside it.') }}
         </p>
       </div>
       <Button
         variant="subtle"
         icon-left="lucide-plus"
-        label="New space"
+        :label="__('New space')"
         @click="ui.spaceDialog = true"
       />
     </div>
   </nav>
 
   <div class="mt-4 flex h-7 items-center">
-    <SidebarLabel>Needs attention</SidebarLabel>
+    <SidebarLabel>{{ __('Needs attention') }}</SidebarLabel>
   </div>
 
   <nav class="mt-0.5 space-y-0.5">

@@ -1,14 +1,14 @@
 <template>
-  <Dialog v-model:open="open" title="Assign training" size="md">
+  <Dialog v-model:open="open" :title="__('Assign training')" size="md">
     <template #default>
       <div class="flex flex-col gap-3">
         <ErrorMessage :message="assign.error?.messages?.[0]" />
 
-        <FormControl type="select" label="Procedure" :options="procedureOptions" v-model="sop" />
+        <FormControl type="select" :label="__('Procedure')" :options="procedureOptions" v-model="sop" />
 
         <div class="grid gap-3 sm:grid-cols-2">
-          <FormControl type="select" label="How they train" :options="METHODS" v-model="method" />
-          <FormControl type="number" label="Due in (days)" v-model="dueDays" />
+          <FormControl type="select" :label="__('How they train')" :options="METHODS" v-model="method" />
+          <FormControl type="number" :label="__('Due in (days)')" v-model="dueDays" />
         </div>
 
         <div v-if="chosen.length" class="flex flex-wrap gap-1.5">
@@ -26,7 +26,7 @@
           :options="candidates"
           :modelValue="null"
           :loading="people.loading"
-          placeholder="Search people by name or email"
+          :placeholder="__('Search people by name or email')"
           @update:modelValue="add"
           @update:query="lookup"
         />
@@ -36,7 +36,7 @@
       <div class="flex justify-end gap-2">
         <Button
           variant="solid"
-          label="Assign"
+          :label="__('Assign')"
           :loading="assign.loading"
           :disabled="!sop || !chosen.length"
           @click="submit"

@@ -19,7 +19,7 @@
         v-if="isDesktop && doc.can_edit"
         variant="ghost"
         icon-left="lucide-pencil"
-        label="Edit"
+        :label="__('Edit')"
         @click="router.push(`/${route.params.name}/edit`)"
       />
 
@@ -42,186 +42,183 @@
       </Tooltip>
 
       <Dropdown :options="actions">
-        <Button variant="ghost" icon="lucide-ellipsis" label="More" />
+        <Button variant="ghost" icon="lucide-ellipsis" :label="__('More')" />
       </Dropdown>
     </div>
   </PageHeader>
 
-  <div class="w-full px-4 pb-24 pt-5 sm:px-6">
+  <div class="flex flex-col lg:min-h-0 lg:flex-1 lg:flex-row lg:overflow-hidden">
+    <aside
+      class="order-first w-full shrink-0 border-b border-outline-gray-1 lg:order-last lg:w-[17rem] lg:overflow-hidden lg:border-b-0 lg:border-l"
+    >
+      <div class="flex h-full flex-col">
+        <div
+          v-if="!isEffective"
+          role="status"
+          class="flex shrink-0 items-center gap-2 px-4 py-2.5 text-sm font-medium"
+          :class="
+            doc.status === 'Retired'
+              ? 'bg-surface-red-1 text-ink-red-6'
+              : 'bg-surface-amber-1 text-ink-amber-6'
+          "
+        >
+          <span class="lucide-triangle-alert size-4 shrink-0" aria-hidden="true" />
+          {{ doc.status }} — not in force
+        </div>
+
+        <div class="shrink-0 border-b border-outline-gray-1 px-4 py-3">
+          <div class="flex items-start gap-2">
+            <p class="min-w-0 flex-1 text-base font-semibold text-ink-gray-9">
+              {{ doc.title }}
+            </p>
+
+            <div class="flex shrink-0 items-center">
+              <Tooltip v-if="doc.can_edit" :text="__('Edit')">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  icon="lucide-pencil"
+                  :label="__('Edit')"
+                  @click="router.push(`/${route.params.name}/edit`)"
+                />
+              </Tooltip>
+              <Tooltip :text="__('Print a controlled copy')">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  icon="lucide-printer"
+                  :label="__('Print')"
+                  @click="printCopy"
+                />
+              </Tooltip>
+              <Tooltip :text="__('Revision history')">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  icon="lucide-history"
+                  :label="__('Revision history')"
+                  @click="router.push(`/${route.params.name}/history`)"
+                />
+              </Tooltip>
+            </div>
+          </div>
+
+          <p class="mt-0.5 font-mono text-sm text-ink-gray-5">{{ doc.sop_no }}</p>
+        </div>
+
+        <div class="shrink-0 divide-y divide-outline-gray-1 border-b border-outline-gray-1">
+          <button
+            v-for="row in quick"
+            :key="row.label"
+            type="button"
+            class="flex w-full items-center gap-2.5 px-4 py-2.5 text-left hover:bg-surface-gray-1"
+            @click="row.onClick"
+          >
+            <span :class="row.icon" class="size-4 shrink-0 text-ink-gray-5" aria-hidden="true" />
+            <span class="min-w-0 flex-1 truncate text-base text-ink-gray-7">{{ row.label }}</span>
+            <Badge v-if="row.count" variant="subtle" size="sm">{{ row.count }}</Badge>
+            <span class="lucide-plus size-4 shrink-0 text-ink-gray-5" aria-hidden="true" />
+          </button>
+        </div>
+
+        <dl class="min-h-0 flex-1 divide-y divide-outline-gray-1 overflow-y-auto">
+          <div v-for="row in facts" :key="row.label" class="px-4 py-2.5">
+            <dt class="text-sm text-ink-gray-5">{{ row.label }}</dt>
+            <dd class="mt-0.5 flex min-w-0 items-center gap-1.5 text-base" :class="row.tone || 'text-ink-gray-8'">
+              <Avatar
+                v-if="row.avatar !== undefined"
+                :image="row.avatar"
+                :label="row.value"
+                size="sm"
+              />
+              <Badge v-else-if="row.badge" :theme="row.badge" variant="subtle" size="sm">
+                {{ row.value }}
+              </Badge>
+              <span v-else class="truncate">{{ row.value }}</span>
+            </dd>
+          </div>
+
+          <div v-if="doc.tags?.length" class="flex flex-wrap items-center gap-1.5 px-4 py-2.5">
+            <span class="lucide-tags size-4 shrink-0 text-ink-gray-5" aria-hidden="true" />
+            <Badge v-for="tag in doc.tags" :key="tag" variant="subtle" size="sm">{{ tag }}</Badge>
+          </div>
+        </dl>
+      </div>
+    </aside>
+
+    <div class="min-w-0 px-4 pb-24 pt-5 sm:px-6 lg:flex-1 lg:overflow-y-auto">
     <ErrorMessage :message="lastError" class="mb-4" />
 
-    <div class="flex flex-col gap-6 lg:grid lg:grid-cols-[minmax(0,1fr)_18rem] lg:items-start lg:gap-7">
-      <aside
-        class="order-first min-w-0 lg:sticky lg:top-[4.25rem] lg:order-last lg:h-[calc(100vh-5.5rem)]"
+    <h1 class="text-2xl font-semibold tracking-tight text-ink-gray-9">{{ doc.title }}</h1>
+
+    <p v-if="doc.summary" class="mb-5 mt-1.5 text-lg text-ink-gray-7">{{ doc.summary }}</p>
+
+    <div v-else class="mb-5" />
+
+    <article
+      ref="body"
+      class="prose-sop max-w-[68ch] text-base leading-relaxed text-ink-gray-8 lg:max-w-none"
+      v-html="doc.content"
+    />
+
+    <MentionChip
+      v-for="reference in doc.references || []"
+      :key="reference.key"
+      :reference="reference"
+      :root="body"
+    />
+
+    <nav
+      v-if="around.previous || around.next"
+      class="mt-10 grid gap-3 border-t border-outline-gray-1 pt-5 sm:grid-cols-2"
+    >
+      <button
+        v-if="around.previous"
+        type="button"
+        class="flex items-center gap-3 rounded-4 border border-outline-gray-2 px-3 py-2.5 text-left hover:border-outline-gray-3"
+        @click="router.push(`/${around.previous.name}`)"
       >
-        <div class="flex h-full flex-col overflow-hidden rounded-4 border border-outline-gray-2">
-          <div
-            v-if="!isEffective"
-            role="status"
-            class="flex shrink-0 items-center gap-2 px-4 py-2.5 text-sm font-medium"
-            :class="
-              doc.status === 'Retired'
-                ? 'bg-surface-red-1 text-ink-red-6'
-                : 'bg-surface-amber-1 text-ink-amber-6'
-            "
-          >
-            <span class="lucide-triangle-alert size-4 shrink-0" aria-hidden="true" />
-            {{ doc.status }} — not in force
-          </div>
+        <span class="lucide-chevron-left size-4 shrink-0 text-ink-gray-5" aria-hidden="true" />
+        <span class="min-w-0">
+          <span class="block text-sm text-ink-gray-5">{{ __('Previous') }}</span>
+          <span class="block truncate text-base text-ink-gray-8">
+            {{ around.previous.title }}
+          </span>
+        </span>
+      </button>
+      <span v-else class="hidden sm:block" />
 
-          <div class="shrink-0 border-b border-outline-gray-1 px-4 py-3">
-            <div class="flex items-start gap-2">
-              <p class="min-w-0 flex-1 text-base font-semibold text-ink-gray-9">
-                {{ doc.title }}
-              </p>
-
-              <div class="flex shrink-0 items-center">
-                <Tooltip v-if="doc.can_edit" text="Edit">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    icon="lucide-pencil"
-                    label="Edit"
-                    @click="router.push(`/${route.params.name}/edit`)"
-                  />
-                </Tooltip>
-                <Tooltip text="Print a controlled copy">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    icon="lucide-printer"
-                    label="Print"
-                    @click="printCopy"
-                  />
-                </Tooltip>
-                <Tooltip text="Revision history">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    icon="lucide-history"
-                    label="Revision history"
-                    @click="router.push(`/${route.params.name}/history`)"
-                  />
-                </Tooltip>
-              </div>
-            </div>
-
-            <p class="mt-0.5 font-mono text-sm text-ink-gray-5">{{ doc.sop_no }}</p>
-          </div>
-
-          <div class="shrink-0 divide-y divide-outline-gray-1 border-b border-outline-gray-1">
-            <button
-              v-for="row in quick"
-              :key="row.label"
-              type="button"
-              class="flex w-full items-center gap-2.5 px-4 py-2.5 text-left hover:bg-surface-gray-1"
-              @click="row.onClick"
-            >
-              <span :class="row.icon" class="size-4 shrink-0 text-ink-gray-5" aria-hidden="true" />
-              <span class="min-w-0 flex-1 truncate text-base text-ink-gray-7">{{ row.label }}</span>
-              <Badge v-if="row.count" variant="subtle" size="sm">{{ row.count }}</Badge>
-              <span class="lucide-plus size-4 shrink-0 text-ink-gray-5" aria-hidden="true" />
-            </button>
-          </div>
-
-          <dl class="min-h-0 flex-1 divide-y divide-outline-gray-1 overflow-y-auto">
-            <div v-for="row in facts" :key="row.label" class="px-4 py-2.5">
-              <dt class="text-sm text-ink-gray-5">{{ row.label }}</dt>
-              <dd class="mt-0.5 flex min-w-0 items-center gap-1.5 text-base" :class="row.tone || 'text-ink-gray-8'">
-                <Avatar
-                  v-if="row.avatar !== undefined"
-                  :image="row.avatar"
-                  :label="row.value"
-                  size="sm"
-                />
-                <Badge v-else-if="row.badge" :theme="row.badge" variant="subtle" size="sm">
-                  {{ row.value }}
-                </Badge>
-                <span v-else class="truncate">{{ row.value }}</span>
-              </dd>
-            </div>
-
-            <div v-if="doc.tags?.length" class="flex flex-wrap items-center gap-1.5 px-4 py-2.5">
-              <span class="lucide-tags size-4 shrink-0 text-ink-gray-5" aria-hidden="true" />
-              <Badge v-for="tag in doc.tags" :key="tag" variant="subtle" size="sm">{{ tag }}</Badge>
-            </div>
-          </dl>
-        </div>
-      </aside>
-
-      <div class="min-w-0">
-      <h1 class="text-2xl font-semibold tracking-tight text-ink-gray-9">{{ doc.title }}</h1>
-
-      <p v-if="doc.summary" class="mb-5 mt-1.5 text-lg text-ink-gray-7">{{ doc.summary }}</p>
-
-      <div v-else class="mb-5" />
-
-      <article
-        ref="body"
-        class="prose-sop max-w-[68ch] text-base leading-relaxed text-ink-gray-8 lg:max-w-none"
-        v-html="doc.content"
-      />
-
-      <MentionChip
-        v-for="reference in doc.references || []"
-        :key="reference.key"
-        :reference="reference"
-        :root="body"
-      />
-
-      <nav
-        v-if="around.previous || around.next"
-        class="mt-10 grid gap-3 border-t border-outline-gray-1 pt-5 sm:grid-cols-2"
+      <button
+        v-if="around.next"
+        type="button"
+        class="flex items-center justify-end gap-3 rounded-4 border border-outline-gray-2 px-3 py-2.5 text-right hover:border-outline-gray-3"
+        @click="router.push(`/${around.next.name}`)"
       >
-        <button
-          v-if="around.previous"
-          type="button"
-          class="flex items-center gap-3 rounded-4 border border-outline-gray-2 px-3 py-2.5 text-left hover:border-outline-gray-3"
-          @click="router.push(`/${around.previous.name}`)"
-        >
-          <span class="lucide-chevron-left size-4 shrink-0 text-ink-gray-5" aria-hidden="true" />
-          <span class="min-w-0">
-            <span class="block text-sm text-ink-gray-5">Previous</span>
-            <span class="block truncate text-base text-ink-gray-8">
-              {{ around.previous.title }}
-            </span>
-          </span>
-        </button>
-        <span v-else class="hidden sm:block" />
+        <span class="min-w-0">
+          <span class="block text-sm text-ink-gray-5">{{ __('Next') }}</span>
+          <span class="block truncate text-base text-ink-gray-8">{{ around.next.title }}</span>
+        </span>
+        <span class="lucide-chevron-right size-4 shrink-0 text-ink-gray-5" aria-hidden="true" />
+      </button>
+    </nav>
 
-        <button
-          v-if="around.next"
-          type="button"
-          class="flex items-center justify-end gap-3 rounded-4 border border-outline-gray-2 px-3 py-2.5 text-right hover:border-outline-gray-3"
-          @click="router.push(`/${around.next.name}`)"
-        >
-          <span class="min-w-0">
-            <span class="block text-sm text-ink-gray-5">Next</span>
-            <span class="block truncate text-base text-ink-gray-8">{{ around.next.title }}</span>
-          </span>
-          <span class="lucide-chevron-right size-4 shrink-0 text-ink-gray-5" aria-hidden="true" />
-        </button>
-      </nav>
-
-      <ReviewComments
-        v-if="doc.name"
-        ref="comments"
-        :sop="doc.name"
-        :version="doc.version"
-        :body="body"
-        @count="(value) => (openComments = value)"
-      />
-
-      </div>
+    <ReviewComments
+      v-if="doc.name"
+      ref="comments"
+      :sop="doc.name"
+      :version="doc.version"
+      :body="body"
+      @count="(value) => (openComments = value)"
+    />
     </div>
   </div>
 
   <div
     v-if="doc.actions?.decide"
-    class="sticky bottom-0 border-t border-outline-gray-1 bg-surface-base px-4 py-3 sm:px-6"
+    class="sticky bottom-0 shrink-0 border-t border-outline-gray-1 bg-surface-base px-4 py-3 sm:px-6"
   >
     <div class="flex w-full items-center justify-between gap-4">
-      <p class="text-sm text-ink-gray-6">Your approval is what this one is waiting on.</p>
+      <p class="text-sm text-ink-gray-6">{{ __('Your approval is what this one is waiting on.') }}</p>
       <div class="flex items-center gap-2">
         <Button
           variant="subtle"
@@ -230,7 +227,7 @@
         />
         <Button
           variant="solid"
-          label="Approve"
+          :label="__('Approve')"
           :loading="decide.loading"
           @click="decide.submit({ sop: doc.name, decision: 'Approved' })"
         />
@@ -244,12 +241,11 @@
   >
     <div class="mx-auto flex max-w-[1400px] items-center justify-between gap-4">
       <p class="text-sm text-ink-gray-6">
-        Confirm you have read and understood <b>Rev {{ doc.version }}</b>. You will be asked again
-        when a new revision comes into force — not every time you open it.
+        {{ __('Confirm you have read and understood') }} <b>Rev {{ doc.version }}</b>{{ __('. You will be asked again when a new revision comes into force — not every time you open it.') }}
       </p>
       <Button
         variant="solid"
-        label="I have read this"
+        :label="__('I have read this')"
         :loading="acknowledge.loading"
         @click="acknowledge.submit({ sop: doc.name, version: doc.version })"
       />
@@ -272,20 +268,20 @@
     @submit="(rows) => send.submit({ sop: doc.name, approvers: rows })"
   />
 
-  <Dialog v-model:open="showPublish" title="Bring into force" size="sm">
+  <Dialog v-model:open="showPublish" :title="__('Bring into force')" size="sm">
     <template #default>
       <div class="flex flex-col gap-3">
         <ErrorMessage :message="release.error?.messages?.[0]" />
-        <FormControl type="date" label="Effective from" v-model="publishOn" />
+        <FormControl type="date" :label="__('Effective from')" v-model="publishOn" />
         <FormControl
           type="textarea"
-          label="What changed"
-          placeholder="Shown in the revision history"
+          :label="__('What changed')"
+          :placeholder="__('Shown in the revision history')"
           v-model="changeSummary"
         />
         <FormControl
           type="checkbox"
-          label="Material change — everyone has to be trained again"
+          :label="__('Material change — everyone has to be trained again')"
           v-model="isMaterial"
         />
       </div>
@@ -302,7 +298,7 @@
     </template>
   </Dialog>
 
-  <Dialog v-model:open="changes.open" title="Request changes" size="sm">
+  <Dialog v-model:open="changes.open" :title="__('Request changes')" size="sm">
     <template #default>
       <div class="flex flex-col gap-3">
         <ErrorMessage :message="decide.error?.messages?.[0]" />
@@ -310,7 +306,7 @@
           {{ openComments }} comment{{ openComments === 1 ? '' : 's' }} on the text
           {{ openComments === 1 ? 'is' : 'are' }} already on this revision. This note goes with them.
         </p>
-        <FormControl type="textarea" label="What has to change" v-model="changes.comment" />
+        <FormControl type="textarea" :label="__('What has to change')" v-model="changes.comment" />
       </div>
     </template>
     <template #actions>
@@ -318,7 +314,7 @@
         <Button
           variant="solid"
           theme="red"
-          label="Send it back"
+          :label="__('Send it back')"
           :loading="decide.loading"
           :disabled="!changes.comment"
           @click="decide.submit({ sop: doc.name, decision: 'Rejected', comment: changes.comment })"
@@ -353,6 +349,7 @@ import { useBreakpoint } from '@/composables/useBreakpoint'
 import { useUI } from '@/stores/ui'
 import { refreshCounts } from '@/data/navigation'
 import { STATUS_THEME, reviewTone, shortDate, today } from '@/utils/format'
+import { translate as __ } from '@/translation'
 
 const route = useRoute()
 const router = useRouter()
@@ -371,9 +368,14 @@ function onKeydown(event) {
   if (event.key === 'Escape' && ui.fullScreen) ui.toggleFullScreen()
 }
 
-onMounted(() => document.addEventListener('keydown', onKeydown))
+onMounted(() => {
+  document.addEventListener('keydown', onKeydown)
+  ui.pageScroll = false
+})
+
 onBeforeUnmount(() => {
   document.removeEventListener('keydown', onKeydown)
+  ui.pageScroll = true
   if (ui.fullScreen) ui.toggleFullScreen()
 })
 const RING = {
@@ -399,19 +401,19 @@ const ownerName = computed(() => doc.value.process_owner_name || doc.value.proce
 const overdue = computed(() => reviewTone(doc.value.review_due) === 'red')
 const quick = computed(() => [
   {
-    label: 'Approvers',
+    label: __('Approvers'),
     icon: 'lucide-user-check',
     count: doc.value.approvals?.length,
     onClick: () => (showApprovers.value = true),
   },
   {
-    label: 'Review comments',
+    label: __('Review comments'),
     icon: 'lucide-message-square',
     count: openComments.value,
     onClick: () => comments.value?.$el?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
   },
   {
-    label: 'Training',
+    label: __('Training'),
     icon: 'lucide-graduation-cap',
     onClick: () => router.push('/training/matrix'),
   },
@@ -419,9 +421,9 @@ const quick = computed(() => [
 
 const facts = computed(() => {
   const rows = [
-    { label: 'Owner', value: ownerName.value, avatar: doc.value.owner_image || null },
+    { label: __('Owner'), value: ownerName.value, avatar: doc.value.owner_image || null },
     {
-      label: 'In force since',
+      label: __('In force since'),
       value: doc.value.effective_from ? shortDate(doc.value.effective_from) : 'Not yet',
     },
     {
@@ -429,9 +431,9 @@ const facts = computed(() => {
       value: doc.value.review_due ? shortDate(doc.value.review_due) : 'Not scheduled',
       tone: overdue.value ? 'text-ink-red-3' : null,
     },
-    { label: 'Version', value: `Rev ${doc.value.version || 1}` },
+    { label: __('Version'), value: `Rev ${doc.value.version || 1}` },
     {
-      label: 'Read & understood',
+      label: __('Read & understood'),
       value: doc.value.acknowledged_on
         ? `Rev ${doc.value.acknowledged_version} · ${shortDate(doc.value.acknowledged_on)}`
         : isEffective.value
@@ -442,7 +444,7 @@ const facts = computed(() => {
 
   if (doc.value.risk_level) {
     rows.push({
-      label: 'Risk',
+      label: __('Risk'),
       value: doc.value.risk_level,
       badge: RISK_THEME[doc.value.risk_level],
     })
@@ -520,7 +522,7 @@ const primary = computed(() => {
 
   if (allowed.send_for_approval) {
     return {
-      label: 'Send for approval',
+      label: __('Send for approval'),
       icon: 'lucide-send',
       loading: send.loading,
       onClick: () => (showApprovers.value = true),
@@ -529,7 +531,7 @@ const primary = computed(() => {
 
   if (allowed.publish) {
     return {
-      label: 'Bring into force',
+      label: __('Bring into force'),
       icon: 'lucide-badge-check',
       loading: release.loading,
       onClick: () => (showPublish.value = true),
@@ -538,7 +540,7 @@ const primary = computed(() => {
 
   if (allowed.start_revision) {
     return {
-      label: 'Start a revision',
+      label: __('Start a revision'),
       icon: 'lucide-git-branch',
       loading: revise.loading,
       onClick: () => revise.submit({ sop: doc.value.name }),
@@ -552,18 +554,18 @@ const actions = computed(() =>
   [
     !isDesktop.value &&
       doc.value.can_edit && {
-        label: 'Edit',
+        label: __('Edit'),
         icon: 'lucide-pencil',
         onClick: () => router.push(`/${route.params.name}/edit`),
       },
     {
-      label: 'Revision history',
+      label: __('Revision history'),
       icon: 'lucide-history',
       onClick: () => router.push(`/${route.params.name}/history`),
     },
-    { label: 'Print controlled copy', icon: 'lucide-printer', onClick: () => window.print() },
+    { label: __('Print controlled copy'), icon: 'lucide-printer', onClick: () => window.print() },
     doc.value.actions?.retire && {
-      label: 'Retire',
+      label: __('Retire'),
       icon: 'lucide-archive',
       onClick: () => withdraw.submit({ sop: doc.value.name }),
     },

@@ -18,6 +18,23 @@ def me():
 		"csrf_token": frappe.sessions.get_csrf_token(),
 	}
 
+def can_use_app(user=None):
+	roles = set(frappe.get_roles(user or frappe.session.user))
+
+	return bool(
+		roles
+		& {
+			"SOP Manager",
+			"SOP Author",
+			"SOP Approver",
+			"SOP Reviewer",
+			"SOP Trainer",
+			"SOP Reader",
+			"System Manager",
+		}
+	)
+
+
 @frappe.whitelist()
 def stats():
 	user = frappe.session.user

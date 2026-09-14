@@ -32,7 +32,12 @@ def set_language(language):
 	frappe.db.set_value("User", frappe.session.user, "language", language or None)
 	frappe.local.lang = language or "en"
 
-	return {"language": language}
+	if getattr(frappe.local, "cookie_manager", None):
+		frappe.local.cookie_manager.set_cookie("preferred_language", frappe.local.lang)
+
+	frappe.clear_cache(user=frappe.session.user)
+
+	return {"language": frappe.local.lang}
 
 
 @frappe.whitelist()

@@ -1,3 +1,5 @@
+import { translate as __ } from '@/translation'
+
 export const STATUS_THEME = {
   Draft: 'gray',
   'In Review': 'amber',
@@ -23,9 +25,9 @@ export function dayLabel(value) {
     (new Date(now.getFullYear(), now.getMonth(), now.getDate()) - start) / 86400000,
   )
 
-  if (days <= 0) return 'Today'
-  if (days === 1) return 'Yesterday'
-  if (days < 7) return 'This week'
+  if (days <= 0) return __('Today')
+  if (days === 1) return __('Yesterday')
+  if (days < 7) return __('This week')
 
   return day.toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' })
 }

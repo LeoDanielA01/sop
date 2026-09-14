@@ -4,7 +4,7 @@
     <Button
       v-if="spaces.length"
       variant="solid"
-      label="New procedure"
+      :label="__('New procedure')"
       icon-left="lucide-plus"
       @click="router.push('/new')"
     />
@@ -99,24 +99,23 @@
       class="mt-16 flex flex-col items-center gap-3 px-6 text-center text-base text-ink-gray-5"
     >
       <template v-if="spaces.length">
-        <span v-if="activeProcess">Nothing filed under this process yet.</span>
-        <span v-else>Nothing here yet.</span>
+        <span v-if="activeProcess">{{ __('Nothing filed under this process yet.') }}</span>
+        <span v-else>{{ __('Nothing here yet.') }}</span>
         <Button
           variant="solid"
           icon-left="lucide-plus"
-          label="Write the first procedure"
+          :label="__('Write the first procedure')"
           @click="router.push('/new')"
         />
       </template>
       <template v-else>
         <span>
-          Start with a space. It is the binder a procedure lives in — QA, Production, HR — and its
-          code becomes the procedure number.
+          {{ __('Start with a space. It is the binder a procedure lives in — QA, Production, HR — and its code becomes the procedure number.') }}
         </span>
         <Button
           variant="solid"
           icon-left="lucide-plus"
-          label="Create a space"
+          :label="__('Create a space')"
           @click="ui.spaceDialog = true"
         />
       </template>

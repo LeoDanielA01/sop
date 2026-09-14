@@ -7,7 +7,7 @@
             class="absolute right-2 top-2"
             variant="ghost"
             icon="lucide-x"
-            label="Close"
+            :label="__('Close')"
             @click="open = false"
           />
         </div>
@@ -38,7 +38,7 @@
             </p>
 
             <div class="mt-4">
-              <FormLabel label="Language" />
+              <FormLabel :label="__('Language')" />
               <Select
                 class="mt-1.5"
                 :options="languageOptions"
@@ -46,15 +46,15 @@
                 :disabled="switching.loading"
                 @update:modelValue="pickLanguage"
               />
-              <p class="mt-1.5 text-sm text-ink-gray-5">The app reloads when you change it.</p>
+              <p class="mt-1.5 text-sm text-ink-gray-5">{{ __('The app reloads when you change it.') }}</p>
             </div>
 
             <div class="mt-4 flex flex-wrap items-center gap-1">
-              <Tooltip text="Settings">
+              <Tooltip :text="__('Settings')">
                 <Button
                   variant="ghost"
                   icon="lucide-settings"
-                  label="Settings"
+                  :label="__('Settings')"
                   @click="openSettings"
                 />
               </Tooltip>
@@ -66,19 +66,19 @@
                   @click="setColorScheme(dark ? 'light' : 'dark')"
                 />
               </Tooltip>
-              <Tooltip text="Open the desk">
+              <Tooltip :text="__('Open the desk')">
                 <Button
                   variant="ghost"
                   icon="lucide-layout-grid"
-                  label="Open the desk"
+                  :label="__('Open the desk')"
                   @click="openDesk"
                 />
               </Tooltip>
-              <Tooltip text="Log out">
+              <Tooltip :text="__('Log out')">
                 <Button
                   variant="ghost"
                   icon="lucide-log-out"
-                  label="Log out"
+                  :label="__('Log out')"
                   @click="session.logout()"
                 />
               </Tooltip>
@@ -86,7 +86,7 @@
           </div>
 
           <div class="min-w-0 pt-3">
-            <p class="mb-2 text-sm text-ink-gray-5">Your work — pick one to go there</p>
+            <p class="mb-2 text-sm text-ink-gray-5">{{ __('Your work — pick one to go there') }}</p>
 
             <div class="grid grid-cols-2 gap-2">
               <button
@@ -136,6 +136,7 @@ import {
 import { session } from '@/data/session'
 import { useUI } from '@/stores/ui'
 import { shortDate } from '@/utils/format'
+import { translate as __ } from '@/translation'
 
 const open = defineModel('open', { type: Boolean, default: false })
 
@@ -178,37 +179,37 @@ const lines = computed(() => {
 
   return [
     {
-      label: 'Waiting on you',
+      label: __('Waiting on you'),
       value: data.waiting ?? 0,
       icon: 'lucide-inbox',
       route: '/?view=approval',
     },
     {
-      label: 'Procedures you own',
+      label: __('Procedures you own'),
       value: data.owned ?? 0,
       icon: 'lucide-file-text',
       route: '/',
     },
     {
-      label: 'Drafts you started',
+      label: __('Drafts you started'),
       value: data.drafts ?? 0,
       icon: 'lucide-pencil-line',
       route: '/?view=drafts',
     },
     {
-      label: 'You signed off',
+      label: __('You signed off'),
       value: data.signed ?? 0,
       icon: 'lucide-check-check',
       route: '/?view=unacknowledged',
     },
     {
-      label: 'Training open',
+      label: __('Training open'),
       value: data.training_open ?? 0,
       icon: 'lucide-graduation-cap',
       route: '/training',
     },
     {
-      label: 'Training overdue',
+      label: __('Training overdue'),
       value: data.training_overdue ?? 0,
       icon: 'lucide-calendar-clock',
       tone: data.training_overdue ? 'text-ink-red-3' : null,

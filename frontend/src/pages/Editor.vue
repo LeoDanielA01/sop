@@ -22,13 +22,13 @@
       <Button
         v-if="!isNew"
         variant="ghost"
-        label="Preview"
+        :label="__('Preview')"
         icon-left="lucide-eye"
         @click="router.push(`/${route.params.name}`)"
       />
       <Button
         variant="solid"
-        label="Save draft"
+        :label="__('Save draft')"
         :loading="save.loading"
         :disabled="!draft.title || !spaces.length"
         @click="submit"
@@ -42,12 +42,12 @@
       class="mt-12 flex flex-col items-center gap-3 px-6 text-center text-base text-ink-gray-5"
     >
       <span>
-        A procedure needs a space to live in — its code becomes the procedure number.
+        {{ __('A procedure needs a space to live in — its code becomes the procedure number.') }}
       </span>
       <Button
         variant="solid"
         icon-left="lucide-plus"
-        label="Create a space"
+        :label="__('Create a space')"
         @click="ui.spaceDialog = true"
       />
     </div>
@@ -57,14 +57,14 @@
       <FormControl
         type="text"
         size="lg"
-        placeholder="Title — what this procedure covers"
+        :placeholder="__('Title — what this procedure covers')"
         v-model="draft.title"
       />
       <div class="grid gap-3 sm:grid-cols-2">
-        <FormControl type="select" label="Space" :options="spaceOptions" v-model="draft.space" />
+        <FormControl type="select" :label="__('Space')" :options="spaceOptions" v-model="draft.space" />
         <FormControl
           type="select"
-          label="Process"
+          :label="__('Process')"
           :options="processOptions"
           v-model="draft.process"
         />
@@ -72,8 +72,8 @@
 
       <FormControl
         type="text"
-        label="Summary"
-        placeholder="One line, shown in search results"
+        :label="__('Summary')"
+        :placeholder="__('One line, shown in search results')"
         v-model="draft.summary"
       />
     </div>

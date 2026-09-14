@@ -1,12 +1,12 @@
 <template>
-  <Dialog v-model:open="open" title="Send for approval" size="md">
+  <Dialog v-model:open="open" :title="__('Send for approval')" size="md">
     <template #default>
       <div class="flex flex-col gap-4">
         <ErrorMessage :message="error" />
 
         <div class="flex flex-col gap-2">
           <div class="flex items-center justify-between">
-            <span class="text-sm text-ink-gray-5">Who signs it off</span>
+            <span class="text-sm text-ink-gray-5">{{ __('Who signs it off') }}</span>
             <Badge v-if="chosen.length" variant="subtle" size="sm">
               {{ chosen.length }} to sign
             </Badge>
@@ -30,12 +30,12 @@
 
               <Select v-model="row.approval_role" :options="ROLES" size="sm" class="w-36" />
 
-              <Tooltip text="Take them off the list">
+              <Tooltip :text="__('Take them off the list')">
                 <Button
                   variant="ghost"
                   size="sm"
                   icon="lucide-x"
-                  label="Remove"
+                  :label="__('Remove')"
                   @click="chosen.splice(index, 1)"
                 />
               </Tooltip>
@@ -46,7 +46,7 @@
             v-else
             class="rounded-4 border border-dashed border-outline-gray-2 px-3 py-5 text-center text-sm text-ink-gray-5"
           >
-            Nobody chosen yet. Add whoever has to sign this off.
+            {{ __('Nobody chosen yet. Add whoever has to sign this off.') }}
           </p>
         </div>
 
@@ -55,7 +55,7 @@
             :options="candidates"
             :modelValue="null"
             :loading="people.loading"
-            placeholder="Search people by name or email"
+            :placeholder="__('Search people by name or email')"
             @update:modelValue="add"
             @update:query="lookup"
           />
@@ -63,7 +63,7 @@
 
         <p class="flex items-start gap-2 text-sm text-ink-gray-5">
           <span class="lucide-info mt-0.5 size-4 shrink-0" aria-hidden="true" />
-          Every person listed has to approve before the procedure comes into force.
+          {{ __('Every person listed has to approve before the procedure comes into force.') }}
         </p>
       </div>
     </template>
@@ -72,7 +72,7 @@
       <div class="flex justify-end gap-2">
         <Button
           variant="solid"
-          label="Send for approval"
+          :label="__('Send for approval')"
           :loading="loading"
           :disabled="!chosen.length"
           @click="emit('submit', payload())"

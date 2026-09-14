@@ -24,6 +24,7 @@ import { useSection } from '@/composables/useSection'
 import { activeSpace, spaces } from '@/data/navigation'
 import { trainingCounts } from '@/data/training'
 import { useUI } from '@/stores/ui'
+import { translate as __ } from '@/translation'
 
 const router = useRouter()
 const ui = useUI()
@@ -46,7 +47,7 @@ const menuItems = computed(() => {
   if (section.value === 'training') {
     return [
       {
-        label: 'Plan a session',
+        label: __('Plan a session'),
         icon: 'lucide-calendar-plus',
         onClick: () => {
           router.push('/training/sessions')
@@ -54,7 +55,7 @@ const menuItems = computed(() => {
         },
       },
       {
-        label: 'Write a training rule',
+        label: __('Write a training rule'),
         icon: 'lucide-scroll-text',
         onClick: () => router.push('/training/rules'),
       },
@@ -63,24 +64,24 @@ const menuItems = computed(() => {
 
   return [
     {
-      label: 'Add a process here',
+      label: __('Add a process here'),
       icon: 'lucide-workflow',
       onClick: () => ui.askForProcess({ space: activeSpace.value }),
       condition: () => !!activeSpace.value,
     },
     {
-      label: 'Start from a template',
+      label: __('Start from a template'),
       icon: 'lucide-sparkles',
       onClick: () => (ui.templateDialog = true),
       condition: () => !!activeSpace.value,
     },
     {
-      label: 'New space',
+      label: __('New space'),
       icon: 'lucide-plus',
       onClick: () => (ui.spaceDialog = true),
     },
     {
-      label: 'Manage spaces',
+      label: __('Manage spaces'),
       icon: 'lucide-settings',
       onClick: () => ui.openSettings('spaces'),
     },

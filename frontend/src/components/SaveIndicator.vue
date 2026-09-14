@@ -4,21 +4,21 @@
       <Tooltip :text="error">
         <span class="flex items-center gap-1.5 text-sm text-ink-red-3">
           <span class="lucide-triangle-alert size-3.5" aria-hidden="true" />
-          Not saved
+          {{ __('Not saved') }}
         </span>
       </Tooltip>
-      <Button variant="ghost" size="sm" label="Try again" @click="emit('retry')" />
+      <Button variant="ghost" size="sm" :label="__('Try again')" @click="emit('retry')" />
     </template>
 
     <span v-else-if="loading" class="flex items-center gap-1.5 text-sm text-ink-gray-5">
       <span class="lucide-loader-circle size-3.5 animate-spin" aria-hidden="true" />
-      Saving
+      {{ __('Saving') }}
     </span>
 
     <Tooltip v-else-if="dirty" :text="hint">
       <span class="flex items-center gap-1.5 text-sm text-ink-gray-5">
         <span class="size-1.5 rounded-full bg-surface-amber-3" aria-hidden="true" />
-        Unsaved changes
+        {{ __('Unsaved changes') }}
       </span>
     </Tooltip>
 

@@ -4,7 +4,7 @@
       <template #prefix>
         <span class="lucide-graduation-cap size-4" aria-hidden="true" />
       </template>
-      <span class="flex-1 truncate text-sm">My training</span>
+      <span class="flex-1 truncate text-sm">{{ __('My training') }}</span>
       <template #suffix>
         <span
           v-if="trainingCounts.data?.open"
@@ -20,7 +20,7 @@
       <template #prefix>
         <span class="lucide-grid-3x3 size-4" aria-hidden="true" />
       </template>
-      <span class="flex-1 truncate text-sm">Training matrix</span>
+      <span class="flex-1 truncate text-sm">{{ __('Training matrix') }}</span>
     </SidebarItem>
 
     <SidebarItem
@@ -30,14 +30,14 @@
       <template #prefix>
         <span class="lucide-users size-4" aria-hidden="true" />
       </template>
-      <span class="flex-1 truncate text-sm">Sessions</span>
+      <span class="flex-1 truncate text-sm">{{ __('Sessions') }}</span>
     </SidebarItem>
 
     <SidebarItem :active="route.name === 'TrainingRules'" @click="router.push('/training/rules')">
       <template #prefix>
         <span class="lucide-scroll-text size-4" aria-hidden="true" />
       </template>
-      <span class="flex-1 truncate text-sm">Rules</span>
+      <span class="flex-1 truncate text-sm">{{ __('Rules') }}</span>
     </SidebarItem>
   </nav>
 </template>

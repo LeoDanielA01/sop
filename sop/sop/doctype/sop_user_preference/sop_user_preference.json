@@ -28,7 +28,7 @@
   },
   {
    "default": "1",
-   "description": "Single-key shortcuts like n for a new procedure.",
+   "description": "Ctrl combinations for creating, finding and jumping around.",
    "fieldname": "shortcuts",
    "fieldtype": "Check",
    "label": "Keyboard Shortcuts"

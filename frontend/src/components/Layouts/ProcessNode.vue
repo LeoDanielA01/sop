@@ -14,13 +14,13 @@
     <span class="flex-1 truncate text-sm">{{ node.title }}</span>
 
     <template #suffix>
-      <Tooltip text="Add a process inside this one">
+      <Tooltip :text="__('Add a process inside this one')">
         <Button
           variant="ghost"
           size="sm"
           class="!size-5 !p-0 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100"
           icon="lucide-plus"
-          label="Add a step"
+          :label="__('Add a step')"
           @click.stop="emit('add', node)"
         />
       </Tooltip>

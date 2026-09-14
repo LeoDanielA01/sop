@@ -1,53 +1,53 @@
 <template>
   <SettingsDialog v-model:open="open" v-model:tab="ui.settingsTab" size="5xl">
     <SettingsSidebar>
-      <SettingsNavGroup label="My settings">
+      <SettingsNavGroup :label="__('My settings')">
         <SettingsNavItem value="preferences">
           <template #prefix>
             <span class="lucide-sliders-horizontal size-4 shrink-0 text-ink-gray-6" />
           </template>
-          Preferences
+          {{ __('Preferences') }}
         </SettingsNavItem>
         <SettingsNavItem value="shortcuts">
           <template #prefix>
             <span class="lucide-keyboard size-4 shrink-0 text-ink-gray-6" />
           </template>
-          Shortcuts
+          {{ __('Shortcuts') }}
         </SettingsNavItem>
         <SettingsNavItem value="notifications">
           <template #prefix>
             <span class="lucide-bell size-4 shrink-0 text-ink-gray-6" />
           </template>
-          Notifications
+          {{ __('Notifications') }}
         </SettingsNavItem>
       </SettingsNavGroup>
 
-      <SettingsNavGroup label="Administration">
+      <SettingsNavGroup :label="__('Administration')">
         <SettingsNavItem value="spaces">
           <template #prefix>
             <span class="lucide-book-text size-4 shrink-0 text-ink-gray-6" />
           </template>
-          Spaces
+          {{ __('Spaces') }}
         </SettingsNavItem>
         <SettingsNavItem value="mentions">
           <template #prefix>
             <span class="lucide-at-sign size-4 shrink-0 text-ink-gray-6" />
           </template>
-          Mention chips
+          {{ __('Mention chips') }}
         </SettingsNavItem>
       </SettingsNavGroup>
     </SettingsSidebar>
 
     <SettingsContent>
       <SettingsPanel value="preferences">
-        <SettingsHeader title="Preferences" />
+        <SettingsHeader :title="__('Preferences')" />
         <SettingsBody>
           <ErrorMessage :message="preferencesError" class="pt-4" />
 
           <div class="divide-y divide-outline-gray-1 pt-6">
             <SettingsRow
-              title="Appearance"
-              description="Choose a light, dark, or system-matched interface"
+              :title="__('Appearance')"
+              :description="__('Choose a light, dark, or system-matched interface')"
             >
               <TabButtons
                 :options="[
@@ -60,8 +60,8 @@
               />
             </SettingsRow>
             <SettingsRow
-              title="Save as you type"
-              description="Keep a draft saved a couple of seconds after you stop typing"
+              :title="__('Save as you type')"
+              :description="__('Keep a draft saved a couple of seconds after you stop typing')"
             >
               <Switch
                 :model-value="!!preferences.autosave"
@@ -69,8 +69,8 @@
               />
             </SettingsRow>
             <SettingsRow
-              title="Rows per page"
-              description="How many procedures a list page shows before it pages"
+              :title="__('Rows per page')"
+              :description="__('How many procedures a list page shows before it pages')"
             >
               <Select
                 :model-value="String(preferences.rows_per_page)"
@@ -84,14 +84,14 @@
 
       <SettingsPanel value="shortcuts">
         <SettingsHeader
-          title="Shortcuts"
-          description="Press ? anywhere to bring this list up"
+          :title="__('Shortcuts')"
+          :description="__('Press Ctrl and / anywhere to bring this list up')"
         />
         <SettingsBody>
           <div class="divide-y divide-outline-gray-1 pt-6">
             <SettingsRow
-              title="Single-key shortcuts"
-              description="Keys like n and f work when you are not typing"
+              :title="__('Creating and jumping around')"
+              :description="__('The Ctrl combinations under Do and Go to. Search, sidebar and save always work.')"
             >
               <Switch
                 :model-value="!!preferences.shortcuts"
@@ -102,7 +102,7 @@
 
           <div class="mt-6 flex flex-col gap-5">
             <div v-for="group in groups" :key="group.name">
-              <p class="mb-2 text-sm text-ink-gray-5">{{ group.name }}</p>
+              <p class="mb-2 text-sm text-ink-gray-5">{{ __(group.name) }}</p>
 
               <div class="divide-y divide-outline-gray-1 rounded-4 border border-outline-gray-2">
                 <div
@@ -110,7 +110,7 @@
                   :key="row.label"
                   class="flex items-center justify-between gap-4 px-3 py-2"
                 >
-                  <span class="min-w-0 truncate text-base text-ink-gray-7">{{ row.label }}</span>
+                  <span class="min-w-0 truncate text-base text-ink-gray-7">{{ __(row.label) }}</span>
 
                   <span class="flex shrink-0 items-center gap-1">
                     <kbd
@@ -118,7 +118,7 @@
                       :key="key"
                       class="rounded-3 bg-surface-gray-2 px-1.5 py-0.5 font-mono text-xs text-ink-gray-7"
                     >
-                      {{ key === 'mod' ? modKey : key }}
+                      {{ KEYS[key] || key }}
                     </kbd>
                   </span>
                 </div>
@@ -130,14 +130,14 @@
 
       <SettingsPanel value="notifications">
         <SettingsHeader
-          title="Notifications"
-          description="What reaches your inbox. Everything still shows in the app."
+          :title="__('Notifications')"
+          :description="__('What reaches your inbox. Everything still shows in the app.')"
         />
         <SettingsBody>
           <div class="divide-y divide-outline-gray-1 pt-6">
             <SettingsRow
-              title="Approval requests"
-              description="When a procedure is waiting for your sign-off"
+              :title="__('Approval requests')"
+              :description="__('When a procedure is waiting for your sign-off')"
             >
               <Switch
                 :model-value="!!preferences.email_on_approval"
@@ -145,8 +145,8 @@
               />
             </SettingsRow>
             <SettingsRow
-              title="Newly effective procedures"
-              description="When a procedure you have to follow comes into force"
+              :title="__('Newly effective procedures')"
+              :description="__('When a procedure you have to follow comes into force')"
             >
               <Switch
                 :model-value="!!preferences.email_on_publish"
@@ -154,15 +154,15 @@
               />
             </SettingsRow>
             <SettingsRow
-              title="Training reminders"
-              description="Before training of yours falls overdue"
+              :title="__('Training reminders')"
+              :description="__('Before training of yours falls overdue')"
             >
               <Switch
                 :model-value="!!preferences.email_on_training"
                 @update:model-value="(value) => setPreference('email_on_training', value ? 1 : 0)"
               />
             </SettingsRow>
-            <SettingsRow title="Review digest" description="A summary of what is due for review">
+            <SettingsRow :title="__('Review digest')" :description="__('A summary of what is due for review')">
               <Select
                 :model-value="preferences.digest"
                 :options="['Off', 'Weekly', 'Monthly']"
@@ -175,11 +175,11 @@
 
       <SettingsPanel value="spaces">
         <SettingsHeader
-          title="Spaces"
-          description="A space is a binder, and it numbers everything inside it"
+          :title="__('Spaces')"
+          :description="__('A space is a binder, and it numbers everything inside it')"
         >
           <template #actions>
-            <Button variant="solid" icon-left="lucide-plus" label="New space" @click="newSpace" />
+            <Button variant="solid" icon-left="lucide-plus" :label="__('New space')" @click="newSpace" />
           </template>
         </SettingsHeader>
         <SettingsBody>
@@ -190,9 +190,9 @@
             :row-height="56"
           >
             <ListHeader>
-              <ListHeaderCell>Space</ListHeaderCell>
-              <ListHeaderCell>Visibility</ListHeaderCell>
-              <ListHeaderCell>Needs review</ListHeaderCell>
+              <ListHeaderCell>{{ __('Space') }}</ListHeaderCell>
+              <ListHeaderCell>{{ __('Visibility') }}</ListHeaderCell>
+              <ListHeaderCell>{{ __('Needs review') }}</ListHeaderCell>
             </ListHeader>
             <ListRows :items="spaces" v-slot="{ item: space }">
               <ListRow>
@@ -212,25 +212,25 @@
                   <Badge v-if="space.overdue" theme="red" variant="subtle" size="sm">
                     {{ space.overdue }} overdue
                   </Badge>
-                  <span v-else class="text-base text-ink-gray-5">Up to date</span>
+                  <span v-else class="text-base text-ink-gray-5">{{ __('Up to date') }}</span>
                 </ListCell>
               </ListRow>
             </ListRows>
           </List>
 
           <p v-else class="px-3 py-10 text-center text-base text-ink-gray-5">
-            No spaces yet. Create one and its code — QA, PROD, HR — becomes the procedure number.
+            {{ __('No spaces yet. Create one and its code — QA, PROD, HR — becomes the procedure number.') }}
           </p>
         </SettingsBody>
       </SettingsPanel>
 
       <SettingsPanel value="mentions">
         <SettingsHeader
-          title="Mention chips"
-          description="What a mentioned record shows to whoever reads the procedure"
+          :title="__('Mention chips')"
+          :description="__('What a mentioned record shows to whoever reads the procedure')"
         >
           <template #actions>
-            <Button icon-left="lucide-plus" label="Add doctype" @click="addMentionConfig" />
+            <Button icon-left="lucide-plus" :label="__('Add doctype')" @click="addMentionConfig" />
           </template>
         </SettingsHeader>
         <SettingsBody>
@@ -241,9 +241,9 @@
             :row-height="52"
           >
             <ListHeader>
-              <ListHeaderCell>Doctype</ListHeaderCell>
-              <ListHeaderCell>Status field</ListHeaderCell>
-              <ListHeaderCell>State</ListHeaderCell>
+              <ListHeaderCell>{{ __('Doctype') }}</ListHeaderCell>
+              <ListHeaderCell>{{ __('Status field') }}</ListHeaderCell>
+              <ListHeaderCell>{{ __('State') }}</ListHeaderCell>
             </ListHeader>
             <ListRows :items="configs" v-slot="{ item: config }">
               <ListRow @click="editMentionConfig(config)">
@@ -265,7 +265,7 @@
           </List>
 
           <p v-else class="px-3 py-10 text-center text-base text-ink-gray-5">
-            Nothing configured. Until a doctype is set up here, a mention reads as plain text.
+            {{ __('Nothing configured. Until a doctype is set up here, a mention reads as plain text.') }}
           </p>
         </SettingsBody>
       </SettingsPanel>
@@ -305,7 +305,13 @@ import { SHORTCUTS } from '@/composables/useShortcuts'
 const open = defineModel('open', { type: Boolean, default: false })
 const ui = useUI()
 
-const modKey = navigator.platform.toLowerCase().includes('mac') ? '⌘' : 'Ctrl'
+const onMac = navigator.platform.toLowerCase().includes('mac')
+
+const KEYS = {
+  mod: onMac ? '⌘' : 'Ctrl',
+  alt: onMac ? '⌥' : 'Alt',
+  shift: onMac ? '⇧' : 'Shift',
+}
 
 const groups = computed(() => {
   const names = [...new Set(SHORTCUTS.map((row) => row.group))]

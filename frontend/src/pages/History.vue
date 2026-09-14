@@ -6,7 +6,7 @@
     <Button
       variant="ghost"
       icon-left="lucide-arrow-left"
-      label="Back to the procedure"
+      :label="__('Back to the procedure')"
       @click="router.push(`/${route.params.name}`)"
     />
   </PageHeader>
@@ -25,7 +25,7 @@
             </div>
             <div class="mt-1.5 truncate text-base text-ink-gray-5">
               {{ row.cause || 'Direct edit' }}
-              <template v-if="row.is_material"> · material change</template>
+              <template v-if="row.is_material"> {{ __('· material change') }}</template>
             </div>
           </div>
         </ListCell>
@@ -45,7 +45,7 @@
       v-if="!revisions.loading && !rows.length"
       class="mt-16 text-center text-base text-ink-gray-5"
     >
-      No revisions yet. The first one is cut when this procedure becomes effective.
+      {{ __('No revisions yet. The first one is cut when this procedure becomes effective.') }}
     </p>
   </div>
 </template>

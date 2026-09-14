@@ -4,7 +4,7 @@
     <Button
       variant="solid"
       icon-left="lucide-plus"
-      label="Plan a session"
+      :label="__('Plan a session')"
       @click="plan(null)"
     />
   </PageHeader>
@@ -66,10 +66,9 @@
       <span class="lucide-users size-6 text-ink-gray-4" aria-hidden="true" />
       <p class="text-base text-ink-gray-7">No sessions {{ status ? `marked ${status.toLowerCase()}` : 'yet' }}</p>
       <p class="max-w-[24rem] text-sm text-ink-gray-5">
-        A session is classroom or on-the-job training for a group. Marking who attended closes their
-        assignments for the procedures it covers.
+        {{ __('A session is classroom or on-the-job training for a group. Marking who attended closes their assignments for the procedures it covers.') }}
       </p>
-      <Button variant="subtle" icon-left="lucide-plus" label="Plan a session" @click="plan(null)" />
+      <Button variant="subtle" icon-left="lucide-plus" :label="__('Plan a session')" @click="plan(null)" />
     </div>
   </div>
 
@@ -125,14 +124,13 @@
             v-if="!detail.attendees.length"
             class="px-3 py-6 text-center text-sm text-ink-gray-5"
           >
-            Nobody is on the list yet. Edit the session to add people.
+            {{ __('Nobody is on the list yet. Edit the session to add people.') }}
           </p>
         </div>
 
         <p class="flex items-start gap-2 text-sm text-ink-gray-5">
           <span class="lucide-info mt-0.5 size-4 shrink-0" aria-hidden="true" />
-          Saving attendance closes the open assignments of everyone marked competent, for every
-          procedure this session covers.
+          {{ __('Saving attendance closes the open assignments of everyone marked competent, for every procedure this session covers.') }}
         </p>
 
         <ErrorMessage :message="attendance.error?.messages?.[0]" />
@@ -144,7 +142,7 @@
         <Button
           v-if="detail?.can_run && detail?.status !== 'Cancelled'"
           variant="ghost"
-          label="Cancel session"
+          :label="__('Cancel session')"
           :loading="cancel.loading"
           @click="cancel.submit({ name: detail.name })"
         />
@@ -152,13 +150,13 @@
           v-if="detail?.can_run"
           variant="subtle"
           icon-left="lucide-pencil"
-          label="Edit"
+          :label="__('Edit')"
           @click="plan(detail)"
         />
         <Button
           v-if="detail?.can_run"
           variant="solid"
-          label="Save attendance"
+          :label="__('Save attendance')"
           :loading="attendance.loading"
           :disabled="!detail?.attendees.length"
           @click="record"

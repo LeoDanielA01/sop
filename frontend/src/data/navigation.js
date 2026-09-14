@@ -1,6 +1,7 @@
 import { createResource } from 'frappe-ui'
 import { computed, ref, watch } from 'vue'
 import { createRetryingResource } from '@/data/resource'
+import { translate as __ } from '@/translation'
 
 export const SECTIONS = [
   { key: 'procedures', label: 'Procedures', icon: 'lucide-book-text', route: '/' },
@@ -32,16 +33,16 @@ export const attention = computed(() => viewsResource.data?.attention || 0)
 export const views = computed(() => {
   const counts = viewsResource.data || {}
   return [
-    { label: 'Awaiting my approval', value: 'approval', icon: 'lucide-stamp', count: counts.approval },
-    { label: 'My drafts', value: 'drafts', icon: 'lucide-pencil-line', count: counts.drafts },
+    { label: __('Awaiting my approval'), value: 'approval', icon: 'lucide-stamp', count: counts.approval },
+    { label: __('My drafts'), value: 'drafts', icon: 'lucide-pencil-line', count: counts.drafts },
     {
-      label: 'Unacknowledged',
+      label: __('Unacknowledged'),
       value: 'unacknowledged',
       icon: 'lucide-check-check',
       count: counts.unacknowledged,
     },
     {
-      label: 'Due for review',
+      label: __('Due for review'),
       value: 'review',
       icon: 'lucide-calendar-clock',
       count: counts.review,

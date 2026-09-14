@@ -7,6 +7,16 @@ app_license = "mit"
 
 required_apps = ["frappe"]
 
+add_to_apps_screen = [
+	{
+		"name": "sop",
+		"logo": "/assets/sop/images/sop-mark.svg",
+		"title": "Procedures",
+		"route": "/sop",
+		"has_permission": "sop.api.session.can_use_app",
+	}
+]
+
 website_route_rules = [
 	{"from_route": "/sop/<path:app_path>", "to_route": "sop"},
 ]

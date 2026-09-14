@@ -10,14 +10,14 @@
             variant="ghost"
             size="md"
             autocomplete="off"
-            placeholder="Search a procedure, or a record one mentions"
+            :placeholder="__('Search a procedure, or a record one mentions')"
             v-model="query"
             @update:modelValue="onInput"
             @keydown.down.prevent="move(1)"
             @keydown.up.prevent="move(-1)"
             @keydown.enter.prevent="choose(active)"
           />
-          <Badge v-if="search.loading" variant="subtle" theme="gray" size="sm" label="Searching" />
+          <Badge v-if="search.loading" variant="subtle" theme="gray" size="sm" :label="__('Searching')" />
         </div>
 
         <div ref="scroller" class="max-h-96 overflow-auto px-2 py-2">
@@ -52,8 +52,7 @@
           </div>
 
           <p v-if="empty" class="px-3 py-10 text-center text-base text-ink-gray-5">
-            Nothing matches that. Search by title, by procedure number, or by the code of anything a
-            procedure mentions.
+            {{ __('Nothing matches that. Search by title, by procedure number, or by the code of anything a procedure mentions.') }}
           </p>
         </div>
 
@@ -69,18 +68,18 @@
               class="lucide-move-down size-5 rounded-3 bg-surface-gray-2 p-1"
               aria-hidden="true"
             />
-            <span>to move</span>
+            <span>{{ __('to move') }}</span>
           </div>
           <div class="flex items-center gap-2">
             <span
               class="lucide-corner-down-left size-5 rounded-3 bg-surface-gray-2 p-1"
               aria-hidden="true"
             />
-            <span>to open</span>
+            <span>{{ __('to open') }}</span>
           </div>
           <div class="ml-auto flex items-center gap-2">
             <span class="rounded-3 bg-surface-gray-2 px-1.5 py-0.5">esc</span>
-            <span>to close</span>
+            <span>{{ __('to close') }}</span>
           </div>
         </div>
       </div>
@@ -93,6 +92,7 @@ import { computed, nextTick, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { Badge, Dialog, TextInput, createResource, debounce } from 'frappe-ui'
 import { SECTIONS, activeSpace, spaces, views } from '@/data/navigation'
+import { translate as __ } from '@/translation'
 
 const show = defineModel('open', { type: Boolean, default: false })
 
@@ -121,19 +121,19 @@ const search = createResource({
 
 const jumpTo = computed(() => [
   {
-    title: 'Jump to',
+    title: __('Jump to'),
     items: [
       ...SECTIONS.map((section) => ({
         label: section.label,
         icon: section.icon,
         route: section.route,
       })),
-      { label: 'New procedure', icon: 'lucide-plus', route: '/new' },
-      { label: 'Training matrix', icon: 'lucide-grid-3x3', route: '/training/matrix' },
+      { label: __('New procedure'), icon: 'lucide-plus', route: '/new' },
+      { label: __('Training matrix'), icon: 'lucide-grid-3x3', route: '/training/matrix' },
     ],
   },
   {
-    title: 'My work',
+    title: __('My work'),
     items: views.value
       .filter((view) => view.count)
       .map((view) => ({
@@ -144,7 +144,7 @@ const jumpTo = computed(() => [
       })),
   },
   {
-    title: 'Spaces',
+    title: __('Spaces'),
     items: spaces.value.map((space) => ({
       label: space.title,
       icon: 'lucide-book-text',

@@ -1,5 +1,5 @@
 <template>
-  <Dialog v-model:open="open" title="Start from a template" size="sm">
+  <Dialog v-model:open="open" :title="__('Start from a template')" size="sm">
     <template #default>
       <div class="flex flex-col gap-3">
         <ErrorMessage :message="applyTemplate.error?.messages?.[0]" />
@@ -9,12 +9,12 @@
           alone, so it is safe to run twice.
         </p>
 
-        <FormControl type="select" label="Template" :options="options" v-model="template" />
+        <FormControl type="select" :label="__('Template')" :options="options" v-model="template" />
         <p v-if="note" class="text-sm text-ink-gray-6">{{ note }}</p>
 
         <FormControl
           type="checkbox"
-          label="Also start a draft procedure on every process"
+          :label="__('Also start a draft procedure on every process')"
           v-model="withDrafts"
         />
       </div>
@@ -23,7 +23,7 @@
       <div class="flex justify-end gap-2">
         <Button
           variant="solid"
-          label="Add the processes"
+          :label="__('Add the processes')"
           :loading="applyTemplate.loading"
           :disabled="!template"
           @click="submit"

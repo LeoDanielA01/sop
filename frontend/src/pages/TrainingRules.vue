@@ -1,13 +1,12 @@
 <template>
   <PageHeader>
     <AppBreadcrumbs :tail="[{ label: 'Rules' }]" />
-    <Button variant="solid" icon-left="lucide-plus" label="New rule" @click="edit(null)" />
+    <Button variant="solid" icon-left="lucide-plus" :label="__('New rule')" @click="edit(null)" />
   </PageHeader>
 
   <div class="mx-auto mt-5 w-full max-w-[940px] px-3 pb-10 sm:px-5">
     <p class="mb-4 text-sm text-ink-gray-5">
-      A rule decides who has to be trained on what. It runs whenever a procedure comes into force
-      and again when training expires.
+      {{ __('A rule decides who has to be trained on what. It runs whenever a procedure comes into force and again when training expires.') }}
     </p>
 
     <List class="-mx-3 sm:list-gap-4">
@@ -16,7 +15,7 @@
           <div class="min-w-0 flex-1">
             <div class="truncate leading-none text-ink-gray-8">
               <span class="text-base">{{ row.who }}</span>
-              <span class="text-ink-gray-5"> must train on </span>
+              <span class="text-ink-gray-5"> {{ __('must train on') }} </span>
               <span class="text-base">{{ row.covers }}</span>
             </div>
             <div class="mt-1.5 flex min-w-0 items-center gap-2 text-base text-ink-gray-5">
@@ -43,11 +42,11 @@
               @click.stop
             />
           </Tooltip>
-          <Tooltip text="Assign it now to everyone it covers">
+          <Tooltip :text="__('Assign it now to everyone it covers')">
             <Button
               variant="ghost"
               icon="lucide-play"
-              label="Run now"
+              :label="__('Run now')"
               :loading="run.loading && running === row.name"
               @click.stop="trigger(row)"
             />
@@ -63,12 +62,12 @@
       class="mt-10 flex flex-col items-center gap-2 rounded-4 border border-dashed border-outline-gray-2 px-4 py-10 text-center"
     >
       <span class="lucide-scroll-text size-6 text-ink-gray-4" aria-hidden="true" />
-      <p class="text-base text-ink-gray-7">No rules yet</p>
+      <p class="text-base text-ink-gray-7">{{ __('No rules yet') }}</p>
       <p class="max-w-[26rem] text-sm text-ink-gray-5">
         Without a rule, training only happens when somebody assigns it by hand. A rule says
         something like "everyone on the Plant Floor team trains on every Manufacturing procedure".
       </p>
-      <Button variant="subtle" icon-left="lucide-plus" label="New rule" @click="edit(null)" />
+      <Button variant="subtle" icon-left="lucide-plus" :label="__('New rule')" @click="edit(null)" />
     </div>
   </div>
 
@@ -80,7 +79,7 @@
         <div class="grid gap-3 sm:grid-cols-2">
           <FormControl
             type="select"
-            label="Applies to"
+            :label="__('Applies to')"
             :options="['Role', 'Team', 'User', 'Designation', 'Department']"
             v-model="draft.applies_to"
           />
@@ -97,46 +96,46 @@
           </div>
           <FormControl
             type="select"
-            label="Covers"
+            :label="__('Covers')"
             :options="['Space', 'Procedure']"
             v-model="draft.scope"
           />
           <FormControl
             v-if="draft.scope === 'Space'"
             type="select"
-            label="Space"
+            :label="__('Space')"
             :options="spaceOptions"
             v-model="draft.space"
           />
           <div v-else class="flex flex-col gap-1.5">
-            <FormLabel label="Procedure" />
+            <FormLabel :label="__('Procedure')" />
             <Combobox
               :options="procedureOptions"
               :modelValue="draft.sop"
               :loading="picks.loading"
-              placeholder="Search procedures"
+              :placeholder="__('Search procedures')"
               @update:modelValue="(value) => (draft.sop = value)"
               @update:query="searchProcedures"
             />
           </div>
           <FormControl
             type="select"
-            label="How they train"
+            :label="__('How they train')"
             :options="METHODS"
             v-model="draft.method"
           />
-          <FormControl type="number" label="Due within (days)" v-model="draft.due_days" />
+          <FormControl type="number" :label="__('Due within (days)')" v-model="draft.due_days" />
           <FormControl
             type="number"
-            label="Repeat every (months)"
+            :label="__('Repeat every (months)')"
             v-model="draft.refresher_months"
           />
-          <FormControl type="number" label="Pass mark %" v-model="draft.pass_mark" />
+          <FormControl type="number" :label="__('Pass mark %')" v-model="draft.pass_mark" />
         </div>
 
         <FormControl
           type="checkbox"
-          label="An assessment decides whether they passed"
+          :label="__('An assessment decides whether they passed')"
           v-model="draft.requires_assessment"
         />
       </div>
@@ -148,13 +147,13 @@
           v-if="draft.name"
           variant="ghost"
           theme="red"
-          label="Delete"
+          :label="__('Delete')"
           :loading="remove.loading"
           @click="remove.submit({ name: draft.name })"
         />
         <Button
           variant="solid"
-          label="Save rule"
+          :label="__('Save rule')"
           :loading="save.loading"
           :disabled="!draft.target || (draft.scope === 'Space' ? !draft.space : !draft.sop)"
           @click="submit"

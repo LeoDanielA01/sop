@@ -2,9 +2,15 @@
 # For license information, please see license.txt
 
 import frappe
-from frappe.utils import add_days, now_datetime, nowdate
+from frappe.utils import add_days, nowdate
 
-from sop import templates
+from sop.api import lifecycle
+from sop.api import procedures as procedures_api
+from sop.api import processes as processes_api
+from sop.api import requirements as requirements_api
+from sop.api import review as review_api
+from sop.api import sessions as sessions_api
+from sop.api import training as training_api
 
 PEOPLE = [
 	("priya.nair@example.com", "Priya", "Nair", ["SOP Manager", "SOP Approver"]),
@@ -135,37 +141,10 @@ PROCEDURES = [
 ]
 
 SHAPES = {
-	"Completed": {
-		"method": "Read & Understand",
-		"assigned": -20,
-		"due": -6,
-		"outcome": "Competent",
-		"tasks": [("Read the procedure", "Read Procedure", True)],
-	},
-	"In Progress": {
-		"method": "On the Job",
-		"assigned": -8,
-		"due": 6,
-		"outcome": "Pending",
-		"tasks": [
-			("Read the procedure", "Read Procedure", True),
-			("Carry out the procedure under supervision", "Practical", False),
-		],
-	},
-	"Assigned": {
-		"method": "Read & Understand",
-		"assigned": -2,
-		"due": 12,
-		"outcome": "Pending",
-		"tasks": [("Read the procedure", "Read Procedure", False)],
-	},
-	"Overdue": {
-		"method": "Read & Understand",
-		"assigned": -30,
-		"due": -9,
-		"outcome": "Pending",
-		"tasks": [("Read the procedure", "Read Procedure", False)],
-	},
+	"Completed": {"method": "Read & Understand", "due": -6, "outcome": "Competent", "done": 1},
+	"In Progress": {"method": "On the Job", "due": 6, "outcome": "Pending", "done": 1},
+	"Assigned": {"method": "Read & Understand", "due": 12, "outcome": "Pending", "done": 0},
+	"Overdue": {"method": "Read & Understand", "due": -9, "outcome": "Pending", "done": 0},
 }
 
 
@@ -190,20 +169,29 @@ def install(force=0):
 
 	people = ensure_people()
 	ensure_team(people)
+	manager = people[0]
 
 	spaces = {
-		"MFG": ensure_space("Manufacturing", "MFG", "How the plant makes, checks and packs what it ships."),
-		"QA": ensure_space("Quality", "QA", "How the plant proves what it shipped was right."),
+		"MFG": ensure_space(
+			manager,
+			"Manufacturing",
+			"MFG",
+			"How the plant makes, checks and packs what it ships.",
+			template="manufacturing",
+		),
+		"QA": ensure_space(
+			manager, "Quality", "QA", "How the plant proves what it shipped was right."
+		),
 	}
 
-	templates.apply_template(spaces["MFG"], "manufacturing")
-	seed_quality_processes(spaces["QA"])
+	seed_quality_processes(manager, spaces["QA"])
 
 	created = []
 	for definition in PROCEDURES:
 		created.append(build(definition, spaces, people))
 
 	seed_training(spaces["MFG"], people)
+	seed_session(people)
 	frappe.db.commit()
 
 	return {"space": list(spaces.values()), "procedures": created, "people": [p[0] for p in PEOPLE]}
@@ -260,32 +248,48 @@ def ensure_team(people):
 	return doc.name
 
 
-def ensure_space(title, code, description):
+def ensure_space(manager, title, code, description, template=None):
 	existing = frappe.db.get_value("SOP Space", {"space_code": code}, "name")
 	if existing:
 		return existing
 
-	return (
-		frappe.get_doc(
-			{
-				"doctype": "SOP Space",
-				"title": title,
-				"space_code": code,
-				"visibility": "Public",
-				"review_interval_months": 12,
-				"description": description,
-			}
-		)
-		.insert(ignore_permissions=True)
-		.name
+	space = as_user(
+		manager,
+		procedures_api.create_space,
+		title=title,
+		space_code=code,
+		description=description,
+		template=template,
 	)
 
+	return space["name"]
 
-def seed_quality_processes(space):
-	for index, (group, steps) in enumerate(QUALITY_PROCESSES, start=1):
-		parent = templates.ensure_process(space, group, None, index * 10)
-		for position, step in enumerate(steps, start=1):
-			templates.ensure_process(space, step, parent, position * 10)
+
+def seed_quality_processes(manager, space):
+	for index, (group, children) in enumerate(QUALITY_PROCESSES, start=1):
+		parent = ensure_process(manager, space, group, None, index * 10)
+
+		for position, child in enumerate(children, start=1):
+			ensure_process(manager, space, child, parent, position * 10)
+
+
+def ensure_process(manager, space, title, parent, sequence):
+	existing = frappe.db.get_value(
+		"SOP Process", {"space": space, "title": title, "parent_process": parent}, "name"
+	)
+	if existing:
+		return existing
+
+	process = as_user(
+		manager,
+		processes_api.create_process,
+		title=title,
+		space=space,
+		parent=parent,
+		sequence=sequence,
+	)
+
+	return process["name"]
 
 
 def build(definition, spaces, people):
@@ -294,27 +298,24 @@ def build(definition, spaces, people):
 		"SOP Process", {"space": space, "title": definition["process"]}, "name"
 	)
 
-	doc = frappe.get_doc(
-		{
-			"doctype": "SOP",
-			"title": definition["title"],
-			"space": space,
-			"sop_process": process,
-			"summary": definition["summary"],
-			"content": definition["content"],
-			"process_owner": people[1],
-			"is_controlled": 1,
-			"risk_level": "High" if definition["space"] == "MFG" else "Medium",
-		}
+	draft = as_user(
+		people[1],
+		procedures_api.save_draft,
+		space=space,
+		title=definition["title"],
+		summary=definition["summary"],
+		content=definition["content"],
+		process=process,
+		risk_level="High" if definition["space"] == "MFG" else "Medium",
+		is_controlled=1,
 	)
-	doc.insert(ignore_permissions=True)
 
 	for tag in definition["tags"]:
-		add_tag(tag, "SOP", doc.name)
+		add_tag(tag, "SOP", draft["name"])
 
-	advance(doc, definition["state"], people, definition.get("effective_since", -40))
+	advance(draft["name"], definition["state"], people, definition.get("effective_since", -40))
 
-	return doc.name
+	return draft["name"]
 
 
 def add_tag(tag, doctype, name):
@@ -323,9 +324,7 @@ def add_tag(tag, doctype, name):
 	tag_it(tag, doctype, name)
 
 
-def advance(doc, state, people, since=-40):
-	from sop.api import lifecycle
-
+def advance(sop, state, people, since=-40):
 	if state == "draft":
 		return
 
@@ -334,29 +333,42 @@ def advance(doc, state, people, since=-40):
 		{"approver": frappe.session.user, "approval_role": "Approver"},
 	]
 
+	as_user(people[1], lifecycle.send_for_approval, sop, approvers)
+
 	if state == "in_review":
-		as_user(people[1], lifecycle.send_for_approval, doc.name, approvers)
+		as_user(
+			people[0],
+			review_api.add_comment,
+			sop,
+			"Name the form this produces — an operator should not have to guess.",
+		)
 		return
 
-	as_user(people[1], lifecycle.send_for_approval, doc.name, approvers)
-	as_user(people[0], lifecycle.decide, doc.name, "Approved", "Reads correctly.")
-	as_user(frappe.session.user, lifecycle.decide, doc.name, "Approved")
+	as_user(people[0], lifecycle.decide, sop, "Approved", "Reads correctly.")
+	as_user(frappe.session.user, lifecycle.decide, sop, "Approved")
 
 	if state == "approved":
 		return
 
-	lifecycle.publish(
-		doc.name,
+	as_user(
+		people[0],
+		lifecycle.publish,
+		sop,
 		effective_from=add_days(nowdate(), since),
 		change_summary="First controlled issue.",
 		is_material=1,
 	)
 
 	if state == "retired":
-		lifecycle.retire(doc.name, "Superseded by the plant-wide sampling procedure.")
+		as_user(
+			people[0],
+			lifecycle.retire,
+			sop,
+			"Superseded by the plant-wide sampling procedure.",
+		)
 		return
 
-	sign(doc.name, people[2:])
+	sign(sop, people[2:])
 
 
 def as_user(user, fn, *args, **kwargs):
@@ -373,101 +385,101 @@ def sign(sop, users):
 	version = frappe.db.get_value("SOP", sop, "version")
 
 	for user in users:
-		if frappe.db.exists("SOP Acknowledgement", {"sop": sop, "version": version, "user": user}):
-			continue
-
-		frappe.get_doc(
-			{
-				"doctype": "SOP Acknowledgement",
-				"sop": sop,
-				"version": version,
-				"user": user,
-				"acknowledged_at": now_datetime(),
-				"method": "Web",
-			}
-		).insert(ignore_permissions=True)
+		as_user(user, procedures_api.acknowledge, sop, version)
 
 
 def seed_training(space, people):
-	requirement = ensure_requirement(space)
+	manager, author, trainer, reader = people
+	requirement = ensure_requirement(manager, space)
+
 	effective = frappe.get_all(
-		"SOP", filters={"space": space, "status": "Effective"}, fields=["name", "version", "title"],
+		"SOP", filters={"space": space, "status": "Effective"}, pluck="name",
 		limit_page_length=0,
 	)
 	if not effective:
 		return
 
-	trainees = [frappe.session.user] + people[1:]
+	trainees = [frappe.session.user, author, trainer, reader]
 
-	for index, procedure in enumerate(effective):
+	for index, sop in enumerate(effective):
 		for position, trainee in enumerate(trainees):
 			state = ("Completed", "In Progress", "Assigned", "Overdue")[(index + position) % 4]
-			assign(procedure, trainee, requirement, state)
+			assign(manager, trainer, sop, trainee, state)
+
+	as_user(manager, requirements_api.run_requirement, requirement)
 
 
-def ensure_requirement(space):
+def ensure_requirement(manager, space):
 	existing = frappe.db.get_value(
 		"SOP Training Requirement", {"scope": "Space", "space": space, "applies_to": "Team"}, "name"
 	)
 	if existing:
 		return existing
 
-	return (
-		frappe.get_doc(
-			{
-				"doctype": "SOP Training Requirement",
-				"enabled": 1,
-				"applies_to": "Team",
-				"team": TEAM,
-				"scope": "Space",
-				"space": space,
-				"method": "Read & Understand",
-				"due_days": 14,
-				"refresher_months": 12,
-			}
-		)
-		.insert(ignore_permissions=True)
-		.name
+	requirement = as_user(
+		manager,
+		requirements_api.save_requirement,
+		enabled=1,
+		applies_to="Team",
+		team=TEAM,
+		scope="Space",
+		space=space,
+		method="Read & Understand",
+		due_days=14,
+		refresher_months=12,
 	)
 
+	return requirement["name"]
 
-def assign(procedure, trainee, requirement, state):
-	if frappe.db.exists(
-		"SOP Training Assignment",
-		{"sop": procedure.name, "trainee": trainee, "version": procedure.version},
-	):
-		return
 
+def assign(manager, trainer, sop, trainee, state):
 	shape = SHAPES[state]
 
-	doc = frappe.get_doc(
-		{
-			"doctype": "SOP Training Assignment",
-			"sop": procedure.name,
-			"version": procedure.version,
-			"trainee": trainee,
-			"requirement": requirement,
-			"method": shape["method"],
-			"assigned_on": add_days(nowdate(), shape["assigned"]),
-			"due_on": add_days(nowdate(), shape["due"]),
-			"outcome": shape["outcome"],
-			"assessed_by": frappe.session.user if shape["outcome"] != "Pending" else None,
-			"tasks": [task(text, kind, done, trainee) for text, kind, done in shape["tasks"]],
-		}
+	created = as_user(
+		manager,
+		training_api.assign,
+		sop=sop,
+		trainees=[trainee],
+		method=shape["method"],
+		due_days=shape["due"],
 	)
-	doc.insert(ignore_permissions=True)
+	if not created:
+		return None
 
-	return doc.name
+	name = created[0]
+
+	for idx in range(1, shape["done"] + 1):
+		as_user(trainee, training_api.complete_task, name, idx)
+
+	if shape["outcome"] != "Pending":
+		assessor = manager if trainee == trainer else trainer
+		as_user(assessor, training_api.record_outcome, name, shape["outcome"])
+
+	return name
 
 
-def task(text, kind, done, trainee):
-	return {
-		"task": text,
-		"task_type": kind,
-		"completed": 1 if done else 0,
-		"completed_on": now_datetime() if done else None,
-		"completed_by": trainee if done else None,
-	}
+def seed_session(people):
+	manager, author, trainer, reader = people
+
+	covered = frappe.get_all(
+		"SOP", filters={"status": "Effective"}, pluck="name", order_by="creation asc",
+		limit_page_length=2,
+	)
+	if not covered or frappe.db.count("SOP Training Session"):
+		return
+
+	as_user(
+		trainer,
+		sessions_api.save_session,
+		title="Line clearance refresher",
+		trainer=trainer,
+		scheduled_on=f"{add_days(nowdate(), 5)} 09:30:00",
+		location="Training room, block B",
+		method="Classroom",
+		procedures=covered,
+		attendees=[author, reader],
+		notes="Walk the line after the classroom half. Bring a spare clearance record.",
+	)
 
 
 def status():
@@ -519,10 +531,18 @@ def clear():
 
 	procedures = frappe.get_all("SOP", filters={"space": ("in", spaces)}, pluck="name", limit_page_length=0)
 
+	assignments = frappe.get_all(
+		"SOP Training Assignment",
+		filters={"sop": ("in", procedures or [""])},
+		pluck="name",
+		limit_page_length=0,
+	)
+
 	for doctype, field in (
 		("SOP Training Assignment", "sop"),
 		("SOP Acknowledgement", "sop"),
 		("SOP Revision", "sop"),
+		("SOP Review Comment", "sop"),
 	):
 		for name in frappe.get_all(doctype, filters={field: ("in", procedures or [""])}, pluck="name", limit_page_length=0):
 			frappe.delete_doc(doctype, name, force=True, ignore_permissions=True)
@@ -539,9 +559,46 @@ def clear():
 	for name in deepest_first(spaces):
 		frappe.delete_doc("SOP Process", name, force=True, ignore_permissions=True)
 
+	frappe.db.delete(
+		"Notification Log",
+		{
+			"document_type": ("in", ["SOP", "SOP Training Assignment"]),
+			"document_name": ("in", (procedures + assignments) or [""]),
+		},
+	)
+
+	for name in sessions_covering(procedures):
+		frappe.delete_doc("SOP Training Session", name, force=True, ignore_permissions=True)
+
+	for name in spaces:
+		frappe.delete_doc("SOP Space", name, force=True, ignore_permissions=True)
+
 	frappe.db.commit()
 
 	return {"cleared": len(procedures), "spaces": spaces}
+
+
+def reset():
+	cleared = clear()
+	seeded = install(force=1)
+
+	return {"cleared": cleared, "seeded": seeded, "status": status()}
+
+
+def sessions_covering(procedures):
+	if not procedures:
+		return []
+
+	return list(
+		set(
+			frappe.get_all(
+				"SOP Session Procedure",
+				filters={"sop": ("in", procedures), "parenttype": "SOP Training Session"},
+				pluck="parent",
+				limit_page_length=0,
+			)
+		)
+	)
 
 
 def deepest_first(spaces):

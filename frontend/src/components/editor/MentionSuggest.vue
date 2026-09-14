@@ -41,8 +41,8 @@
       </div>
 
       <div class="border-t border-outline-gray-1 px-3 py-1.5 text-xs text-ink-gray-5">
-        <template v-if="stage === 'doctype'">Pick a type, then search its records</template>
-        <template v-else>↑ ↓ to move · ⏎ to insert · esc to dismiss</template>
+        <template v-if="stage === 'doctype'">{{ __('Pick a type, then search its records') }}</template>
+        <template v-else>{{ __('↑ ↓ to move · ⏎ to insert · esc to dismiss') }}</template>
       </div>
     </div>
   </Teleport>

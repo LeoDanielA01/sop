@@ -8,7 +8,7 @@
         v-if="!onList"
         variant="ghost"
         icon="lucide-arrow-left"
-        label="Back"
+        :label="__('Back')"
         @click="router.back()"
       />
       <Button
@@ -21,8 +21,8 @@
 
       <div class="flex-1" />
 
-      <Button variant="ghost" icon="lucide-search" label="Search" @click="ui.searchDialog = true" />
-      <Button variant="ghost" label="Notifications" @click="ui.notificationsPanel = true">
+      <Button variant="ghost" icon="lucide-search" :label="__('Search')" @click="ui.searchDialog = true" />
+      <Button variant="ghost" :label="__('Notifications')" @click="ui.notificationsPanel = true">
         <span class="relative">
           <span class="lucide-bell size-5 text-ink-gray-7" aria-hidden="true" />
           <span
@@ -32,7 +32,7 @@
           />
         </span>
       </Button>
-      <Button variant="ghost" label="Account" @click="ui.profileDialog = true">
+      <Button variant="ghost" :label="__('Account')" @click="ui.profileDialog = true">
         <Avatar :image="session.user.image" :label="session.user.full_name" size="sm" />
       </Button>
     </header>
@@ -75,7 +75,7 @@
       </Button>
     </nav>
 
-    <Dialog v-model:open="showSpaces" title="Spaces" size="sm">
+    <Dialog v-model:open="showSpaces" :title="__('Spaces')" size="sm">
       <template #default>
         <div class="flex flex-col gap-1">
           <Button
@@ -91,7 +91,7 @@
           </Button>
 
           <template v-if="tree.length">
-            <div class="mt-2 px-2 text-sm text-ink-gray-5">Processes</div>
+            <div class="mt-2 px-2 text-sm text-ink-gray-5">{{ __('Processes') }}</div>
             <Button
               v-for="node in tree"
               :key="node.name"
@@ -109,10 +109,10 @@
             </Button>
           </template>
 
-          <Button variant="subtle" icon-left="lucide-plus" label="New space" @click="newSpace" />
+          <Button variant="subtle" icon-left="lucide-plus" :label="__('New space')" @click="newSpace" />
 
           <p v-if="!spaces.length" class="px-2 pb-2 pt-4 text-center text-sm text-ink-gray-5">
-            A space is a binder — QA, Production, HR. Procedures are numbered from its code.
+            {{ __('A space is a binder — QA, Production, HR. Procedures are numbered from its code.') }}
           </p>
         </div>
       </template>
@@ -131,6 +131,7 @@ import { unreadCount } from '@/data/notifications'
 import { session } from '@/data/session'
 import { trainingCounts } from '@/data/training'
 import { useUI } from '@/stores/ui'
+import { translate as __ } from '@/translation'
 
 const route = useRoute()
 const router = useRouter()
@@ -146,7 +147,7 @@ const bottom = computed(() => [
   { label: 'Procedures', icon: 'lucide-book-text', value: 'all' },
   { label: 'Approvals', icon: 'lucide-stamp', value: 'approval', count: views.value[0]?.count },
   {
-    label: 'Training',
+    label: __('Training'),
     icon: 'lucide-graduation-cap',
     route: '/training',
     count: trainingCounts.data?.open,

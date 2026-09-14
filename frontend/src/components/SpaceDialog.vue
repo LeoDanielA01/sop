@@ -1,34 +1,34 @@
 <template>
-  <Dialog v-model:open="open" title="New space" size="sm">
+  <Dialog v-model:open="open" :title="__('New space')" size="sm">
     <template #default>
       <div class="flex flex-col gap-3">
         <ErrorMessage :message="createSpace.error?.messages?.[0]" />
 
         <FormControl
           type="text"
-          label="Name"
-          placeholder="Quality Assurance"
+          :label="__('Name')"
+          :placeholder="__('Quality Assurance')"
           v-model="title"
           @update:modelValue="touchCode"
         />
         <FormControl
           type="text"
-          label="Code"
+          :label="__('Code')"
           :description="`Procedures here are numbered SOP-${code || 'CODE'}-0001`"
           :modelValue="code"
           @update:modelValue="setCode"
         />
         <FormControl
           type="select"
-          label="Who can see it"
+          :label="__('Who can see it')"
           :options="['Public', 'Team', 'Private']"
           v-model="visibility"
         />
-        <FormControl type="number" label="Review every (months)" v-model="reviewMonths" />
+        <FormControl type="number" :label="__('Review every (months)')" v-model="reviewMonths" />
 
         <FormControl
           type="select"
-          label="Start from"
+          :label="__('Start from')"
           :options="templateOptions"
           v-model="template"
         />
@@ -37,7 +37,7 @@
           <p class="text-sm text-ink-gray-6">{{ templateNote }}</p>
           <FormControl
             type="checkbox"
-            label="Also start a draft procedure on every process"
+            :label="__('Also start a draft procedure on every process')"
             v-model="withDrafts"
           />
         </div>
@@ -47,7 +47,7 @@
       <div class="flex justify-end gap-2">
         <Button
           variant="solid"
-          label="Create space"
+          :label="__('Create space')"
           :loading="createSpace.loading"
           :disabled="!title"
           @click="submit"

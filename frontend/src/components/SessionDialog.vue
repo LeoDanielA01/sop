@@ -6,34 +6,34 @@
 
         <FormControl
           type="text"
-          label="What it covers"
-          placeholder="Line clearance, morning shift"
+          :label="__('What it covers')"
+          :placeholder="__('Line clearance, morning shift')"
           v-model="draft.title"
         />
 
         <div class="grid gap-3 sm:grid-cols-2">
           <div class="flex flex-col gap-1.5">
-            <FormLabel label="Date" />
-            <DatePicker v-model="draft.date" placeholder="Pick a day" />
+            <FormLabel :label="__('Date')" />
+            <DatePicker v-model="draft.date" :placeholder="__('Pick a day')" />
           </div>
 
           <div class="flex flex-col gap-1.5">
-            <FormLabel label="Time" />
-            <TimePicker v-model="draft.time" placeholder="Pick a time" />
+            <FormLabel :label="__('Time')" />
+            <TimePicker v-model="draft.time" :placeholder="__('Pick a time')" />
           </div>
 
-          <FormControl type="select" label="How it runs" :options="METHODS" v-model="draft.method" />
-          <FormControl type="text" label="Where" placeholder="Line 2" v-model="draft.location" />
+          <FormControl type="select" :label="__('How it runs')" :options="METHODS" v-model="draft.method" />
+          <FormControl type="text" :label="__('Where')" :placeholder="__('Line 2')" v-model="draft.location" />
         </div>
 
         <div class="flex flex-col gap-1.5">
-          <FormLabel label="Procedures covered" />
+          <FormLabel :label="__('Procedures covered')" />
 
           <Combobox
             :options="procedureChoices"
             :modelValue="null"
             :loading="options.loading"
-            placeholder="Search procedures"
+            :placeholder="__('Search procedures')"
             @update:modelValue="addProcedure"
           />
 
@@ -51,13 +51,13 @@
         </div>
 
         <div class="flex flex-col gap-1.5">
-          <FormLabel label="Who attends" />
+          <FormLabel :label="__('Who attends')" />
 
           <Combobox
             :options="peopleChoices"
             :modelValue="null"
             :loading="people.loading"
-            placeholder="Search people by name or email"
+            :placeholder="__('Search people by name or email')"
             @update:modelValue="addPerson"
             @update:query="lookup"
           />
@@ -77,8 +77,8 @@
 
         <FormControl
           type="textarea"
-          label="Notes"
-          placeholder="What the trainer should cover"
+          :label="__('Notes')"
+          :placeholder="__('What the trainer should cover')"
           v-model="draft.notes"
         />
       </div>

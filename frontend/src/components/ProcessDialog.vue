@@ -1,5 +1,5 @@
 <template>
-  <Dialog v-model:open="open" title="New process" size="sm">
+  <Dialog v-model:open="open" :title="__('New process')" size="sm">
     <template #default>
       <div class="flex flex-col gap-3">
         <ErrorMessage :message="createProcess.error?.messages?.[0]" />
@@ -8,15 +8,15 @@
           <template v-if="ui.processDialog.parentTitle">
             Inside {{ ui.processDialog.parentTitle }}.
           </template>
-          <template v-else>A top-level process in this space.</template>
-          Procedures can sit on any process, at any depth.
+          <template v-else>{{ __('A top-level process in this space.') }}</template>
+          {{ __('Procedures can sit on any process, at any depth.') }}
         </p>
 
-        <FormControl type="text" label="Name" placeholder="Mixing and blending" v-model="title" />
+        <FormControl type="text" :label="__('Name')" :placeholder="__('Mixing and blending')" v-model="title" />
         <FormControl
           type="number"
-          label="Sequence"
-          description="Order among its siblings — lower comes first"
+          :label="__('Sequence')"
+          :description="__('Order among its siblings — lower comes first')"
           v-model="sequence"
         />
       </div>
@@ -25,7 +25,7 @@
       <div class="flex justify-end gap-2">
         <Button
           variant="solid"
-          label="Add process"
+          :label="__('Add process')"
           :loading="createProcess.loading"
           :disabled="!title"
           @click="submit"

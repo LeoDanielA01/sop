@@ -6,7 +6,7 @@
       <span class="whitespace-nowrap text-sm text-ink-gray-5">
         Page {{ page }} of {{ totalPages }}
       </span>
-      <span class="hidden text-sm text-ink-gray-5 sm:inline">Rows per page</span>
+      <span class="hidden text-sm text-ink-gray-5 sm:inline">{{ __('Rows per page') }}</span>
       <Select
         :modelValue="String(pageLength)"
         :options="['10', '20', '50', '100']"
@@ -21,14 +21,14 @@
       <Button
         variant="ghost"
         icon="lucide-chevrons-left"
-        label="First page"
+        :label="__('First page')"
         :disabled="page === 1"
         @click="go(1)"
       />
       <Button
         variant="ghost"
         icon="lucide-chevron-left"
-        label="Previous page"
+        :label="__('Previous page')"
         :disabled="page === 1"
         @click="go(page - 1)"
       />
@@ -53,14 +53,14 @@
       <Button
         variant="ghost"
         icon="lucide-chevron-right"
-        label="Next page"
+        :label="__('Next page')"
         :disabled="page === totalPages"
         @click="go(page + 1)"
       />
       <Button
         variant="ghost"
         icon="lucide-chevrons-right"
-        label="Last page"
+        :label="__('Last page')"
         :disabled="page === totalPages"
         @click="go(totalPages)"
       />

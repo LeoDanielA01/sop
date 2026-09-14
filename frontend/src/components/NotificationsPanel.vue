@@ -12,25 +12,25 @@
     <Transition
       enter-active-class="transition-transform duration-200 ease-out"
       leave-active-class="transition-transform duration-150 ease-in"
-      enter-from-class="translate-x-full"
-      leave-to-class="translate-x-full"
+      enter-from-class="-translate-x-full"
+      leave-to-class="-translate-x-full"
     >
       <aside
         v-if="open"
-        class="fixed inset-y-0 right-0 z-20 flex w-full flex-col border-l border-outline-gray-2 bg-surface-base shadow-2xl sm:w-[26rem]"
+        class="fixed inset-y-0 left-0 z-20 flex w-full flex-col border-r border-outline-gray-2 bg-surface-base shadow-2xl sm:left-[50px] sm:w-[26rem]"
       >
         <div class="flex items-center gap-2 px-4 pb-2 pt-3.5">
-          <span class="text-lg font-semibold text-ink-gray-9">Notifications</span>
+          <span class="text-lg font-semibold text-ink-gray-9">{{ __('Notifications') }}</span>
           <Badge v-if="counts.total" theme="red" variant="subtle" size="sm">
             {{ counts.total }}
           </Badge>
 
           <div class="flex-1" />
 
-          <Tooltip text="Mark everything as read">
+          <Tooltip :text="__('Mark everything as read')">
             <Button
               variant="ghost"
-              label="Mark everything as read"
+              :label="__('Mark everything as read')"
               :disabled="!counts.total"
               :loading="read.loading"
               @click="markAll"
@@ -41,12 +41,12 @@
             </Button>
           </Tooltip>
 
-          <Tooltip text="Close">
-            <Button variant="ghost" icon="lucide-x" label="Close" @click="open = false" />
+          <Tooltip :text="__('Close')">
+            <Button variant="ghost" icon="lucide-x" :label="__('Close')" @click="open = false" />
           </Tooltip>
         </div>
 
-        <TabButtons v-model="tab" :options="TABS" class="notify-tabs px-3 pb-1" @update:modelValue="load" />
+        <TabButtons v-model="tab" :options="tabs" class="notify-tabs px-3 pb-1" @update:modelValue="load" />
 
         <div class="min-h-0 flex-1 overflow-y-auto">
           <ListSkeleton v-if="feed.loading && !rows.length" class="px-4 pt-3" :rows="5" />
@@ -118,8 +118,8 @@
             >
               <span class="lucide-bell size-5 text-ink-gray-5" />
             </span>
-            <p class="mt-3 text-base font-medium text-ink-gray-7">{{ empty.title }}</p>
-            <p class="mt-1 text-sm text-ink-gray-5">{{ empty.line }}</p>
+            <p class="mt-3 text-base font-medium text-ink-gray-7">{{ __(empty.title) }}</p>
+            <p class="mt-1 text-sm text-ink-gray-5">{{ __(empty.line) }}</p>
           </div>
         </div>
       </aside>
@@ -133,6 +133,7 @@ import { useRouter } from 'vue-router'
 import { Avatar, Badge, Button, TabButtons, Tooltip } from 'frappe-ui'
 import ListSkeleton from '@/components/ListSkeleton.vue'
 import { feed, counts, read, unreadResource } from '@/data/notifications'
+import { translate as __ } from '@/translation'
 import { STATUS_THEME, dayLabel, shortDate } from '@/utils/format'
 
 const TABS = [
@@ -155,6 +156,8 @@ const router = useRouter()
 const tab = ref('all')
 
 const rows = computed(() => feed.data || [])
+
+const tabs = computed(() => TABS.map((row) => ({ ...row, label: __(row.label) })))
 
 const empty = computed(() => EMPTY[tab.value] || EMPTY.all)
 

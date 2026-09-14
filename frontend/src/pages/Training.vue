@@ -5,7 +5,7 @@
       v-if="compact"
       variant="ghost"
       icon-left="lucide-grid-3x3"
-      label="Training matrix"
+      :label="__('Training matrix')"
       @click="router.push('/training/matrix')"
     />
   </PageHeader>
@@ -33,7 +33,7 @@
             <div class="mt-1.5 flex min-w-0 items-center gap-2 text-base text-ink-gray-5">
               <span class="shrink-0 font-mono text-sm">{{ row.sop_no }}</span>
               <span class="shrink-0">· {{ row.method }}</span>
-              <Badge v-if="row.is_refresher" variant="subtle" size="sm">Refresher</Badge>
+              <Badge v-if="row.is_refresher" variant="subtle" size="sm">{{ __('Refresher') }}</Badge>
             </div>
           </div>
         </ListCell>
@@ -59,7 +59,7 @@
       v-if="!assignments.loading && !rows.length"
       class="mt-16 text-center text-base text-ink-gray-5"
     >
-      Nothing outstanding. Training lands here when a procedure you follow is published or expires.
+      {{ __('Nothing outstanding. Training lands here when a procedure you follow is published or expires.') }}
     </p>
   </div>
 
@@ -83,7 +83,7 @@
         <Button
           variant="subtle"
           icon-left="lucide-book-open"
-          label="Open the procedure"
+          :label="__('Open the procedure')"
           @click="router.push(`/${detail.sop}`)"
         />
 
@@ -108,13 +108,13 @@
                 </template>
               </div>
             </div>
-            <Tooltip v-if="task.verified_by" text="Someone else has to witness this one">
+            <Tooltip v-if="task.verified_by" :text="__('Someone else has to witness this one')">
               <span class="lucide-shield-check size-4 text-ink-gray-4" aria-hidden="true" />
             </Tooltip>
             <Button
               v-if="!task.completed"
               variant="subtle"
-              label="Done"
+              :label="__('Done')"
               :loading="tick.loading"
               @click="tick.submit({ name: detail.name, idx: task.idx })"
             />
@@ -126,42 +126,42 @@
           class="flex items-center justify-between rounded-4 border border-outline-gray-2 px-3 py-2"
         >
           <div class="text-sm text-ink-gray-6">
-            Record the outcome
+            {{ __('Record the outcome') }}
             <template v-if="detail.requires_assessment">
               — pass mark {{ detail.pass_mark }}%
             </template>
           </div>
-          <Button variant="solid" label="Assess" @click="outcome.open = true" />
+          <Button variant="solid" :label="__('Assess')" @click="outcome.open = true" />
         </div>
       </div>
     </template>
   </Dialog>
 
-  <Dialog v-model:open="outcome.open" title="Record outcome" size="sm">
+  <Dialog v-model:open="outcome.open" :title="__('Record outcome')" size="sm">
     <template #default>
       <div class="flex flex-col gap-3">
         <ErrorMessage :message="judge.error?.messages?.[0]" />
         <FormControl
           type="select"
-          label="Outcome"
+          :label="__('Outcome')"
           :options="['Competent', 'Needs More Practice', 'Not Competent']"
           v-model="outcome.value"
         />
         <FormControl
           v-if="detail?.requires_assessment"
           type="number"
-          label="Score %"
+          :label="__('Score %')"
           v-model="outcome.score"
         />
-        <FormControl type="textarea" label="Remarks" v-model="outcome.remarks" />
+        <FormControl type="textarea" :label="__('Remarks')" v-model="outcome.remarks" />
         <p class="text-sm text-ink-gray-5">
-          Recorded against you as the assessor. Nobody can assess their own training.
+          {{ __('Recorded against you as the assessor. Nobody can assess their own training.') }}
         </p>
       </div>
     </template>
     <template #actions>
       <div class="flex justify-end gap-2">
-        <Button variant="solid" label="Save outcome" :loading="judge.loading" @click="save" />
+        <Button variant="solid" :label="__('Save outcome')" :loading="judge.loading" @click="save" />
       </div>
     </template>
   </Dialog>

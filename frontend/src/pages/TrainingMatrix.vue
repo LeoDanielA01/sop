@@ -4,7 +4,7 @@
     <Button
       variant="solid"
       icon-left="lucide-user-plus"
-      label="Assign training"
+      :label="__('Assign training')"
       :disabled="!procedures.length"
       @click="showAssign = true"
     />
@@ -55,10 +55,10 @@
             <th
               class="sticky left-0 z-10 min-w-[13rem] bg-surface-gray-1 px-3 py-2.5 text-left font-medium text-ink-gray-7"
             >
-              Person
+              {{ __('Person') }}
             </th>
             <th class="hidden w-32 px-3 py-2.5 text-left font-medium text-ink-gray-7 sm:table-cell">
-              Trained
+              {{ __('Trained') }}
             </th>
             <th
               v-for="procedure in procedures"
@@ -69,7 +69,7 @@
                 <span class="font-mono text-xs text-ink-gray-5">{{ procedure.sop_no }}</span>
               </Tooltip>
             </th>
-            <th class="px-3 py-2.5 text-right font-medium text-ink-gray-7">Gaps</th>
+            <th class="px-3 py-2.5 text-right font-medium text-ink-gray-7">{{ __('Gaps') }}</th>
           </tr>
         </thead>
 
@@ -138,13 +138,13 @@
         v-if="procedures.length && scope === 'all'"
         variant="subtle"
         icon-left="lucide-user-plus"
-        label="Assign training"
+        :label="__('Assign training')"
         @click="showAssign = true"
       />
       <Button
         v-else-if="scope !== 'all'"
         variant="subtle"
-        label="Show everyone"
+        :label="__('Show everyone')"
         @click="scope = 'all'"
       />
     </div>
@@ -161,6 +161,7 @@ import ListSkeleton from '@/components/ListSkeleton.vue'
 import AssignTrainingDialog from '@/components/AssignTrainingDialog.vue'
 import { activeSpace } from '@/data/navigation'
 import { matrix, trainingCounts } from '@/data/training'
+import { translate as __ } from '@/translation'
 
 const MARK = {
   Completed: { icon: 'lucide-circle-check-big', tone: 'text-ink-green-3', label: 'Trained' },
@@ -193,11 +194,11 @@ const tiles = computed(() => {
   const missing = people.value.reduce((total, person) => total + gaps(person), 0)
 
   return [
-    { label: 'People', value: people.value.length, icon: 'lucide-users' },
-    { label: 'Fully trained', value: trained, icon: 'lucide-circle-check-big' },
-    { label: 'Gaps', value: missing, icon: 'lucide-triangle-alert' },
+    { label: __('People'), value: people.value.length, icon: 'lucide-users' },
+    { label: __('Fully trained'), value: trained, icon: 'lucide-circle-check-big' },
+    { label: __('Gaps'), value: missing, icon: 'lucide-triangle-alert' },
     {
-      label: 'Overdue',
+      label: __('Overdue'),
       value: late,
       icon: 'lucide-calendar-clock',
       tone: late ? 'text-ink-red-3' : null,

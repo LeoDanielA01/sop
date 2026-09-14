@@ -1,6 +1,6 @@
 <template>
   <SidebarRail class="border-r">
-    <SidebarRailItem label="Procedures" @click="router.push('/')">
+    <SidebarRailItem :label="__('Procedures')" @click="router.push('/')">
       <Avatar :image="mark" label="SOP" size="lg" shape="square" class="size-7" />
     </SidebarRailItem>
 
@@ -26,7 +26,7 @@
       />
 
       <SidebarRailItem
-        label="Find and replace"
+        :label="__('Find and replace')"
         variant="ghost"
         icon="lucide-replace"
         @click="ui.replaceDialog = true"
@@ -36,7 +36,7 @@
     <div class="flex flex-col items-center gap-2.5">
       <Dropdown :options="createOptions" side="right" align="end" :offset="8">
         <span class="flex">
-          <SidebarRailItem label="Create" variant="ghost" icon="lucide-plus" />
+          <SidebarRailItem :label="__('Create')" variant="ghost" icon="lucide-plus" />
         </span>
       </Dropdown>
       <SidebarRailItem
@@ -46,13 +46,13 @@
         @click="ui.toggleSidebar"
       />
       <SidebarRailItem
-        label="Search"
+        :label="__('Search')"
         variant="ghost"
         icon="lucide-search"
         @click="ui.searchDialog = true"
       />
       <SidebarRailItem
-        label="Settings"
+        :label="__('Settings')"
         variant="ghost"
         icon="lucide-settings"
         @click="ui.settingsDialog = true"
@@ -63,6 +63,7 @@
           :image="session.user.image"
           :label="session.user.full_name"
           size="lg"
+          shape="square"
           class="size-7"
         />
       </SidebarRailItem>
@@ -81,6 +82,7 @@ import { unreadCount } from '@/data/notifications'
 import { session } from '@/data/session'
 import { trainingCounts } from '@/data/training'
 import { useUI } from '@/stores/ui'
+import { translate as __ } from '@/translation'
 
 const router = useRouter()
 const ui = useUI()
@@ -93,29 +95,29 @@ const badges = computed(() => ({
 
 const createOptions = computed(() => [
   {
-    label: 'Procedure',
+    label: __('Procedure'),
     icon: 'lucide-file-plus-2',
     onClick: () => router.push('/new'),
   },
   {
-    label: 'Procedure from a template',
+    label: __('Procedure from a template'),
     icon: 'lucide-sparkles',
     onClick: () => (ui.templateDialog = true),
     condition: () => !!activeSpace.value,
   },
   {
-    label: 'Process',
+    label: __('Process'),
     icon: 'lucide-workflow',
     onClick: () => ui.askForProcess({ space: activeSpace.value }),
     condition: () => !!activeSpace.value,
   },
   {
-    label: 'Space',
+    label: __('Space'),
     icon: 'lucide-folder-plus',
     onClick: () => (ui.spaceDialog = true),
   },
   {
-    label: 'Training session',
+    label: __('Training session'),
     icon: 'lucide-calendar-plus',
     onClick: () => {
       router.push('/training/sessions')
@@ -123,7 +125,7 @@ const createOptions = computed(() => [
     },
   },
   {
-    label: 'Training rule',
+    label: __('Training rule'),
     icon: 'lucide-scroll-text',
     onClick: () => router.push('/training/rules'),
   },
@@ -131,8 +133,8 @@ const createOptions = computed(() => [
 
 function railLabel(item) {
   const count = badges.value[item.key]
-  if (!count) return item.label
+  if (!count) return __(item.label)
 
-  return `${item.label} — ${count} waiting on you`
+  return `${__(item.label)} — ${count}`
 }
 </script>
