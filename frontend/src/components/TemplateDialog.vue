@@ -1,6 +1,6 @@
 <template>
-  <Dialog v-model="open" :options="{ title: 'Start from a template', size: 'sm' }">
-    <template #body-content>
+  <Dialog v-model:open="open" title="Start from a template" size="sm">
+    <template #default>
       <div class="flex flex-col gap-3">
         <ErrorMessage :message="applyTemplate.error?.messages?.[0]" />
 
@@ -20,13 +20,15 @@
       </div>
     </template>
     <template #actions>
-      <Button
-        variant="solid"
-        label="Add the processes"
-        :loading="applyTemplate.loading"
-        :disabled="!template"
-        @click="submit"
-      />
+      <div class="flex justify-end gap-2">
+        <Button
+          variant="solid"
+          label="Add the processes"
+          :loading="applyTemplate.loading"
+          :disabled="!template"
+          @click="submit"
+        />
+      </div>
     </template>
   </Dialog>
 </template>

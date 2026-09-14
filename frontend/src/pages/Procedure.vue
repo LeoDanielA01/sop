@@ -181,8 +181,8 @@
     @submit="(rows) => send.submit({ sop: doc.name, approvers: rows })"
   />
 
-  <Dialog v-model="showPublish" :options="{ title: 'Bring into force', size: 'sm' }">
-    <template #body-content>
+  <Dialog v-model:open="showPublish" title="Bring into force" size="sm">
+    <template #default>
       <div class="flex flex-col gap-3">
         <ErrorMessage :message="release.error?.messages?.[0]" />
         <FormControl type="date" label="Effective from" v-model="publishOn" />
@@ -200,31 +200,35 @@
       </div>
     </template>
     <template #actions>
-      <Button
-        variant="solid"
-        :label="`Publish Rev ${(doc.version || 0) + 1}`"
-        :loading="release.loading"
-        @click="publish"
-      />
+      <div class="flex justify-end gap-2">
+        <Button
+          variant="solid"
+          :label="`Publish Rev ${(doc.version || 0) + 1}`"
+          :loading="release.loading"
+          @click="publish"
+        />
+      </div>
     </template>
   </Dialog>
 
-  <Dialog v-model="changes.open" :options="{ title: 'Request changes', size: 'sm' }">
-    <template #body-content>
+  <Dialog v-model:open="changes.open" title="Request changes" size="sm">
+    <template #default>
       <div class="flex flex-col gap-3">
         <ErrorMessage :message="decide.error?.messages?.[0]" />
         <FormControl type="textarea" label="What has to change" v-model="changes.comment" />
       </div>
     </template>
     <template #actions>
-      <Button
-        variant="solid"
-        theme="red"
-        label="Send it back"
-        :loading="decide.loading"
-        :disabled="!changes.comment"
-        @click="decide.submit({ sop: doc.name, decision: 'Rejected', comment: changes.comment })"
-      />
+      <div class="flex justify-end gap-2">
+        <Button
+          variant="solid"
+          theme="red"
+          label="Send it back"
+          :loading="decide.loading"
+          :disabled="!changes.comment"
+          @click="decide.submit({ sop: doc.name, decision: 'Rejected', comment: changes.comment })"
+        />
+      </div>
     </template>
   </Dialog>
 </template>

@@ -1,6 +1,6 @@
 <template>
-  <Dialog v-model="open" :options="{ title: 'New space', size: 'sm' }">
-    <template #body-content>
+  <Dialog v-model:open="open" title="New space" size="sm">
+    <template #default>
       <div class="flex flex-col gap-3">
         <ErrorMessage :message="createSpace.error?.messages?.[0]" />
 
@@ -44,13 +44,15 @@
       </div>
     </template>
     <template #actions>
-      <Button
-        variant="solid"
-        label="Create space"
-        :loading="createSpace.loading"
-        :disabled="!title"
-        @click="submit"
-      />
+      <div class="flex justify-end gap-2">
+        <Button
+          variant="solid"
+          label="Create space"
+          :loading="createSpace.loading"
+          :disabled="!title"
+          @click="submit"
+        />
+      </div>
     </template>
   </Dialog>
 </template>

@@ -62,11 +62,11 @@
   </div>
 
   <Dialog
-    :modelValue="!!detail"
-    @update:modelValue="detail = null"
-    :options="{ title: detail?.title || 'Training', size: 'lg' }"
+    :open="!!detail"
+    @update:open="detail = null"
+    :title="detail?.title || 'Training'" size="lg"
   >
-    <template #body-content>
+    <template #default>
       <div v-if="detail" class="flex flex-col gap-4">
         <div class="flex flex-wrap items-center gap-2 text-sm text-ink-gray-5">
           <span class="font-mono">{{ detail.sop_no }}</span>
@@ -135,8 +135,8 @@
     </template>
   </Dialog>
 
-  <Dialog v-model="outcome.open" :options="{ title: 'Record outcome', size: 'sm' }">
-    <template #body-content>
+  <Dialog v-model:open="outcome.open" title="Record outcome" size="sm">
+    <template #default>
       <div class="flex flex-col gap-3">
         <ErrorMessage :message="judge.error?.messages?.[0]" />
         <FormControl
@@ -158,7 +158,9 @@
       </div>
     </template>
     <template #actions>
-      <Button variant="solid" label="Save outcome" :loading="judge.loading" @click="save" />
+      <div class="flex justify-end gap-2">
+        <Button variant="solid" label="Save outcome" :loading="judge.loading" @click="save" />
+      </div>
     </template>
   </Dialog>
 </template>

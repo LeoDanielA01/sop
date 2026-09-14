@@ -1,6 +1,6 @@
 <template>
-  <Dialog v-model="open" :options="{ title: 'Send for approval', size: 'md' }">
-    <template #body-content>
+  <Dialog v-model:open="open" title="Send for approval" size="md">
+    <template #default>
       <div class="flex flex-col gap-3">
         <ErrorMessage :message="error" />
 
@@ -58,13 +58,15 @@
       </div>
     </template>
     <template #actions>
-      <Button
-        variant="solid"
-        label="Send for approval"
-        :loading="loading"
-        :disabled="!chosen.length"
-        @click="emit('submit', payload())"
-      />
+      <div class="flex justify-end gap-2">
+        <Button
+          variant="solid"
+          label="Send for approval"
+          :loading="loading"
+          :disabled="!chosen.length"
+          @click="emit('submit', payload())"
+        />
+      </div>
     </template>
   </Dialog>
 </template>

@@ -1,6 +1,6 @@
 <template>
-  <Dialog v-model="open" :options="{ title: 'Assign training', size: 'md' }">
-    <template #body-content>
+  <Dialog v-model:open="open" title="Assign training" size="md">
+    <template #default>
       <div class="flex flex-col gap-3">
         <ErrorMessage :message="assign.error?.messages?.[0]" />
 
@@ -51,13 +51,15 @@
       </div>
     </template>
     <template #actions>
-      <Button
-        variant="solid"
-        label="Assign"
-        :loading="assign.loading"
-        :disabled="!sop || !chosen.length"
-        @click="submit"
-      />
+      <div class="flex justify-end gap-2">
+        <Button
+          variant="solid"
+          label="Assign"
+          :loading="assign.loading"
+          :disabled="!sop || !chosen.length"
+          @click="submit"
+        />
+      </div>
     </template>
   </Dialog>
 </template>

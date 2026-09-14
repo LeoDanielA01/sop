@@ -52,8 +52,8 @@
       </Button>
     </nav>
 
-    <Dialog v-model="showSpaces" :options="{ title: 'Spaces', size: 'sm' }">
-      <template #body-content>
+    <Dialog v-model:open="showSpaces" title="Spaces" size="sm">
+      <template #default>
         <div class="flex flex-col gap-1">
           <Button
             v-for="row in spaces"

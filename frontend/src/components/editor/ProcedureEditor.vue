@@ -26,8 +26,8 @@
     </div>
   </div>
 
-  <Dialog v-model="picker.open" :options="{ title: PICKER_TITLE[picker.kind], size: 'md' }">
-    <template #body-content>
+  <Dialog v-model:open="picker.open" :title="PICKER_TITLE[picker.kind]" size="md">
+    <template #default>
       <div class="flex flex-col gap-3">
         <Select
           v-if="picker.kind === 'record' && targets.data?.length > 1"

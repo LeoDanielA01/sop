@@ -510,6 +510,39 @@ def task(text, kind, done, trainee):
 	}
 
 
+def status():
+	return {
+		"user": frappe.session.user,
+		"developer_mode": bool(frappe.conf.get("developer_mode")),
+		"demo_enabled": wanted(),
+		"spaces": frappe.get_all("SOP Space", fields=["name", "title", "space_code", "visibility"]),
+		"processes": frappe.db.count("SOP Process"),
+		"procedures": frappe.db.count("SOP"),
+		"by_status": frappe.get_all(
+			"SOP", fields=["status", "count(name) as total"], group_by="status"
+		),
+		"acknowledgements": frappe.db.count("SOP Acknowledgement"),
+		"assignments": frappe.db.count("SOP Training Assignment"),
+		"can_read_spaces": frappe.has_permission("SOP Space", "read"),
+		"spaces_api": len(frappe.call("sop.api.procedures.spaces")),
+		"last_error": last_error(),
+	}
+
+
+def last_error():
+	rows = frappe.get_all(
+		"Error Log",
+		filters={"method": ("like", "%SOP demo%")},
+		fields=["creation", "error"],
+		order_by="creation desc",
+		limit_page_length=1,
+	)
+	if not rows:
+		return None
+
+	return {"at": str(rows[0].creation), "tail": (rows[0].error or "").strip().splitlines()[-6:]}
+
+
 def clear():
 	spaces = frappe.get_all(
 		"SOP Space", filters={"space_code": ("in", ["MFG", "QA"])}, pluck="name"
