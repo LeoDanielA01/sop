@@ -45,7 +45,7 @@
           </Tooltip>
           <span
             v-if="space.overdue"
-            class="mr-1 grid size-4 place-content-center text-xs text-ink-red-3"
+            class="grid size-4 place-content-center text-xs text-ink-red-3"
           >
             {{ space.overdue }}
           </span>
@@ -54,7 +54,7 @@
 
       <div
         v-if="activeSpace === space.name"
-        class="ml-[0.9rem] space-y-0.5 border-l border-outline-gray-2 pl-1.5"
+        class="ml-3 space-y-0.5 border-l border-outline-gray-2 pl-1"
       >
         <ProcessNode
           v-for="node in processes"
@@ -83,23 +83,29 @@
       <div v-for="row in 3" :key="row" class="h-4 animate-pulse rounded bg-surface-gray-2" />
     </div>
 
+    <p v-else-if="spacesResource.error" class="px-2 py-2 text-sm text-ink-gray-5">
+      Spaces are not reachable right now.
+    </p>
+
     <div
-      v-else-if="spacesResource.error"
-      class="flex flex-col items-start gap-1 px-2 py-2 text-sm text-ink-gray-5"
+      v-else-if="!spaces.length"
+      class="mt-1 flex flex-col items-center gap-2 rounded-lg border border-dashed border-outline-gray-2 px-3 py-5 text-center"
     >
-      <p>The spaces did not load.</p>
+      <span class="lucide-library size-5 text-ink-gray-4" aria-hidden="true" />
+      <div>
+        <p class="text-base text-ink-gray-7">No spaces yet</p>
+        <p class="mt-0.5 text-sm text-ink-gray-5">
+          A space is a binder — QA, Manufacturing, HR — and its code numbers every procedure inside
+          it.
+        </p>
+      </div>
       <Button
-        variant="ghost"
-        size="sm"
-        icon-left="lucide-rotate-cw"
-        label="Try again"
-        @click="spacesResource.reload()"
+        variant="subtle"
+        icon-left="lucide-plus"
+        label="New space"
+        @click="ui.spaceDialog = true"
       />
     </div>
-
-    <p v-else-if="!spaces.length" class="px-2 py-2 text-sm text-ink-gray-5">
-      No spaces yet. A space is a binder — QA, Manufacturing, HR.
-    </p>
   </nav>
 
   <div class="mt-4 flex h-7 items-center">

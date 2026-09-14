@@ -1,11 +1,12 @@
 import { createResource } from 'frappe-ui'
 import { computed, ref, watch } from 'vue'
 import { activeSpace } from '@/data/navigation'
+import { createRetryingResource } from '@/data/resource'
 
 export const activeProcess = ref(null)
 export const expanded = ref(new Set())
 
-export const processTree = createResource({
+export const processTree = createRetryingResource({
   url: 'sop.api.processes.tree',
   auto: true,
   makeParams: () => ({ space: activeSpace.value }),

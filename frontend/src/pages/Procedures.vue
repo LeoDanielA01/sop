@@ -122,7 +122,7 @@
 </template>
 
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
   Avatar,
@@ -179,6 +179,8 @@ const rows = computed(() => {
 })
 
 const total = computed(() => procedures.data?.total || 0)
+
+onMounted(() => procedures.reload())
 
 function open(procedure) {
   router.push(`/${procedure.name}`)

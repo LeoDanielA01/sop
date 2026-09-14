@@ -22,30 +22,38 @@
           />
         </div>
 
-        <FormControl
-          type="text"
-          placeholder="Search people to train"
-          v-model="query"
-          @update:modelValue="people.reload()"
-        />
+        <div class="flex items-center gap-2 rounded-lg border border-outline-gray-2 px-2.5">
+          <span class="lucide-search size-4 shrink-0 text-ink-gray-4" aria-hidden="true" />
+          <TextInput
+            class="w-full"
+            variant="ghost"
+            placeholder="Search people by name or email"
+            v-model="query"
+            @update:modelValue="people.reload()"
+          />
+        </div>
 
         <div class="flex max-h-52 flex-col gap-1 overflow-y-auto">
           <Button
             v-for="person in candidates"
             :key="person.name"
             variant="ghost"
-            class="!justify-start"
+            class="!h-auto w-full !justify-start !px-2 !py-1.5"
             @click="add(person)"
           >
             <Avatar :image="person.user_image" :label="person.full_name" size="sm" />
-            <span class="ml-2 min-w-0 flex-1 truncate text-left">{{ person.full_name }}</span>
+            <span class="ml-2.5 min-w-0 flex-1 text-left">
+              <span class="block truncate text-base text-ink-gray-8">{{ person.full_name }}</span>
+              <span class="block truncate text-sm text-ink-gray-5">{{ person.name }}</span>
+            </span>
+            <span class="lucide-plus size-4 shrink-0 text-ink-gray-4" aria-hidden="true" />
           </Button>
 
           <p
             v-if="!people.loading && !candidates.length"
             class="px-2 py-4 text-center text-sm text-ink-gray-5"
           >
-            Nobody left to add.
+            {{ query ? 'Nobody matches that.' : 'Everyone available is already on the list.' }}
           </p>
         </div>
       </div>
@@ -66,7 +74,15 @@
 
 <script setup>
 import { computed, ref, watch } from 'vue'
-import { Avatar, Button, Dialog, ErrorMessage, FormControl, createResource } from 'frappe-ui'
+import {
+  Avatar,
+  Button,
+  Dialog,
+  ErrorMessage,
+  FormControl,
+  TextInput,
+  createResource,
+} from 'frappe-ui'
 
 const open = defineModel('open', { type: Boolean, default: false })
 

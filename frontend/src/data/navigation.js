@@ -1,5 +1,6 @@
 import { createResource } from 'frappe-ui'
 import { computed, ref } from 'vue'
+import { createRetryingResource } from '@/data/resource'
 
 export const SECTIONS = [
   { key: 'procedures', label: 'Procedures', icon: 'lucide-library', route: '/' },
@@ -8,7 +9,7 @@ export const SECTIONS = [
 
 export const activeSpace = ref(null)
 
-export const spacesResource = createResource({
+export const spacesResource = createRetryingResource({
   url: 'sop.api.procedures.spaces',
   auto: true,
   onSuccess(data) {
@@ -18,7 +19,7 @@ export const spacesResource = createResource({
 
 export const spaces = computed(() => spacesResource.data || [])
 
-export const viewsResource = createResource({
+export const viewsResource = createRetryingResource({
   url: 'sop.api.procedures.counts',
   auto: true,
   makeParams: () => ({ space: activeSpace.value }),

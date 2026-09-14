@@ -22,6 +22,23 @@
       </template>
       <span class="flex-1 truncate text-sm">Training matrix</span>
     </SidebarItem>
+
+    <SidebarItem
+      :active="route.name === 'TrainingSessions'"
+      @click="router.push('/training/sessions')"
+    >
+      <template #prefix>
+        <span class="lucide-users size-4" aria-hidden="true" />
+      </template>
+      <span class="flex-1 truncate text-sm">Sessions</span>
+    </SidebarItem>
+
+    <SidebarItem :active="route.name === 'TrainingRules'" @click="router.push('/training/rules')">
+      <template #prefix>
+        <span class="lucide-scroll-text size-4" aria-hidden="true" />
+      </template>
+      <span class="flex-1 truncate text-sm">Rules</span>
+    </SidebarItem>
   </nav>
 </template>
 

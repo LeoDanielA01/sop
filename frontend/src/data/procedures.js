@@ -3,6 +3,7 @@ import { computed, ref, watch } from 'vue'
 import { activeSpace } from '@/data/navigation'
 import { activeProcess } from '@/data/processes'
 import { preferences, setPreference } from '@/data/preferences'
+import { createRetryingResource } from '@/data/resource'
 
 export const page = ref(1)
 export const pageLength = computed({
@@ -12,7 +13,7 @@ export const pageLength = computed({
 export const view = ref('all')
 export const search = ref('')
 
-export const procedures = createResource({
+export const procedures = createRetryingResource({
   url: 'sop.api.procedures.list_procedures',
   auto: true,
   makeParams: () => ({

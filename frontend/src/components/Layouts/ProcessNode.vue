@@ -1,8 +1,7 @@
 <template>
   <SidebarItem :active="activeProcess === node.name" @click="open">
-    <template #prefix>
+    <template v-if="node.children.length" #prefix>
       <Button
-        v-if="node.children.length"
         variant="ghost"
         size="sm"
         class="!size-4 !p-0"
@@ -10,7 +9,6 @@
         :label="isOpen ? 'Collapse' : 'Expand'"
         @click.stop="toggle(node.name)"
       />
-      <span v-else class="size-4 shrink-0" />
     </template>
 
     <span class="flex-1 truncate text-sm">{{ node.title }}</span>
@@ -26,7 +24,7 @@
           @click.stop="emit('add', node)"
         />
       </Tooltip>
-      <span v-if="node.total" class="mr-1 grid size-4 place-content-center text-xs text-ink-gray-5">
+      <span v-if="node.total" class="grid size-4 place-content-center text-xs text-ink-gray-5">
         {{ node.total }}
       </span>
     </template>
@@ -34,7 +32,7 @@
 
   <div
     v-if="isOpen && node.children.length"
-    class="ml-[0.9rem] space-y-0.5 border-l pl-1.5"
+    class="ml-3 space-y-0.5 border-l pl-1"
     :class="holdsActive ? 'border-outline-gray-4' : 'border-outline-gray-2'"
   >
     <ProcessNode

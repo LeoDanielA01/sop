@@ -1,62 +1,99 @@
 <template>
   <Dialog v-model:open="open" title="Send for approval" size="md">
     <template #default>
-      <div class="flex flex-col gap-3">
+      <div class="flex flex-col gap-4">
         <ErrorMessage :message="error" />
 
-        <div v-if="chosen.length" class="flex flex-col gap-1.5">
-          <div
-            v-for="(row, index) in chosen"
-            :key="row.approver"
-            class="flex items-center gap-2 rounded-md border border-outline-gray-2 px-2 py-1.5"
-          >
-            <Avatar :image="row.approver_image" :label="row.approver_name" size="sm" />
-            <span class="min-w-0 flex-1 truncate text-base text-ink-gray-8">
-              {{ row.approver_name }}
-            </span>
-            <Select v-model="row.approval_role" :options="ROLES" />
-            <Button
-              variant="ghost"
-              icon="lucide-x"
-              label="Remove"
-              @click="chosen.splice(index, 1)"
-            />
+        <div class="flex flex-col gap-2">
+          <div class="flex items-center justify-between">
+            <span class="text-sm text-ink-gray-5">Who signs it off</span>
+            <Badge v-if="chosen.length" variant="subtle" size="sm">
+              {{ chosen.length }} to sign
+            </Badge>
           </div>
-        </div>
 
-        <FormControl
-          type="text"
-          placeholder="Search people to add"
-          v-model="query"
-          @update:modelValue="lookup"
-        />
-
-        <div class="flex max-h-56 flex-col gap-1 overflow-y-auto">
-          <Button
-            v-for="person in candidates"
-            :key="person.name"
-            variant="ghost"
-            class="!justify-start"
-            @click="add(person)"
+          <div
+            v-if="chosen.length"
+            class="divide-y divide-outline-gray-1 rounded-lg border border-outline-gray-2"
           >
-            <Avatar :image="person.user_image" :label="person.full_name" size="sm" />
-            <span class="ml-2 min-w-0 flex-1 truncate text-left">{{ person.full_name }}</span>
-            <span class="truncate text-sm text-ink-gray-4">{{ person.name }}</span>
-          </Button>
+            <div
+              v-for="(row, index) in chosen"
+              :key="row.approver"
+              class="flex items-center gap-2.5 px-2.5 py-2"
+            >
+              <Avatar :image="row.approver_image" :label="row.approver_name" size="md" />
+
+              <div class="min-w-0 flex-1">
+                <div class="truncate text-base text-ink-gray-8">{{ row.approver_name }}</div>
+                <div class="truncate text-sm text-ink-gray-5">{{ row.approver }}</div>
+              </div>
+
+              <Select v-model="row.approval_role" :options="ROLES" size="sm" class="w-36" />
+
+              <Tooltip text="Take them off the list">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  icon="lucide-x"
+                  label="Remove"
+                  @click="chosen.splice(index, 1)"
+                />
+              </Tooltip>
+            </div>
+          </div>
 
           <p
-            v-if="!people.loading && !candidates.length"
-            class="px-2 py-4 text-center text-sm text-ink-gray-5"
+            v-else
+            class="rounded-lg border border-dashed border-outline-gray-2 px-3 py-5 text-center text-sm text-ink-gray-5"
           >
-            Nobody left to add.
+            Nobody chosen yet. Add whoever has to sign this off.
           </p>
         </div>
 
-        <p class="text-sm text-ink-gray-5">
-          Everyone listed has to approve before the procedure can come into force.
+        <div class="flex flex-col gap-1.5">
+          <div class="flex items-center gap-2 rounded-lg border border-outline-gray-2 px-2.5">
+            <span class="lucide-search size-4 shrink-0 text-ink-gray-4" aria-hidden="true" />
+            <TextInput
+              class="w-full"
+              variant="ghost"
+              placeholder="Search people by name or email"
+              v-model="query"
+              @update:modelValue="lookup"
+            />
+          </div>
+
+          <div class="flex max-h-52 flex-col gap-0.5 overflow-y-auto">
+            <Button
+              v-for="person in candidates"
+              :key="person.name"
+              variant="ghost"
+              class="!h-auto w-full !justify-start !px-2 !py-1.5"
+              @click="add(person)"
+            >
+              <Avatar :image="person.user_image" :label="person.full_name" size="sm" />
+              <span class="ml-2.5 min-w-0 flex-1 text-left">
+                <span class="block truncate text-base text-ink-gray-8">{{ person.full_name }}</span>
+                <span class="block truncate text-sm text-ink-gray-5">{{ person.name }}</span>
+              </span>
+              <span class="lucide-plus size-4 shrink-0 text-ink-gray-4" aria-hidden="true" />
+            </Button>
+
+            <p
+              v-if="!people.loading && !candidates.length"
+              class="px-2 py-4 text-center text-sm text-ink-gray-5"
+            >
+              {{ query ? 'Nobody matches that.' : 'Everyone available is already on the list.' }}
+            </p>
+          </div>
+        </div>
+
+        <p class="flex items-start gap-2 text-sm text-ink-gray-5">
+          <span class="lucide-info mt-0.5 size-4 shrink-0" aria-hidden="true" />
+          Every person listed has to approve before the procedure comes into force.
         </p>
       </div>
     </template>
+
     <template #actions>
       <div class="flex justify-end gap-2">
         <Button
@@ -75,11 +112,13 @@
 import { computed, ref, watch } from 'vue'
 import {
   Avatar,
+  Badge,
   Button,
   Dialog,
   ErrorMessage,
-  FormControl,
   Select,
+  TextInput,
+  Tooltip,
   createResource,
 } from 'frappe-ui'
 
