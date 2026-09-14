@@ -18,7 +18,7 @@
     <div
       v-if="open && !pinned && editor"
       ref="panel"
-      class="fixed z-50 w-72 rounded-lg border border-outline-gray-2 bg-surface-base p-1 shadow-2xl"
+      class="fixed z-50 w-72 rounded-4 border border-outline-gray-2 bg-surface-base p-1 shadow-2xl"
       :style="{ left: `${position.left}px`, top: `${position.top}px` }"
       role="menu"
     >

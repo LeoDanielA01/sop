@@ -14,7 +14,7 @@
 
           <div
             v-if="chosen.length"
-            class="divide-y divide-outline-gray-1 rounded-lg border border-outline-gray-2 bg-surface-gray-1"
+            class="divide-y divide-outline-gray-1 rounded-4 border border-outline-gray-2 bg-surface-gray-1"
           >
             <div
               v-for="(row, index) in chosen"
@@ -44,7 +44,7 @@
 
           <p
             v-else
-            class="rounded-lg border border-dashed border-outline-gray-2 px-3 py-5 text-center text-sm text-ink-gray-5"
+            class="rounded-4 border border-dashed border-outline-gray-2 px-3 py-5 text-center text-sm text-ink-gray-5"
           >
             Nobody chosen yet. Add whoever has to sign this off.
           </p>

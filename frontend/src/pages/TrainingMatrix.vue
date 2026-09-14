@@ -15,7 +15,7 @@
       <div
         v-for="tile in tiles"
         :key="tile.label"
-        class="rounded-lg border border-outline-gray-2 bg-surface-gray-1 px-3 py-2.5"
+        class="rounded-4 border border-outline-gray-2 bg-surface-gray-1 px-3 py-2.5"
       >
         <div class="flex items-center gap-1.5 text-sm text-ink-gray-5">
           <span :class="tile.icon" class="size-3.5 shrink-0" aria-hidden="true" />
@@ -41,7 +41,7 @@
       </span>
     </div>
 
-    <div v-if="rows.length" class="overflow-x-auto rounded-lg border border-outline-gray-2">
+    <div v-if="rows.length" class="overflow-x-auto rounded-4 border border-outline-gray-2">
       <table class="w-full border-collapse text-sm">
         <thead>
           <tr class="bg-surface-gray-1">
@@ -122,7 +122,7 @@
 
     <div
       v-if="!matrix.loading && !rows.length"
-      class="mt-10 flex flex-col items-center gap-2 rounded-lg border border-dashed border-outline-gray-2 px-4 py-12 text-center"
+      class="mt-10 flex flex-col items-center gap-2 rounded-4 border border-dashed border-outline-gray-2 px-4 py-12 text-center"
     >
       <span class="lucide-grid-3x3 size-6 text-ink-gray-4" aria-hidden="true" />
       <p class="text-base text-ink-gray-7">{{ emptyTitle }}</p>

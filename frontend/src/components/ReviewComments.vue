@@ -1,10 +1,6 @@
 <template>
   <Teleport to="body">
-    <div
-      v-if="spot"
-      class="fixed z-40"
-      :style="{ left: `${spot.left}px`, top: `${spot.top}px` }"
-    >
+    <div v-if="spot" class="fixed z-40" :style="{ left: `${spot.left}px`, top: `${spot.top}px` }">
       <Button
         variant="solid"
         size="sm"
@@ -15,11 +11,17 @@
     </div>
   </Teleport>
 
-  <section v-if="rows.length || draft" class="mt-10">
+  <section v-if="threads.length || draft" class="mt-10">
     <div class="mb-3 flex items-center justify-between">
-      <h2 class="text-lg font-semibold text-ink-gray-8">Review comments</h2>
+      <div class="flex items-center gap-2">
+        <h2 class="text-lg font-semibold text-ink-gray-8">Review</h2>
+        <Badge v-if="openCount" variant="subtle" theme="orange" size="sm">
+          {{ openCount }} open
+        </Badge>
+      </div>
+
       <TabButtons
-        v-if="rows.length"
+        v-if="threads.length"
         v-model="filter"
         :options="[
           { label: 'Open', value: 'Open' },
@@ -28,74 +30,109 @@
       />
     </div>
 
+    <ErrorMessage class="mb-3" :message="add.error?.messages?.[0] || remove.error?.messages?.[0]" />
+
     <div
       v-if="draft"
-      class="mb-3 rounded-lg border border-outline-gray-2 bg-surface-gray-1 px-3 py-3"
+      class="mb-3 overflow-hidden rounded-4 border border-outline-gray-2 bg-surface-base"
     >
-      <p v-if="draft.quote" class="mb-2 border-l-2 border-outline-gray-3 pl-2 text-sm text-ink-gray-6">
-        “{{ draft.quote }}”
+      <p v-if="draft.quote" class="border-b border-outline-gray-1 bg-surface-gray-1 px-3 py-2">
+        <span class="border-l-2 border-outline-amber-2 pl-2 text-sm text-ink-gray-6">
+          {{ draft.quote }}
+        </span>
       </p>
-      <FormControl
-        ref="input"
-        type="textarea"
-        placeholder="What has to change here?"
-        v-model="draft.comment"
-      />
-      <div class="mt-2 flex justify-end gap-2">
-        <Button variant="ghost" size="sm" label="Cancel" @click="draft = null" />
-        <Button
-          variant="solid"
-          size="sm"
-          label="Comment"
-          :loading="add.loading"
-          :disabled="!draft.comment"
-          @click="save"
+
+      <div class="px-3 py-2.5">
+        <FormControl
+          ref="input"
+          type="textarea"
+          placeholder="Leave a comment on this passage"
+          v-model="draft.comment"
         />
+        <div class="mt-2 flex justify-end gap-2">
+          <Button variant="ghost" size="sm" label="Cancel" @click="draft = null" />
+          <Button
+            variant="solid"
+            size="sm"
+            label="Comment"
+            :loading="add.loading"
+            :disabled="!draft.comment"
+            @click="save()"
+          />
+        </div>
       </div>
     </div>
 
-    <div class="flex flex-col gap-2">
+    <div class="flex flex-col gap-3">
       <div
-        v-for="row in shown"
-        :key="row.name"
-        class="rounded-lg border border-outline-gray-2 bg-surface-gray-1 px-3 py-2.5"
-        :class="row.status === 'Resolved' ? 'opacity-60' : ''"
+        v-for="thread in shown"
+        :key="thread.name"
+        class="overflow-hidden rounded-4 border border-outline-gray-2 bg-surface-base"
+        :class="thread.status === 'Resolved' ? 'opacity-70' : ''"
       >
-        <div class="flex items-center gap-2">
-          <Avatar :image="row.image" :label="row.author" size="sm" />
-          <span class="text-base text-ink-gray-8">{{ row.author }}</span>
-          <span class="text-sm text-ink-gray-5">{{ row.when }}</span>
-          <Badge v-if="row.status === 'Resolved'" theme="green" variant="subtle" size="sm">
-            Resolved
-          </Badge>
+        <div
+          v-if="thread.quote"
+          class="border-b border-outline-gray-1 bg-surface-gray-1 px-3 py-2"
+        >
+          <span class="border-l-2 border-outline-amber-2 pl-2 text-sm text-ink-gray-6">
+            {{ thread.quote }}
+          </span>
+        </div>
 
-          <div class="ml-auto flex items-center gap-1">
-            <Tooltip :text="row.status === 'Resolved' ? 'Reopen' : 'Mark resolved'">
-              <Button
-                variant="ghost"
+        <div class="divide-y divide-outline-gray-1">
+          <div v-for="row in [thread, ...thread.replies]" :key="row.name" class="px-3 py-2.5">
+            <div class="flex items-center gap-2">
+              <Avatar :image="row.image" :label="row.author" size="sm" />
+              <span class="text-base text-ink-gray-8">{{ row.author }}</span>
+              <span class="text-sm text-ink-gray-5">{{ row.when }}</span>
+
+              <Badge
+                v-if="row.name === thread.name && thread.status === 'Resolved'"
+                theme="green"
+                variant="subtle"
                 size="sm"
-                :icon="row.status === 'Resolved' ? 'lucide-rotate-ccw' : 'lucide-check'"
-                :label="row.status === 'Resolved' ? 'Reopen' : 'Resolve'"
-                @click="flip(row)"
-              />
-            </Tooltip>
-            <Tooltip v-if="row.is_mine" text="Delete">
-              <Button
-                variant="ghost"
-                size="sm"
-                icon="lucide-trash-2"
-                label="Delete"
-                @click="remove.submit({ name: row.name })"
-              />
-            </Tooltip>
+              >
+                Resolved
+              </Badge>
+
+              <div class="ml-auto flex items-center gap-1">
+                <Tooltip
+                  v-if="row.name === thread.name"
+                  :text="thread.status === 'Resolved' ? 'Reopen' : 'Mark resolved'"
+                >
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    :icon="thread.status === 'Resolved' ? 'lucide-rotate-ccw' : 'lucide-check'"
+                    :label="thread.status === 'Resolved' ? 'Reopen' : 'Resolve'"
+                    @click="flip(thread)"
+                  />
+                </Tooltip>
+                <Tooltip v-if="row.is_mine" text="Delete">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    icon="lucide-trash-2"
+                    label="Delete"
+                    @click="remove.submit({ name: row.name })"
+                  />
+                </Tooltip>
+              </div>
+            </div>
+
+            <p class="mt-1.5 whitespace-pre-line text-base text-ink-gray-8">{{ row.comment }}</p>
           </div>
         </div>
 
-        <p v-if="row.quote" class="mt-2 border-l-2 border-outline-gray-3 pl-2 text-sm text-ink-gray-6">
-          “{{ row.quote }}”
-        </p>
-
-        <p class="mt-1.5 text-base text-ink-gray-8">{{ row.comment }}</p>
+        <div v-if="thread.status !== 'Resolved'" class="border-t border-outline-gray-1 px-3 py-2">
+          <FormControl
+            type="text"
+            :placeholder="`Reply to ${thread.author.split(' ')[0]}`"
+            :modelValue="replies[thread.name] || ''"
+            @update:modelValue="(value) => (replies[thread.name] = value)"
+            @keyup.enter="save(thread)"
+          />
+        </div>
       </div>
     </div>
 
@@ -106,8 +143,17 @@
 </template>
 
 <script setup>
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { Avatar, Badge, Button, FormControl, TabButtons, Tooltip, createResource } from 'frappe-ui'
+import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
+import {
+  Avatar,
+  Badge,
+  Button,
+  ErrorMessage,
+  FormControl,
+  TabButtons,
+  Tooltip,
+  createResource,
+} from 'frappe-ui'
 
 const props = defineProps({
   sop: { type: String, default: '' },
@@ -121,6 +167,7 @@ const filter = ref('Open')
 const draft = ref(null)
 const spot = ref(null)
 const input = ref(null)
+const replies = reactive({})
 let picked = ''
 
 const list = createResource({
@@ -146,13 +193,15 @@ const remove = createResource({
   onSuccess: () => list.reload(),
 })
 
-const rows = computed(() => list.data || [])
+const threads = computed(() => list.data || [])
 
 const shown = computed(() =>
-  filter.value ? rows.value.filter((row) => row.status === filter.value) : rows.value,
+  filter.value ? threads.value.filter((row) => row.status === filter.value) : threads.value,
 )
 
-watch(rows, (value) => emit('count', value.filter((row) => row.status === 'Open').length))
+const openCount = computed(() => threads.value.filter((row) => row.status === 'Open').length)
+
+watch(openCount, (value) => emit('count', value))
 
 watch(
   () => props.sop,
@@ -190,17 +239,26 @@ function startComment() {
   nextTick(() => input.value?.$el?.querySelector('textarea')?.focus())
 }
 
-function save() {
+function save(thread) {
+  const comment = thread ? replies[thread.name] : draft.value.comment
+  if (!comment) return
+
   add.submit({
     sop: props.sop,
     version: props.version,
-    quote: draft.value.quote,
-    comment: draft.value.comment,
+    quote: thread ? null : draft.value.quote,
+    parent: thread?.name || null,
+    comment,
   })
+
+  if (thread) replies[thread.name] = ''
 }
 
-function flip(row) {
-  resolve.submit({ name: row.name, status: row.status === 'Resolved' ? 'Open' : 'Resolved' })
+function flip(thread) {
+  resolve.submit({
+    name: thread.name,
+    status: thread.status === 'Resolved' ? 'Open' : 'Resolved',
+  })
 }
 
 onMounted(() => document.addEventListener('selectionchange', onSelection))

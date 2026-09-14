@@ -33,7 +33,7 @@
           v-model="template"
         />
 
-        <div v-if="template" class="flex flex-col gap-2 rounded-lg bg-surface-gray-1 px-3 py-2.5">
+        <div v-if="template" class="flex flex-col gap-2 rounded-4 bg-surface-gray-1 px-3 py-2.5">
           <p class="text-sm text-ink-gray-6">{{ templateNote }}</p>
           <FormControl
             type="checkbox"

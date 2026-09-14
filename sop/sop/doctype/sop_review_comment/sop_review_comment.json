@@ -10,6 +10,7 @@
   "version",
   "status",
   "column_break_body",
+  "parent_comment",
   "quote",
   "comment"
  ],
@@ -39,6 +40,13 @@
   {
    "fieldname": "column_break_body",
    "fieldtype": "Column Break"
+  },
+  {
+   "description": "Set when this is a reply in a thread.",
+   "fieldname": "parent_comment",
+   "fieldtype": "Link",
+   "label": "Reply To",
+   "options": "SOP Review Comment"
   },
   {
    "description": "The words this comment is about.",

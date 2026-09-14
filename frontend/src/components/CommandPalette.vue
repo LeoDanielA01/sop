@@ -28,7 +28,7 @@
               v-for="item in group.items"
               :key="item.key"
               :ref="(el) => setRow(el, item.index)"
-              class="flex cursor-pointer items-center gap-3 rounded-md px-2.5 py-2"
+              class="flex cursor-pointer items-center gap-3 rounded-3 px-2.5 py-2"
               :class="item.index === cursor ? 'bg-surface-gray-2' : 'hover:bg-surface-gray-2'"
               @click="choose(item)"
               @mouseenter="cursor = item.index"
@@ -62,24 +62,24 @@
         >
           <div class="flex items-center gap-2">
             <span
-              class="lucide-move-up size-5 rounded-md bg-surface-gray-2 p-1"
+              class="lucide-move-up size-5 rounded-3 bg-surface-gray-2 p-1"
               aria-hidden="true"
             />
             <span
-              class="lucide-move-down size-5 rounded-md bg-surface-gray-2 p-1"
+              class="lucide-move-down size-5 rounded-3 bg-surface-gray-2 p-1"
               aria-hidden="true"
             />
             <span>to move</span>
           </div>
           <div class="flex items-center gap-2">
             <span
-              class="lucide-corner-down-left size-5 rounded-md bg-surface-gray-2 p-1"
+              class="lucide-corner-down-left size-5 rounded-3 bg-surface-gray-2 p-1"
               aria-hidden="true"
             />
             <span>to open</span>
           </div>
           <div class="ml-auto flex items-center gap-2">
-            <span class="rounded-md bg-surface-gray-2 px-1.5 py-0.5">esc</span>
+            <span class="rounded-3 bg-surface-gray-2 px-1.5 py-0.5">esc</span>
             <span>to close</span>
           </div>
         </div>

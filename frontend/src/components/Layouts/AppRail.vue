@@ -17,6 +17,15 @@
       />
 
       <SidebarRailItem
+        :label="unreadCount ? `Notifications — ${unreadCount} new` : 'Notifications'"
+        variant="ghost"
+        icon="lucide-bell"
+        :badge="unreadCount || undefined"
+        badge-style="count"
+        @click="ui.notificationsDialog = true"
+      />
+
+      <SidebarRailItem
         label="Find and replace"
         variant="ghost"
         icon="lucide-replace"
@@ -50,18 +59,14 @@
         @click="ui.settingsDialog = true"
       />
 
-      <Dropdown :options="userMenu">
-        <template #trigger>
-          <SidebarRailItem :label="session.user.full_name">
-            <Avatar
-              :image="session.user.image"
-              :label="session.user.full_name"
-              size="lg"
-              class="size-7"
-            />
-          </SidebarRailItem>
-        </template>
-      </Dropdown>
+      <SidebarRailItem :label="session.user.full_name" @click="ui.profileDialog = true">
+        <Avatar
+          :image="session.user.image"
+          :label="session.user.full_name"
+          size="lg"
+          class="size-7"
+        />
+      </SidebarRailItem>
     </div>
   </SidebarRail>
 </template>
@@ -69,9 +74,10 @@
 <script setup>
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { Avatar, Dropdown, SidebarRail, SidebarRailItem, useColorScheme } from 'frappe-ui'
+import { Avatar, SidebarRail, SidebarRailItem } from 'frappe-ui'
 import { useSection } from '@/composables/useSection'
 import { SECTIONS, attention } from '@/data/navigation'
+import { unreadCount } from '@/data/notifications'
 import { session } from '@/data/session'
 import { trainingCounts } from '@/data/training'
 import { useUI } from '@/stores/ui'
@@ -79,7 +85,6 @@ import { useUI } from '@/stores/ui'
 const router = useRouter()
 const ui = useUI()
 const { section } = useSection()
-const { colorScheme, setColorScheme } = useColorScheme()
 
 const badges = computed(() => ({
   procedures: attention.value || undefined,
@@ -92,28 +97,4 @@ function railLabel(item) {
 
   return `${item.label} — ${count} waiting on you`
 }
-
-const userMenu = computed(() => [
-  {
-    icon: 'lucide-circle-user',
-    label: 'My profile',
-    onClick: () => (ui.profileDialog = true),
-  },
-  {
-    icon: 'lucide-settings',
-    label: 'Settings',
-    onClick: () => ui.openSettings('preferences'),
-  },
-  {
-    icon: colorScheme.value === 'dark' ? 'lucide-sun' : 'lucide-moon',
-    label: colorScheme.value === 'dark' ? 'Switch to light' : 'Switch to dark',
-    onClick: () => setColorScheme(colorScheme.value === 'dark' ? 'light' : 'dark'),
-  },
-  {
-    icon: 'lucide-layout-grid',
-    label: 'Open the desk',
-    onClick: () => window.open('/app/sop', '_blank'),
-  },
-  { icon: 'lucide-log-out', label: 'Log out', onClick: () => session.logout() },
-])
 </script>

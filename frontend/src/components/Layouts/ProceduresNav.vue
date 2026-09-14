@@ -96,7 +96,7 @@
     </template>
 
     <div v-if="spacesResource.loading" class="flex flex-col gap-1.5 px-2 py-2">
-      <div v-for="row in 3" :key="row" class="h-4 animate-pulse rounded-md bg-surface-gray-2" />
+      <div v-for="row in 3" :key="row" class="h-4 animate-pulse rounded-3 bg-surface-gray-2" />
     </div>
 
     <p v-else-if="spacesResource.error" class="px-2 py-2 text-sm text-ink-gray-5">
@@ -105,7 +105,7 @@
 
     <div
       v-else-if="!spaces.length"
-      class="mt-1 flex flex-col items-center gap-2 rounded-lg border border-dashed border-outline-gray-2 px-3 py-5 text-center"
+      class="mt-1 flex flex-col items-center gap-2 rounded-4 border border-dashed border-outline-gray-2 px-3 py-5 text-center"
     >
       <span class="lucide-library size-5 text-ink-gray-4" aria-hidden="true" />
       <div>

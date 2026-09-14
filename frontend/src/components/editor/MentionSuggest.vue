@@ -2,7 +2,7 @@
   <Teleport to="body">
     <div
       v-if="open"
-      class="fixed z-50 w-72 overflow-hidden rounded-lg border border-outline-gray-2 bg-surface-base shadow-2xl"
+      class="fixed z-50 w-72 overflow-hidden rounded-4 border border-outline-gray-2 bg-surface-base shadow-2xl"
       :style="{ left: `${spot.left}px`, top: `${spot.top}px` }"
       role="listbox"
     >
@@ -14,7 +14,7 @@
         <div
           v-for="(row, index) in rows"
           :key="row.value"
-          class="flex cursor-pointer items-center gap-2.5 rounded-md px-2 py-1.5"
+          class="flex cursor-pointer items-center gap-2.5 rounded-3 px-2 py-1.5"
           :class="index === cursor ? 'bg-surface-gray-2' : 'hover:bg-surface-gray-2'"
           role="option"
           :aria-selected="index === cursor"

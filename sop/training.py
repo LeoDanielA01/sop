@@ -123,16 +123,16 @@ def create_assignment(doc, requirement, user, cause=None, is_refresher=0, supers
 
 
 def notify(assignment):
-	frappe.get_doc(
-		{
-			"doctype": "Notification Log",
-			"subject": _("Training assigned: {0}").format(assignment.sop),
-			"for_user": assignment.trainee,
-			"type": "Assignment",
-			"document_type": "SOP Training Assignment",
-			"document_name": assignment.name,
-		}
-	).insert(ignore_permissions=True)
+	from sop.notifications import tell
+
+	sop_no = frappe.db.get_value("SOP", assignment.sop, "sop_no") or assignment.sop
+
+	tell(
+		assignment.trainee,
+		_("Training assigned: {0}").format(sop_no),
+		frappe._dict(doctype="SOP", name=assignment.sop),
+		kind="training",
+	)
 
 
 def mark_overdue():

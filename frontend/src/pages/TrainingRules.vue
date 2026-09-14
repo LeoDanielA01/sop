@@ -58,7 +58,7 @@
 
     <div
       v-if="!requirements.loading && !rows.length"
-      class="mt-10 flex flex-col items-center gap-2 rounded-lg border border-dashed border-outline-gray-2 px-4 py-10 text-center"
+      class="mt-10 flex flex-col items-center gap-2 rounded-4 border border-dashed border-outline-gray-2 px-4 py-10 text-center"
     >
       <span class="lucide-scroll-text size-6 text-ink-gray-4" aria-hidden="true" />
       <p class="text-base text-ink-gray-7">No rules yet</p>

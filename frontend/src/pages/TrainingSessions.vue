@@ -59,7 +59,7 @@
 
     <div
       v-if="!sessions.loading && !rows.length"
-      class="mt-10 flex flex-col items-center gap-2 rounded-lg border border-dashed border-outline-gray-2 px-4 py-10 text-center"
+      class="mt-10 flex flex-col items-center gap-2 rounded-4 border border-dashed border-outline-gray-2 px-4 py-10 text-center"
     >
       <span class="lucide-users size-6 text-ink-gray-4" aria-hidden="true" />
       <p class="text-base text-ink-gray-7">No sessions {{ status ? `marked ${status.toLowerCase()}` : 'yet' }}</p>
@@ -92,7 +92,7 @@
           </Badge>
         </div>
 
-        <div class="divide-y divide-outline-gray-1 rounded-lg border border-outline-gray-2 bg-surface-gray-1">
+        <div class="divide-y divide-outline-gray-1 rounded-4 border border-outline-gray-2 bg-surface-gray-1">
           <div
             v-for="person in detail.attendees"
             :key="person.user"

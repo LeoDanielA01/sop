@@ -5,6 +5,8 @@ import hashlib
 
 import frappe
 from frappe import _
+
+from sop.notifications import tell
 from frappe.utils import cint, getdate, now_datetime, nowdate
 
 from sop import training
@@ -246,10 +248,11 @@ def tell_approvers(doc):
 		if row.decision != "Pending":
 			continue
 
-		notify(
+		tell(
 			row.approver,
 			_("{0} is waiting for your approval").format(doc.sop_no),
 			doc,
+			kind="approval",
 		)
 
 
@@ -258,20 +261,4 @@ def tell_owner(doc, decision, comment=None):
 	if comment:
 		subject = f"{subject} — {comment}"
 
-	notify(doc.process_owner, subject, doc)
-
-
-def notify(user, subject, doc):
-	if not user or user == frappe.session.user:
-		return
-
-	frappe.get_doc(
-		{
-			"doctype": "Notification Log",
-			"for_user": user,
-			"type": "Alert",
-			"document_type": "SOP",
-			"document_name": doc.name,
-			"subject": subject,
-		}
-	).insert(ignore_permissions=True)
+	tell(doc.process_owner, subject, doc, kind="approval")

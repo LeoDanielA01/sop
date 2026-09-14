@@ -20,7 +20,16 @@ def comments(sop, version=None, status=None):
 	rows = frappe.get_all(
 		"SOP Review Comment",
 		filters=filters,
-		fields=["name", "quote", "comment", "status", "version", "owner", "creation"],
+		fields=[
+			"name",
+			"parent_comment",
+			"quote",
+			"comment",
+			"status",
+			"version",
+			"owner",
+			"creation",
+		],
 		order_by="creation asc",
 		limit_page_length=0,
 	)
@@ -37,9 +46,10 @@ def comments(sop, version=None, status=None):
 
 	mine = frappe.session.user
 
-	return [
-		{
+	def shape(row):
+		return {
 			"name": row.name,
+			"parent": row.parent_comment,
 			"quote": row.quote,
 			"comment": row.comment,
 			"status": row.status,
@@ -49,12 +59,26 @@ def comments(sop, version=None, status=None):
 			"when": pretty_date(row.creation),
 			"is_mine": row.owner == mine,
 		}
-		for row in rows
-	]
+
+	threads = []
+	by_name = {}
+
+	for row in rows:
+		item = shape(row)
+		item["replies"] = []
+
+		if row.parent_comment and row.parent_comment in by_name:
+			by_name[row.parent_comment]["replies"].append(item)
+		else:
+			threads.append(item)
+
+		by_name[row.name] = item
+
+	return threads
 
 
 @frappe.whitelist()
-def add_comment(sop, comment, quote=None, version=None):
+def add_comment(sop, comment, quote=None, version=None, parent=None):
 	doc = frappe.get_doc("SOP", sop)
 	doc.check_permission("read")
 
@@ -66,6 +90,7 @@ def add_comment(sop, comment, quote=None, version=None):
 		{
 			"doctype": "SOP Review Comment",
 			"sop": sop,
+			"parent_comment": parent,
 			"version": frappe.utils.cint(version) or doc.version,
 			"quote": (quote or "").strip()[:500],
 			"comment": comment,
@@ -83,6 +108,11 @@ def resolve_comment(name, status="Resolved"):
 
 	row.status = "Resolved" if status == "Resolved" else "Open"
 	row.save(ignore_permissions=True)
+
+	for reply in frappe.get_all(
+		"SOP Review Comment", filters={"parent_comment": name}, pluck="name", limit_page_length=0
+	):
+		frappe.db.set_value("SOP Review Comment", reply, "status", row.status)
 
 	return {"name": row.name, "status": row.status}
 

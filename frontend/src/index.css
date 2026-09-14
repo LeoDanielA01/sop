@@ -33,7 +33,7 @@
 .prose-sop [data-mention]:focus-visible {
   outline: 2px solid var(--outline-blue-2);
   outline-offset: 2px;
-  border-radius: 3px;
+  border-radius: var(--radius-1);
 }
 .prose-sop ul,
 .prose-sop ol {
@@ -63,7 +63,7 @@
 }
 .prose-sop pre {
   border: 1px solid var(--outline-gray-2);
-  border-radius: 6px;
+  border-radius: var(--radius-3);
   background: var(--surface-gray-1);
   padding: 0.7em 0.9em;
   overflow-x: auto;
@@ -87,7 +87,7 @@
 }
 .prose-sop img {
   max-width: 100%;
-  border-radius: 6px;
+  border-radius: var(--radius-3);
 }
 .prose-sop .tableWrapper {
   overflow-x: auto;
@@ -110,7 +110,7 @@
 .prose-sop [data-sop='callout'] {
   border: 1px solid var(--outline-amber-2);
   background: var(--surface-amber-1);
-  border-radius: 6px;
+  border-radius: var(--radius-3);
   padding: 0.7em 0.9em;
 }
 .prose-sop [data-sop='callout'][data-tone='note'] {

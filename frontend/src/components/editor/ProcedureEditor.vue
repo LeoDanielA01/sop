@@ -1,6 +1,6 @@
 <template>
   <div
-    class="rounded-lg border border-outline-gray-2 bg-surface-base"
+    class="rounded-4 border border-outline-gray-2 bg-surface-base"
     @contextmenu="palette?.onContextMenu($event)"
     @touchstart="palette?.onTouchStart($event)"
     @touchend="palette?.cancelPress()"

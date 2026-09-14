@@ -19,11 +19,9 @@
       <div class="flex-1" />
 
       <Button variant="ghost" icon="lucide-search" label="Search" @click="ui.searchDialog = true" />
-      <Dropdown :options="userMenu">
-        <Button variant="ghost" label="Account">
-          <Avatar :image="session.user.image" :label="session.user.full_name" size="sm" />
-        </Button>
-      </Dropdown>
+      <Button variant="ghost" label="Account" @click="ui.profileDialog = true">
+        <Avatar :image="session.user.image" :label="session.user.full_name" size="sm" />
+      </Button>
     </header>
 
     <main class="min-h-0 flex-1 overflow-y-auto">
@@ -100,7 +98,7 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Avatar, Button, Dialog, Dropdown, useColorScheme } from 'frappe-ui'
+import { Avatar, Button, Dialog } from 'frappe-ui'
 import { useSection } from '@/composables/useSection'
 import { activeSpace, setSpace, spaces, views } from '@/data/navigation'
 import { activeProcess, flatten, processes, setProcess } from '@/data/processes'
@@ -112,26 +110,11 @@ const route = useRoute()
 const router = useRouter()
 const ui = useUI()
 const showSpaces = ref(false)
-const { colorScheme, setColorScheme } = useColorScheme()
 
 const { space, activeView } = useSection()
 const onList = computed(() => route.name === 'Procedures')
 const tree = computed(() => flatten(processes.value))
 
-const userMenu = computed(() => [
-  {
-    icon: 'lucide-circle-user',
-    label: 'My profile',
-    onClick: () => (ui.profileDialog = true),
-  },
-  { label: 'Settings', icon: 'lucide-settings', onClick: () => ui.openSettings('preferences') },
-  {
-    icon: colorScheme.value === 'dark' ? 'lucide-sun' : 'lucide-moon',
-    label: colorScheme.value === 'dark' ? 'Switch to light' : 'Switch to dark',
-    onClick: () => setColorScheme(colorScheme.value === 'dark' ? 'light' : 'dark'),
-  },
-  { label: 'Log out', icon: 'lucide-log-out', onClick: () => session.logout() },
-])
 
 const bottom = computed(() => [
   { label: 'Procedures', icon: 'lucide-library', value: 'all' },

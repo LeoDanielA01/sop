@@ -49,7 +49,7 @@
     <div
       v-if="doc.status && !isEffective"
       role="status"
-      class="mb-5 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border px-3 py-2"
+      class="mb-5 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-4 border px-3 py-2"
       :class="
         doc.status === 'Retired'
           ? 'border-outline-red-2 bg-surface-red-1'
@@ -103,165 +103,171 @@
 
     <div v-if="!doc.summary" class="mb-5" />
 
-    <dl
-      class="mb-8 grid grid-cols-2 gap-x-5 gap-y-4 rounded-lg border border-outline-gray-2 bg-surface-gray-1 px-4 py-4 sm:grid-cols-3"
-    >
-      <div class="flex min-w-0 items-center gap-2.5">
-        <Avatar :image="doc.owner_image" :label="ownerName" size="lg" />
-        <div class="min-w-0">
-          <dt class="text-sm text-ink-gray-5">Owner</dt>
-          <dd class="truncate text-base text-ink-gray-8">{{ ownerName }}</dd>
-        </div>
-      </div>
-
-      <div class="flex min-w-0 items-center gap-2.5">
-        <span
-          class="grid size-8 shrink-0 place-content-center rounded-md border border-outline-gray-2 bg-surface-base"
+    <div class="flex flex-col gap-6 lg:grid lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-start lg:gap-8">
+      <aside class="order-first min-w-0 lg:order-last lg:sticky lg:top-6">
+        <dl
+          class="grid grid-cols-2 gap-x-5 gap-y-4 rounded-4 border border-outline-gray-2 bg-surface-gray-1 px-4 py-4 sm:grid-cols-3 lg:grid-cols-1 lg:gap-y-3.5"
         >
-          <span class="lucide-calendar-check size-4 text-ink-gray-6" aria-hidden="true" />
-        </span>
-        <div class="min-w-0">
-          <dt class="text-sm text-ink-gray-5">In force since</dt>
-          <dd class="truncate text-base text-ink-gray-8">
-            {{ doc.effective_from ? shortDate(doc.effective_from) : 'Not yet' }}
-          </dd>
-        </div>
-      </div>
-
-      <div class="flex min-w-0 items-center gap-2.5">
-        <span
-          class="grid size-8 shrink-0 place-content-center rounded-md border border-outline-gray-2 bg-surface-base"
-        >
-          <span
-            class="lucide-calendar-clock size-4"
-            :class="overdue ? 'text-ink-red-3' : 'text-ink-gray-6'"
-            aria-hidden="true"
-          />
-        </span>
-        <div class="min-w-0">
-          <dt class="text-sm text-ink-gray-5">{{ overdue ? 'Review overdue' : 'Next review' }}</dt>
-          <dd
-            class="truncate text-base"
-            :class="overdue ? 'text-ink-red-3' : 'text-ink-gray-8'"
-          >
-            {{ doc.review_due ? shortDate(doc.review_due) : 'Not scheduled' }}
-          </dd>
-        </div>
-      </div>
-
-      <div class="flex min-w-0 items-center gap-2.5">
-        <span
-          class="grid size-8 shrink-0 place-content-center rounded-md border border-outline-gray-2 bg-surface-base"
-        >
-          <span class="lucide-git-commit-horizontal size-4 text-ink-gray-6" aria-hidden="true" />
-        </span>
-        <div class="min-w-0">
-          <dt class="text-sm text-ink-gray-5">Version</dt>
-          <dd class="truncate text-base text-ink-gray-8">
-            Rev {{ doc.version || 1 }}
-            <span v-if="doc.revisions?.length > 1" class="text-ink-gray-5">
-              of {{ doc.revisions.length }}
-            </span>
-          </dd>
-        </div>
-      </div>
-
-      <div class="flex min-w-0 items-center gap-2.5">
-        <span
-          class="grid size-8 shrink-0 place-content-center rounded-md border border-outline-gray-2 bg-surface-base"
-        >
-          <span
-            class="size-4"
-            :class="
-              doc.acknowledged_on ? 'lucide-check-check text-ink-green-3' : 'lucide-circle-dashed text-ink-gray-6'
-            "
-            aria-hidden="true"
-          />
-        </span>
-        <div class="min-w-0">
-          <Tooltip
-            text="Sign-off is per revision, not per reading. When a new revision comes into force you are asked again."
-          >
-            <dt class="w-fit text-sm text-ink-gray-5">Read &amp; understood</dt>
-          </Tooltip>
-          <dd class="truncate text-base text-ink-gray-8">
-            <template v-if="doc.acknowledged_on">
-              Rev {{ doc.acknowledged_version }} · {{ shortDate(doc.acknowledged_on) }}
-            </template>
-            <template v-else-if="isEffective">Not signed off</template>
-            <template v-else>—</template>
-          </dd>
-        </div>
-      </div>
-
-      <div v-if="doc.risk_level" class="flex min-w-0 items-center gap-2.5">
-        <span
-          class="grid size-8 shrink-0 place-content-center rounded-md border border-outline-gray-2 bg-surface-base"
-        >
-          <span class="lucide-shield-alert size-4 text-ink-gray-6" aria-hidden="true" />
-        </span>
-        <div class="min-w-0">
-          <dt class="text-sm text-ink-gray-5">Risk</dt>
-          <dd class="truncate">
-            <Badge :theme="RISK_THEME[doc.risk_level]" variant="subtle" size="sm">
-              {{ doc.risk_level }}
-            </Badge>
-          </dd>
-        </div>
-      </div>
-
-      <div
-        v-if="doc.tags?.length"
-        class="col-span-2 flex flex-wrap items-center gap-1.5 border-t border-outline-gray-1 pt-3 sm:col-span-3"
-      >
-        <span class="lucide-tags size-4 shrink-0 text-ink-gray-5" aria-hidden="true" />
-        <Badge v-for="tag in doc.tags" :key="tag" variant="subtle" size="sm">{{ tag }}</Badge>
-      </div>
-    </dl>
-
-    <article
-      ref="body"
-      class="prose-sop max-w-[68ch] text-base leading-relaxed text-ink-gray-8"
-      v-html="doc.content"
-    />
-
-    <MentionChip
-      v-for="reference in doc.references || []"
-      :key="reference.key"
-      :reference="reference"
-      :root="body"
-    />
-
-    <ReviewComments
-      v-if="doc.name"
-      :sop="doc.name"
-      :version="doc.version"
-      :body="body"
-      @count="(value) => (openComments = value)"
-    />
-
-    <section v-if="doc.steps?.length" class="mt-10">
-      <h2 class="text-lg-semibold text-ink-gray-8">Steps</h2>
-      <ol class="mt-3 space-y-3">
-        <li v-for="step in doc.steps" :key="step.step_no" class="flex gap-3">
-          <span
-            class="mt-0.5 grid size-6 shrink-0 place-content-center rounded-full bg-surface-gray-2 text-sm text-ink-gray-7"
-          >
-            {{ step.step_no }}
-          </span>
-          <div class="min-w-0">
-            <div class="text-base text-ink-gray-8" v-html="step.instruction" />
-            <div
-              v-if="step.responsible_role || step.record_to_capture"
-              class="mt-1 flex flex-wrap gap-x-4 text-sm text-ink-gray-5"
-            >
-              <span v-if="step.responsible_role">{{ step.responsible_role }}</span>
-              <span v-if="step.record_to_capture">Records: {{ step.record_to_capture }}</span>
+          <div class="flex min-w-0 items-center gap-2.5">
+            <Avatar :image="doc.owner_image" :label="ownerName" size="lg" />
+            <div class="min-w-0">
+              <dt class="text-sm text-ink-gray-5">Owner</dt>
+              <dd class="truncate text-base text-ink-gray-8">{{ ownerName }}</dd>
             </div>
           </div>
-        </li>
-      </ol>
-    </section>
+
+          <div class="flex min-w-0 items-center gap-2.5">
+            <span
+              class="grid size-8 shrink-0 place-content-center rounded-3 border border-outline-gray-2 bg-surface-base"
+            >
+              <span class="lucide-calendar-check size-4 text-ink-gray-6" aria-hidden="true" />
+            </span>
+            <div class="min-w-0">
+              <dt class="text-sm text-ink-gray-5">In force since</dt>
+              <dd class="truncate text-base text-ink-gray-8">
+                {{ doc.effective_from ? shortDate(doc.effective_from) : 'Not yet' }}
+              </dd>
+            </div>
+          </div>
+
+          <div class="flex min-w-0 items-center gap-2.5">
+            <span
+              class="grid size-8 shrink-0 place-content-center rounded-3 border border-outline-gray-2 bg-surface-base"
+            >
+              <span
+                class="lucide-calendar-clock size-4"
+                :class="overdue ? 'text-ink-red-3' : 'text-ink-gray-6'"
+                aria-hidden="true"
+              />
+            </span>
+            <div class="min-w-0">
+              <dt class="text-sm text-ink-gray-5">{{ overdue ? 'Review overdue' : 'Next review' }}</dt>
+              <dd
+                class="truncate text-base"
+                :class="overdue ? 'text-ink-red-3' : 'text-ink-gray-8'"
+              >
+                {{ doc.review_due ? shortDate(doc.review_due) : 'Not scheduled' }}
+              </dd>
+            </div>
+          </div>
+
+          <div class="flex min-w-0 items-center gap-2.5">
+            <span
+              class="grid size-8 shrink-0 place-content-center rounded-3 border border-outline-gray-2 bg-surface-base"
+            >
+              <span class="lucide-git-commit-horizontal size-4 text-ink-gray-6" aria-hidden="true" />
+            </span>
+            <div class="min-w-0">
+              <dt class="text-sm text-ink-gray-5">Version</dt>
+              <dd class="truncate text-base text-ink-gray-8">
+                Rev {{ doc.version || 1 }}
+                <span v-if="doc.revisions?.length > 1" class="text-ink-gray-5">
+                  of {{ doc.revisions.length }}
+                </span>
+              </dd>
+            </div>
+          </div>
+
+          <div class="flex min-w-0 items-center gap-2.5">
+            <span
+              class="grid size-8 shrink-0 place-content-center rounded-3 border border-outline-gray-2 bg-surface-base"
+            >
+              <span
+                class="size-4"
+                :class="
+                  doc.acknowledged_on ? 'lucide-check-check text-ink-green-3' : 'lucide-circle-dashed text-ink-gray-6'
+                "
+                aria-hidden="true"
+              />
+            </span>
+            <div class="min-w-0">
+              <Tooltip
+                text="Sign-off is per revision, not per reading. When a new revision comes into force you are asked again."
+              >
+                <dt class="w-fit text-sm text-ink-gray-5">Read &amp; understood</dt>
+              </Tooltip>
+              <dd class="truncate text-base text-ink-gray-8">
+                <template v-if="doc.acknowledged_on">
+                  Rev {{ doc.acknowledged_version }} · {{ shortDate(doc.acknowledged_on) }}
+                </template>
+                <template v-else-if="isEffective">Not signed off</template>
+                <template v-else>—</template>
+              </dd>
+            </div>
+          </div>
+
+          <div v-if="doc.risk_level" class="flex min-w-0 items-center gap-2.5">
+            <span
+              class="grid size-8 shrink-0 place-content-center rounded-3 border border-outline-gray-2 bg-surface-base"
+            >
+              <span class="lucide-shield-alert size-4 text-ink-gray-6" aria-hidden="true" />
+            </span>
+            <div class="min-w-0">
+              <dt class="text-sm text-ink-gray-5">Risk</dt>
+              <dd class="truncate">
+                <Badge :theme="RISK_THEME[doc.risk_level]" variant="subtle" size="sm">
+                  {{ doc.risk_level }}
+                </Badge>
+              </dd>
+            </div>
+          </div>
+
+          <div
+            v-if="doc.tags?.length"
+            class="col-span-2 flex flex-wrap items-center gap-1.5 border-t border-outline-gray-1 pt-3 sm:col-span-3 lg:col-span-1"
+          >
+            <span class="lucide-tags size-4 shrink-0 text-ink-gray-5" aria-hidden="true" />
+            <Badge v-for="tag in doc.tags" :key="tag" variant="subtle" size="sm">{{ tag }}</Badge>
+          </div>
+        </dl>
+      </aside>
+
+      <div class="min-w-0">
+      <article
+        ref="body"
+        class="prose-sop max-w-[68ch] text-base leading-relaxed text-ink-gray-8"
+        v-html="doc.content"
+      />
+
+      <MentionChip
+        v-for="reference in doc.references || []"
+        :key="reference.key"
+        :reference="reference"
+        :root="body"
+      />
+
+      <ReviewComments
+        v-if="doc.name"
+        :sop="doc.name"
+        :version="doc.version"
+        :body="body"
+        @count="(value) => (openComments = value)"
+      />
+
+      <section v-if="doc.steps?.length" class="mt-10">
+        <h2 class="text-lg-semibold text-ink-gray-8">Steps</h2>
+        <ol class="mt-3 space-y-3">
+          <li v-for="step in doc.steps" :key="step.step_no" class="flex gap-3">
+            <span
+              class="mt-0.5 grid size-6 shrink-0 place-content-center rounded-full bg-surface-gray-2 text-sm text-ink-gray-7"
+            >
+              {{ step.step_no }}
+            </span>
+            <div class="min-w-0">
+              <div class="text-base text-ink-gray-8" v-html="step.instruction" />
+              <div
+                v-if="step.responsible_role || step.record_to_capture"
+                class="mt-1 flex flex-wrap gap-x-4 text-sm text-ink-gray-5"
+              >
+                <span v-if="step.responsible_role">{{ step.responsible_role }}</span>
+                <span v-if="step.record_to_capture">Records: {{ step.record_to_capture }}</span>
+              </div>
+            </div>
+          </li>
+        </ol>
+      </section>
+      </div>
+    </div>
   </div>
 
   <div
