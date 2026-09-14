@@ -7,7 +7,9 @@ app_license = "mit"
 
 required_apps = ["frappe"]
 
-website_route_rules = [{"from_route": "/sop/<path:app_path>", "to_route": "sop"}]
+website_route_rules = [
+	{"from_route": "/sop/<path:app_path>", "to_route": "sop"},
+]
 
 website_redirects = [{"source": "/procedures", "target": "/sop"}]
 
@@ -20,5 +22,3 @@ scheduler_events = {
 		"sop.training.schedule_refreshers",
 	]
 }
-
-sop_mention_resolvers = {}
