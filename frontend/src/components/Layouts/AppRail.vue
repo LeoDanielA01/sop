@@ -19,16 +19,22 @@
 
     <div class="flex flex-col items-center gap-2.5">
       <SidebarRailItem
+        :label="ui.sidebarCollapsed ? 'Show the sidebar' : 'Hide the sidebar'"
+        variant="ghost"
+        :icon="ui.sidebarCollapsed ? 'lucide-panel-left-open' : 'lucide-panel-left-close'"
+        @click="ui.toggleSidebar"
+      />
+      <SidebarRailItem
         label="Search"
         variant="ghost"
         icon="lucide-search"
-        @click="searchDialog = true"
+        @click="ui.searchDialog = true"
       />
       <SidebarRailItem
         label="Settings"
         variant="ghost"
         icon="lucide-settings"
-        @click="settingsDialog = true"
+        @click="ui.settingsDialog = true"
       />
 
       <Dropdown :options="userMenu">
@@ -54,9 +60,10 @@ import { useSection } from '@/composables/useSection'
 import { SECTIONS } from '@/data/navigation'
 import { session } from '@/data/session'
 import { trainingCounts } from '@/data/training'
-import { searchDialog, settingsDialog } from '@/data/ui'
+import { useUI } from '@/stores/ui'
 
 const router = useRouter()
+const ui = useUI()
 const { section } = useSection()
 
 const userMenu = [{ label: 'Log out', icon: 'lucide-log-out', onClick: () => session.logout() }]

@@ -1,10 +1,7 @@
 <template>
   <PageHeader>
     <div class="flex min-w-0 items-center gap-2">
-      <PageHeaderTitle>
-        <span class="font-mono text-sm text-ink-gray-5">{{ doc.sop_no }}</span>
-        <span class="ml-2">{{ doc.title }}</span>
-      </PageHeaderTitle>
+      <AppBreadcrumbs :tail="[{ label: doc.sop_no || route.params.name }]" />
       <Badge :theme="STATUS_THEME[doc.status]" variant="subtle" size="sm">
         {{ doc.status }}
       </Badge>
@@ -32,13 +29,21 @@
         :loading="primary.loading"
         @click="primary.onClick"
       />
+      <Tooltip :text="fullWidth ? 'Narrow the page' : 'Use the full width'">
+        <Button
+          variant="ghost"
+          :icon="fullWidth ? 'lucide-minimize-2' : 'lucide-maximize-2'"
+          :label="fullWidth ? 'Narrow the page' : 'Use the full width'"
+          @click="toggleWidth"
+        />
+      </Tooltip>
       <Dropdown :options="actions">
         <Button variant="ghost" icon="lucide-ellipsis" label="More" />
       </Dropdown>
     </div>
   </PageHeader>
 
-  <div class="mx-auto mt-5 w-full max-w-[740px] px-3 pb-24 sm:px-5">
+  <div :class="readingWidth" class="mx-auto mt-5 w-full px-3 pb-24 sm:px-5">
     <ErrorMessage :message="lastError" class="mb-4" />
 
     <div
@@ -75,28 +80,74 @@
       </div>
     </div>
 
-    <div class="mb-6 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-ink-gray-5">
-      <span class="flex items-center gap-1.5">
+    <h1 class="text-2xl font-semibold text-ink-gray-9">{{ doc.title }}</h1>
+
+    <p v-if="doc.summary" class="mb-5 mt-1.5 text-lg text-ink-gray-7">{{ doc.summary }}</p>
+
+    <div v-if="!doc.summary" class="mb-5" />
+
+    <dl
+      class="mb-7 grid grid-cols-[8.5rem_minmax(0,1fr)] gap-x-4 gap-y-2.5 rounded-lg border border-outline-gray-2 px-4 py-3.5 text-base sm:grid-cols-[9rem_minmax(0,1fr)_9rem_minmax(0,1fr)]"
+    >
+      <dt class="text-sm text-ink-gray-5">Owner</dt>
+      <dd class="flex min-w-0 items-center gap-2 text-ink-gray-8">
         <Avatar
           :image="doc.owner_image"
           :label="doc.process_owner_name || doc.process_owner"
           size="sm"
         />
-        {{ doc.process_owner_name || doc.process_owner }}
-      </span>
-      <span v-if="doc.process_trail?.length" class="flex min-w-0 items-center gap-1">
-        <span class="lucide-workflow size-3.5 shrink-0" aria-hidden="true" />
-        <span class="truncate">{{ doc.process_trail.map((step) => step.title).join(' › ') }}</span>
-      </span>
-      <span v-if="doc.effective_from">Effective {{ shortDate(doc.effective_from) }}</span>
-      <span
-        v-if="doc.review_due"
-        :class="reviewTone(doc.review_due) === 'red' ? 'text-ink-red-3' : ''"
-      >
-        Review due {{ shortDate(doc.review_due) }}
-      </span>
-      <span v-for="tag in doc.tags || []" :key="tag">#{{ tag }}</span>
-    </div>
+        <span class="truncate">{{ doc.process_owner_name || doc.process_owner }}</span>
+      </dd>
+
+      <dt class="text-sm text-ink-gray-5">Filed under</dt>
+      <dd class="min-w-0 truncate text-ink-gray-8">{{ filedUnder }}</dd>
+
+      <dt class="text-sm text-ink-gray-5">In force since</dt>
+      <dd class="text-ink-gray-8">
+        {{ doc.effective_from ? shortDate(doc.effective_from) : 'Not yet in force' }}
+      </dd>
+
+      <dt class="text-sm text-ink-gray-5">Next review</dt>
+      <dd :class="reviewTone(doc.review_due) === 'red' ? 'text-ink-red-3' : 'text-ink-gray-8'">
+        {{ doc.review_due ? shortDate(doc.review_due) : '—' }}
+      </dd>
+
+      <dt class="text-sm text-ink-gray-5">This version</dt>
+      <dd class="flex items-center gap-2 text-ink-gray-8">
+        Rev {{ doc.version || 1 }}
+        <Button
+          variant="ghost"
+          size="sm"
+          label="History"
+          @click="router.push(`/${route.params.name}/history`)"
+        />
+      </dd>
+
+      <dt class="text-sm text-ink-gray-5">Read it</dt>
+      <dd class="min-w-0 text-ink-gray-8">
+        <span v-if="doc.acknowledged_on">
+          Acknowledged {{ shortDate(doc.acknowledged_on) }}
+        </span>
+        <span v-else-if="isEffective" class="text-ink-gray-5">Not acknowledged yet</span>
+        <span v-else class="text-ink-gray-5">—</span>
+      </dd>
+
+      <template v-if="doc.risk_level">
+        <dt class="text-sm text-ink-gray-5">Risk</dt>
+        <dd class="text-ink-gray-8">
+          <Badge :theme="RISK_THEME[doc.risk_level]" variant="subtle" size="sm">
+            {{ doc.risk_level }}
+          </Badge>
+        </dd>
+      </template>
+
+      <template v-if="doc.tags?.length">
+        <dt class="text-sm text-ink-gray-5">Tags</dt>
+        <dd class="flex min-w-0 flex-wrap gap-1.5">
+          <Badge v-for="tag in doc.tags" :key="tag" variant="subtle" size="sm">{{ tag }}</Badge>
+        </dd>
+      </template>
+    </dl>
 
     <article ref="body" class="prose-sop text-base text-ink-gray-8" v-html="doc.content" />
 
@@ -135,7 +186,7 @@
     v-if="doc.actions?.decide"
     class="sticky bottom-0 border-t border-outline-gray-1 bg-surface-base px-4 py-3 sm:px-6"
   >
-    <div class="mx-auto flex max-w-[740px] items-center justify-between gap-4">
+    <div :class="readingWidth" class="mx-auto flex items-center justify-between gap-4">
       <p class="text-sm text-ink-gray-6">Your approval is what this one is waiting on.</p>
       <div class="flex items-center gap-2">
         <Button variant="subtle" label="Request changes" @click="changes.open = true" />
@@ -153,7 +204,7 @@
     v-else-if="needsAcknowledgement"
     class="sticky bottom-0 border-t border-outline-gray-1 bg-surface-base px-4 py-3 sm:px-6"
   >
-    <div class="mx-auto flex max-w-[740px] items-center justify-between gap-4">
+    <div :class="readingWidth" class="mx-auto flex items-center justify-between gap-4">
       <p class="text-sm text-ink-gray-6">
         Confirm you have read and understood Rev {{ doc.version }}.
       </p>
@@ -168,7 +219,8 @@
 
   <div
     v-else-if="isEffective && doc.acknowledged_on"
-    class="mx-auto max-w-[740px] px-3 pb-10 text-sm text-ink-gray-5 sm:px-5"
+    :class="readingWidth"
+    class="mx-auto px-3 pb-10 text-sm text-ink-gray-5 sm:px-5"
   >
     You acknowledged Rev {{ doc.acknowledged_version }} on {{ shortDate(doc.acknowledged_on) }}.
   </div>
@@ -245,18 +297,22 @@ import {
   ErrorMessage,
   FormControl,
   PageHeader,
-  PageHeaderTitle,
   Select,
+  Tooltip,
   createResource,
 } from 'frappe-ui'
+import AppBreadcrumbs from '@/components/Layouts/AppBreadcrumbs.vue'
 import ApproversDialog from '@/components/ApproversDialog.vue'
 import MentionChip from '@/components/MentionChip.vue'
 import { acknowledge, procedure } from '@/data/procedures'
+import { fullWidth, readingWidth, toggleWidth } from '@/data/preferences'
 import { refreshCounts } from '@/data/navigation'
 import { STATUS_THEME, reviewTone, shortDate, today } from '@/utils/format'
 
 const route = useRoute()
 const router = useRouter()
+
+const RISK_THEME = { High: 'red', Medium: 'orange', Low: 'green' }
 
 const DECISION_THEME = { Approved: 'green', Rejected: 'red', Pending: 'gray' }
 
@@ -270,6 +326,12 @@ const isMaterial = ref(true)
 const changes = reactive({ open: false, comment: '' })
 
 const doc = computed(() => procedure.data || {})
+const filedUnder = computed(() =>
+  [doc.value.space_title || doc.value.space, ...(doc.value.process_trail || []).map((step) => step.title)]
+    .filter(Boolean)
+    .join(' › '),
+)
+
 const isEffective = computed(() => doc.value.status === 'Effective')
 const needsAcknowledgement = computed(() => isEffective.value && !doc.value.acknowledged)
 

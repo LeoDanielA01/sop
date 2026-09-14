@@ -1,26 +1,6 @@
 <template>
   <PageHeader>
-    <div class="flex min-w-0 flex-col gap-0.5">
-      <PageHeaderTitle>{{ heading }}</PageHeaderTitle>
-      <div v-if="trail.length" class="flex min-w-0 items-center gap-1 text-sm text-ink-gray-5">
-        <Button
-          variant="ghost"
-          size="sm"
-          :label="space?.title || 'Space'"
-          @click="clearProcess"
-        />
-        <template v-for="(step, index) in trail" :key="step.name">
-          <span class="lucide-chevron-right size-3.5 shrink-0" aria-hidden="true" />
-          <Button
-            variant="ghost"
-            size="sm"
-            :label="step.title"
-            :disabled="index === trail.length - 1"
-            @click="setProcess(step.name)"
-          />
-        </template>
-      </div>
-    </div>
+    <AppBreadcrumbs />
     <Button
       v-if="spaces.length"
       variant="solid"
@@ -116,7 +96,7 @@
       class="mt-16 flex flex-col items-center gap-3 px-6 text-center text-base text-ink-gray-5"
     >
       <template v-if="spaces.length">
-        <span v-if="activeProcess">Nothing filed under {{ heading }} yet.</span>
+        <span v-if="activeProcess">Nothing filed under this process yet.</span>
         <span v-else>Nothing here yet.</span>
         <Button
           variant="solid"
@@ -134,7 +114,7 @@
           variant="solid"
           icon-left="lucide-plus"
           label="Create a space"
-          @click="spaceDialog = true"
+          @click="ui.spaceDialog = true"
         />
       </template>
     </div>
@@ -149,39 +129,27 @@ import {
   Badge,
   Button,
   PageHeader,
-  PageHeaderTitle,
   TabButtons,
   Tooltip,
   createResource,
 } from 'frappe-ui'
 import { List, ListCell, ListRow } from 'frappe-ui/list'
+import AppBreadcrumbs from '@/components/Layouts/AppBreadcrumbs.vue'
 import Pagination from '@/components/Pagination.vue'
 import { procedures, page, pageLength, view } from '@/data/procedures'
 import { activeSpace, setSpace, spaces } from '@/data/navigation'
 import { activeProcess, setProcess } from '@/data/processes'
-import { spaceDialog } from '@/data/ui'
+import { useUI } from '@/stores/ui'
 import { STATUS_THEME, reviewTone, shortDate } from '@/utils/format'
 
 defineProps({ compact: { type: Boolean, default: false } })
 
 const route = useRoute()
 const router = useRouter()
+const ui = useUI()
 
 const scope = ref('All')
 const space = computed(() => spaces.value.find((s) => s.name === activeSpace.value))
-
-const trailResource = createResource({ url: 'sop.api.processes.trail' })
-
-const trail = computed(() => (activeProcess.value ? trailResource.data || [] : []))
-
-const heading = computed(
-  () => trail.value[trail.value.length - 1]?.title || space.value?.title || 'All procedures',
-)
-
-function clearProcess() {
-  setProcess(null)
-  router.push({ path: '/', query: { space: activeSpace.value } })
-}
 
 watch(
   () => route.query.view,
@@ -201,7 +169,6 @@ watch(
   () => route.query.process,
   (value) => {
     if ((value || null) !== activeProcess.value) setProcess(value || null)
-    if (value) trailResource.submit({ process: value })
   },
   { immediate: true },
 )

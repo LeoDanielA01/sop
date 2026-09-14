@@ -1,10 +1,14 @@
 import { createResource } from 'frappe-ui'
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { activeSpace } from '@/data/navigation'
 import { activeProcess } from '@/data/processes'
+import { preferences, setPreference } from '@/data/preferences'
 
 export const page = ref(1)
-export const pageLength = ref(Number(localStorage.getItem('sop:page-length')) || 10)
+export const pageLength = computed({
+  get: () => preferences.rows_per_page,
+  set: (value) => setPreference('rows_per_page', Number(value)),
+})
 export const view = ref('all')
 export const search = ref('')
 
@@ -20,8 +24,6 @@ export const procedures = createResource({
     page_length: pageLength.value,
   }),
 })
-
-watch(pageLength, (value) => localStorage.setItem('sop:page-length', String(value)))
 
 watch([page, pageLength], () => procedures.reload())
 

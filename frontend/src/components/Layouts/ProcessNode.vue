@@ -1,18 +1,16 @@
 <template>
   <SidebarItem :active="activeProcess === node.name" @click="open">
     <template #prefix>
-      <span class="flex items-center" :style="{ paddingLeft: `${node.depth * 0.75}rem` }">
-        <Button
-          v-if="node.children.length"
-          variant="ghost"
-          size="sm"
-          class="!size-4 !p-0"
-          :icon="isOpen ? 'lucide-chevron-down' : 'lucide-chevron-right'"
-          :label="isOpen ? 'Collapse' : 'Expand'"
-          @click.stop="toggle(node.name)"
-        />
-        <span v-else class="size-4 shrink-0" />
-      </span>
+      <Button
+        v-if="node.children.length"
+        variant="ghost"
+        size="sm"
+        class="!size-4 !p-0"
+        :icon="isOpen ? 'lucide-chevron-down' : 'lucide-chevron-right'"
+        :label="isOpen ? 'Collapse' : 'Expand'"
+        @click.stop="toggle(node.name)"
+      />
+      <span v-else class="size-4 shrink-0" />
     </template>
 
     <span class="flex-1 truncate text-sm">{{ node.title }}</span>
@@ -34,14 +32,18 @@
     </template>
   </SidebarItem>
 
-  <template v-if="isOpen">
+  <div
+    v-if="isOpen && node.children.length"
+    class="ml-[0.9rem] space-y-0.5 border-l pl-1.5"
+    :class="holdsActive ? 'border-outline-gray-4' : 'border-outline-gray-2'"
+  >
     <ProcessNode
       v-for="child in node.children"
       :key="child.name"
-      :node="{ ...child, depth: node.depth + 1 }"
+      :node="child"
       @add="emit('add', $event)"
     />
-  </template>
+  </div>
 </template>
 
 <script setup>
@@ -60,6 +62,14 @@ const emit = defineEmits(['add'])
 const router = useRouter()
 
 const isOpen = computed(() => expanded.value.has(props.node.name))
+
+const holdsActive = computed(() => contains(props.node, activeProcess.value))
+
+function contains(node, name) {
+  if (!name) return false
+
+  return (node.children || []).some((child) => child.name === name || contains(child, name))
+}
 
 function open() {
   setProcess(props.node.name)

@@ -1,7 +1,12 @@
 <template>
   <PageHeader>
     <div class="flex min-w-0 items-center gap-2">
-      <PageHeaderTitle>{{ isNew ? 'New procedure' : draft.sop_no }}</PageHeaderTitle>
+      <AppBreadcrumbs
+        :tail="[
+          { label: isNew ? 'New procedure' : draft.sop_no, route: crumbRoute },
+          { label: 'Edit' },
+        ]"
+      />
       <Badge variant="subtle" size="sm">{{ draft.status }}</Badge>
       <span class="text-sm text-ink-gray-4">
         <template v-if="save.loading">Saving…</template>
@@ -40,7 +45,7 @@
         variant="solid"
         icon-left="lucide-plus"
         label="Create a space"
-        @click="spaceDialog = true"
+        @click="ui.spaceDialog = true"
       />
     </div>
 
@@ -86,16 +91,17 @@ import {
   ErrorMessage,
   FormControl,
   PageHeader,
-  PageHeaderTitle,
   createResource,
 } from 'frappe-ui'
+import AppBreadcrumbs from '@/components/Layouts/AppBreadcrumbs.vue'
 import ProcedureEditor from '@/components/editor/ProcedureEditor.vue'
 import { activeSpace, spaces } from '@/data/navigation'
 import { activeProcess, flatten, processes } from '@/data/processes'
-import { spaceDialog } from '@/data/ui'
+import { useUI } from '@/stores/ui'
 
 const route = useRoute()
 const router = useRouter()
+const ui = useUI()
 
 const draft = reactive({
   title: '',
@@ -112,6 +118,7 @@ const savedAt = ref(null)
 let loading = false
 
 const isNew = computed(() => !route.params.name)
+const crumbRoute = computed(() => (isNew.value ? '/' : `/${route.params.name}`))
 const spaceOptions = computed(() => spaces.value.map((s) => ({ label: s.title, value: s.name })))
 
 const processOptions = computed(() => [

@@ -1,11 +1,22 @@
 import { onBeforeUnmount, onMounted } from 'vue'
-import { searchDialog } from '@/data/ui'
+import { useUI } from '@/stores/ui'
 
 export function useShortcuts() {
+  const ui = useUI()
+
   function onKeydown(event) {
-    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+    if (!event.metaKey && !event.ctrlKey) return
+
+    const key = event.key.toLowerCase()
+
+    if (key === 'k') {
       event.preventDefault()
-      searchDialog.value = true
+      ui.searchDialog = true
+    }
+
+    if (key === 'b') {
+      event.preventDefault()
+      ui.toggleSidebar()
     }
   }
 

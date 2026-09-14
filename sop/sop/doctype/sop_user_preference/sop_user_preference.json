@@ -1,0 +1,97 @@
+{
+ "actions": [],
+ "autoname": "field:user",
+ "creation": "2026-09-14 10:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "user",
+  "reading_width",
+  "rows_per_page",
+  "column_break_mail",
+  "email_on_approval",
+  "email_on_publish",
+  "email_on_training",
+  "digest"
+ ],
+ "fields": [
+  {
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "User",
+   "options": "User",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "default": "Comfortable",
+   "fieldname": "reading_width",
+   "fieldtype": "Select",
+   "label": "Reading Width",
+   "options": "Comfortable\nFull"
+  },
+  {
+   "default": "20",
+   "fieldname": "rows_per_page",
+   "fieldtype": "Int",
+   "label": "Rows Per Page"
+  },
+  {
+   "fieldname": "column_break_mail",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "1",
+   "fieldname": "email_on_approval",
+   "fieldtype": "Check",
+   "label": "Email When Approval Is Waiting"
+  },
+  {
+   "default": "1",
+   "fieldname": "email_on_publish",
+   "fieldtype": "Check",
+   "label": "Email When A Procedure Comes Into Force"
+  },
+  {
+   "default": "1",
+   "fieldname": "email_on_training",
+   "fieldtype": "Check",
+   "label": "Email Before Training Falls Overdue"
+  },
+  {
+   "default": "Weekly",
+   "fieldname": "digest",
+   "fieldtype": "Select",
+   "label": "Review Digest",
+   "options": "Off\nWeekly\nMonthly"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-09-14 10:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "SOP",
+ "name": "SOP User Preference",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "SOP Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}

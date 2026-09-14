@@ -6,7 +6,7 @@
     @touchend="palette?.cancelPress()"
     @touchmove="palette?.cancelPress()"
   >
-    <ToolPalette ref="palette" v-model:pinned="pinned" :editor="editor" :api="api" />
+    <ToolPalette ref="palette" v-model:pinned="ui.editorToolsPinned" :editor="editor" :api="api" />
 
     <EditorBubbleMenu v-if="editor && editable" :editor="editor" :items="BUBBLE_ITEMS" />
     <EditorTableMenu v-if="editor && editable" :editor="editor" />
@@ -17,7 +17,7 @@
     />
 
     <div
-      v-if="!pinned"
+      v-if="!ui.editorToolsPinned"
       class="flex items-center gap-1.5 border-t border-outline-gray-1 px-3 py-1.5 text-sm text-ink-gray-5"
     >
       <span class="lucide-mouse-pointer-click size-3.5 shrink-0" aria-hidden="true" />
@@ -94,6 +94,7 @@ import {
   useEditor,
 } from 'frappe-ui/editor'
 import ToolPalette from './ToolPalette.vue'
+import { useUI } from '@/stores/ui'
 import { BUBBLE_ITEMS } from './tools'
 
 const content = defineModel({ type: String, default: '' })
@@ -110,7 +111,7 @@ const PICKER_TITLE = {
 }
 
 const palette = ref(null)
-const pinned = ref(localStorage.getItem('sop:editor-tools-pinned') === '1')
+const ui = useUI()
 const fileUpload = useFileUpload()
 
 const editor = useEditor({

@@ -8,6 +8,12 @@
           </template>
           Preferences
         </SettingsNavItem>
+        <SettingsNavItem value="notifications">
+          <template #prefix>
+            <span class="lucide-bell size-4 shrink-0 text-ink-gray-6" />
+          </template>
+          Notifications
+        </SettingsNavItem>
       </SettingsNavGroup>
 
       <SettingsNavGroup label="Administration">
@@ -46,10 +52,68 @@
               />
             </SettingsRow>
             <SettingsRow
+              title="Reading width"
+              description="How wide a procedure runs when you read it"
+            >
+              <TabButtons
+                :buttons="[
+                  { label: 'Comfortable', value: 'Comfortable' },
+                  { label: 'Full', value: 'Full' },
+                ]"
+                :model-value="preferences.reading_width"
+                @update:model-value="(value) => setPreference('reading_width', value)"
+              />
+            </SettingsRow>
+            <SettingsRow
               title="Rows per page"
               description="How many procedures a list page shows before it pages"
             >
               <Select v-model="rowsPerPage" :options="['10', '20', '50', '100']" />
+            </SettingsRow>
+          </div>
+        </SettingsBody>
+      </SettingsPanel>
+
+      <SettingsPanel value="notifications">
+        <SettingsHeader
+          title="Notifications"
+          description="What reaches your inbox. Everything still shows in the app."
+        />
+        <SettingsBody>
+          <div class="divide-y divide-outline-gray-1 pt-6">
+            <SettingsRow
+              title="Approval requests"
+              description="When a procedure is waiting for your sign-off"
+            >
+              <Switch
+                :model-value="!!preferences.email_on_approval"
+                @update:model-value="(value) => setPreference('email_on_approval', value ? 1 : 0)"
+              />
+            </SettingsRow>
+            <SettingsRow
+              title="Newly effective procedures"
+              description="When a procedure you have to follow comes into force"
+            >
+              <Switch
+                :model-value="!!preferences.email_on_publish"
+                @update:model-value="(value) => setPreference('email_on_publish', value ? 1 : 0)"
+              />
+            </SettingsRow>
+            <SettingsRow
+              title="Training reminders"
+              description="Before training of yours falls overdue"
+            >
+              <Switch
+                :model-value="!!preferences.email_on_training"
+                @update:model-value="(value) => setPreference('email_on_training', value ? 1 : 0)"
+              />
+            </SettingsRow>
+            <SettingsRow title="Review digest" description="A summary of what is due for review">
+              <Select
+                :model-value="preferences.digest"
+                :options="['Off', 'Weekly', 'Monthly']"
+                @update:model-value="(value) => setPreference('digest', value)"
+              />
             </SettingsRow>
           </div>
         </SettingsBody>
@@ -171,6 +235,7 @@ import {
   SettingsPanel,
   SettingsRow,
   SettingsSidebar,
+  Switch,
   TabButtons,
   createResource,
   useColorScheme,
@@ -178,16 +243,20 @@ import {
 
 import { List, ListCell, ListHeader, ListHeaderCell, ListRow, ListRows } from 'frappe-ui/list'
 import { spaces } from '@/data/navigation'
-import { spaceDialog } from '@/data/ui'
+import { useUI } from '@/stores/ui'
 import { pageLength } from '@/data/procedures'
+import { preferences, setPreference } from '@/data/preferences'
 
 const open = defineModel('open', { type: Boolean, default: false })
 const tab = ref('preferences')
+const ui = useUI()
 
 const { colorScheme, setColorScheme } = useColorScheme()
 
-const rowsPerPage = ref(String(pageLength.value))
-watch(rowsPerPage, (value) => (pageLength.value = Number(value)))
+const rowsPerPage = computed({
+  get: () => String(pageLength.value),
+  set: (value) => (pageLength.value = Number(value)),
+})
 
 const mentionConfigs = createResource({
   url: 'frappe.client.get_list',
@@ -202,7 +271,7 @@ const configs = computed(() => mentionConfigs.data || [])
 
 function newSpace() {
   open.value = false
-  spaceDialog.value = true
+  ui.spaceDialog = true
 }
 
 function addMentionConfig() {

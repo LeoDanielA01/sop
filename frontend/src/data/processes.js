@@ -21,6 +21,10 @@ export const createProcess = createResource({
   },
 })
 
+export const trailResource = createResource({ url: 'sop.api.processes.trail' })
+
+export const trail = computed(() => (activeProcess.value ? trailResource.data || [] : []))
+
 export const templates = createResource({ url: 'sop.api.processes.templates', auto: true })
 
 export const applyTemplate = createResource({
@@ -36,6 +40,8 @@ watch(activeSpace, () => {
 
 export function setProcess(name) {
   activeProcess.value = name || null
+
+  if (name) trailResource.submit({ process: name })
 }
 
 export function toggle(name) {

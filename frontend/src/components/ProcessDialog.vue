@@ -5,7 +5,9 @@
         <ErrorMessage :message="createProcess.error?.messages?.[0]" />
 
         <p class="text-sm text-ink-gray-5">
-          <template v-if="state.parentTitle">Inside {{ state.parentTitle }}.</template>
+          <template v-if="ui.processDialog.parentTitle">
+            Inside {{ ui.processDialog.parentTitle }}.
+          </template>
           <template v-else>A top-level process in this space.</template>
           Procedures can sit on any process, at any depth.
         </p>
@@ -37,13 +39,13 @@
 import { computed, ref, watch } from 'vue'
 import { Button, Dialog, ErrorMessage, FormControl } from 'frappe-ui'
 import { createProcess } from '@/data/processes'
-import { processDialog } from '@/data/ui'
+import { useUI } from '@/stores/ui'
 
-const state = processDialog
+const ui = useUI()
 
 const open = computed({
-  get: () => state.value.open,
-  set: (value) => (state.value = { ...state.value, open: value }),
+  get: () => ui.processDialog.open,
+  set: (value) => (ui.processDialog = { ...ui.processDialog, open: value }),
 })
 
 const title = ref('')
@@ -53,8 +55,8 @@ function submit() {
   createProcess.submit(
     {
       title: title.value,
-      space: state.value.space,
-      parent: state.value.parent,
+      space: ui.processDialog.space,
+      parent: ui.processDialog.parent,
       sequence: sequence.value,
     },
     { onSuccess: () => (open.value = false) },

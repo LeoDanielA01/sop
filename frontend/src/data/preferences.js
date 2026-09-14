@@ -1,0 +1,38 @@
+import { createResource } from 'frappe-ui'
+import { computed, reactive } from 'vue'
+
+const DEFAULTS = {
+  reading_width: 'Comfortable',
+  rows_per_page: 20,
+  email_on_approval: 1,
+  email_on_publish: 1,
+  email_on_training: 1,
+  digest: 'Weekly',
+}
+
+export const preferences = reactive({ ...DEFAULTS })
+
+export const preferencesResource = createResource({
+  url: 'sop.api.preferences.get',
+  auto: true,
+  onSuccess(data) {
+    Object.assign(preferences, data)
+  },
+})
+
+const saveResource = createResource({ url: 'sop.api.preferences.save' })
+
+export function setPreference(key, value) {
+  if (preferences[key] === value) return
+
+  preferences[key] = value
+  saveResource.submit({ [key]: value })
+}
+
+export const fullWidth = computed(() => preferences.reading_width === 'Full')
+
+export const readingWidth = computed(() => (fullWidth.value ? 'max-w-none' : 'max-w-[820px]'))
+
+export function toggleWidth() {
+  setPreference('reading_width', fullWidth.value ? 'Comfortable' : 'Full')
+}

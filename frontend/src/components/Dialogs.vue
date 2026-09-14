@@ -1,9 +1,9 @@
 <template>
-  <CommandPalette v-model:open="searchDialog" />
-  <SpaceDialog v-model:open="spaceDialog" />
+  <CommandPalette v-model:open="ui.searchDialog" />
+  <SpaceDialog v-model:open="ui.spaceDialog" />
   <ProcessDialog />
   <TemplateDialog />
-  <Settings v-model:open="settingsDialog" />
+  <Settings v-model:open="ui.settingsDialog" />
 </template>
 
 <script setup>
@@ -12,5 +12,7 @@ import ProcessDialog from '@/components/ProcessDialog.vue'
 import Settings from '@/components/Settings.vue'
 import TemplateDialog from '@/components/TemplateDialog.vue'
 import SpaceDialog from '@/components/SpaceDialog.vue'
-import { searchDialog, settingsDialog, spaceDialog } from '@/data/ui'
+import { useUI } from '@/stores/ui'
+
+const ui = useUI()
 </script>

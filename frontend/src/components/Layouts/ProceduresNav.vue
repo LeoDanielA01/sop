@@ -16,7 +16,7 @@
         size="sm"
         icon="lucide-plus"
         label="New space"
-        @click="spaceDialog = true"
+        @click="ui.spaceDialog = true"
       />
     </Tooltip>
   </div>
@@ -52,17 +52,20 @@
         </template>
       </SidebarItem>
 
-      <template v-if="activeSpace === space.name">
+      <div
+        v-if="activeSpace === space.name"
+        class="ml-[0.9rem] space-y-0.5 border-l border-outline-gray-2 pl-1.5"
+      >
         <ProcessNode
           v-for="node in processes"
           :key="node.name"
-          :node="{ ...node, depth: 1 }"
+          :node="node"
           @add="add(space, $event)"
         />
 
         <div
           v-if="!processTree.loading && !processes.length"
-          class="flex flex-col items-start gap-1 py-1.5 pl-8 pr-2"
+          class="flex flex-col items-start gap-1 py-1.5 pl-2 pr-2"
         >
           <p class="text-sm text-ink-gray-5">No processes yet.</p>
           <Button
@@ -70,13 +73,31 @@
             size="sm"
             icon-left="lucide-sparkles"
             label="Start from a template"
-            @click="templateDialog = true"
+            @click="ui.templateDialog = true"
           />
         </div>
-      </template>
+      </div>
     </template>
 
-    <p v-if="!spaces.length" class="px-2 py-2 text-sm text-ink-gray-5">
+    <div v-if="spacesResource.loading" class="flex flex-col gap-1.5 px-2 py-2">
+      <div v-for="row in 3" :key="row" class="h-4 animate-pulse rounded bg-surface-gray-2" />
+    </div>
+
+    <div
+      v-else-if="spacesResource.error"
+      class="flex flex-col items-start gap-1 px-2 py-2 text-sm text-ink-gray-5"
+    >
+      <p>The spaces did not load.</p>
+      <Button
+        variant="ghost"
+        size="sm"
+        icon-left="lucide-rotate-cw"
+        label="Try again"
+        @click="spacesResource.reload()"
+      />
+    </div>
+
+    <p v-else-if="!spaces.length" class="px-2 py-2 text-sm text-ink-gray-5">
       No spaces yet. A space is a binder — QA, Manufacturing, HR.
     </p>
   </nav>
@@ -115,12 +136,13 @@ import { useRoute, useRouter } from 'vue-router'
 import { Button, SidebarItem, SidebarLabel, Tooltip } from 'frappe-ui'
 import ProcessNode from './ProcessNode.vue'
 import { useSection } from '@/composables/useSection'
-import { activeSpace, setSpace, spaces, views } from '@/data/navigation'
+import { activeSpace, setSpace, spaces, spacesResource, views } from '@/data/navigation'
 import { activeProcess, processTree, processes, setProcess } from '@/data/processes'
-import { askForProcess, spaceDialog, templateDialog } from '@/data/ui'
+import { useUI } from '@/stores/ui'
 
 const route = useRoute()
 const router = useRouter()
+const ui = useUI()
 const { activeView } = useSection()
 
 const isAll = computed(
@@ -139,6 +161,6 @@ function pick(space) {
 }
 
 function add(space, node) {
-  askForProcess({ space: space.name, parent: node })
+  ui.askForProcess({ space: space.name, parent: node })
 }
 </script>

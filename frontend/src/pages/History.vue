@@ -1,6 +1,8 @@
 <template>
   <PageHeader>
-    <PageHeaderTitle>Revision history</PageHeaderTitle>
+    <AppBreadcrumbs
+      :tail="[{ label: sopNo, route: `/${route.params.name}` }, { label: 'Revision history' }]"
+    />
     <Button
       variant="ghost"
       icon-left="lucide-arrow-left"
@@ -49,8 +51,10 @@
 <script setup>
 import { computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Badge, Button, PageHeader, PageHeaderTitle, createResource } from 'frappe-ui'
+import { Badge, Button, PageHeader, createResource } from 'frappe-ui'
 import { List, ListCell, ListRow } from 'frappe-ui/list'
+import AppBreadcrumbs from '@/components/Layouts/AppBreadcrumbs.vue'
+import { procedure } from '@/data/procedures'
 import { shortDate } from '@/utils/format'
 
 const route = useRoute()
@@ -75,6 +79,10 @@ const revisions = createResource({
     limit_page_length: 100,
   }),
 })
+
+const sopNo = computed(() =>
+  procedure.data?.name === route.params.name ? procedure.data.sop_no : route.params.name,
+)
 
 const rows = computed(() => revisions.data || [])
 onMounted(() => revisions.fetch())

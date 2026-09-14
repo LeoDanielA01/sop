@@ -5,7 +5,7 @@
     </template>
 
     <template #sidebar>
-      <AppSidebar />
+      <AppSidebar v-if="!ui.sidebarCollapsed" />
     </template>
 
     <slot />
@@ -16,4 +16,7 @@
 import { DesktopShell } from 'frappe-ui'
 import AppRail from './AppRail.vue'
 import AppSidebar from './AppSidebar.vue'
+import { useUI } from '@/stores/ui'
+
+const ui = useUI()
 </script>

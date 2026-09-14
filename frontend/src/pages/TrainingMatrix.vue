@@ -1,6 +1,6 @@
 <template>
   <PageHeader>
-    <PageHeaderTitle>Training matrix</PageHeaderTitle>
+    <AppBreadcrumbs :tail="[{ label: 'Matrix' }]" />
     <Button
       variant="solid"
       icon-left="lucide-user-plus"
@@ -87,7 +87,8 @@
 
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
-import { Avatar, Badge, Button, PageHeader, PageHeaderTitle, Tooltip } from 'frappe-ui'
+import { Avatar, Badge, Button, PageHeader, Tooltip } from 'frappe-ui'
+import AppBreadcrumbs from '@/components/Layouts/AppBreadcrumbs.vue'
 import AssignTrainingDialog from '@/components/AssignTrainingDialog.vue'
 import { activeSpace } from '@/data/navigation'
 import { matrix, trainingCounts } from '@/data/training'

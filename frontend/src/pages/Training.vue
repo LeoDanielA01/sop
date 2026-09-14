@@ -1,6 +1,6 @@
 <template>
   <PageHeader>
-    <PageHeaderTitle>My training</PageHeaderTitle>
+    <AppBreadcrumbs />
     <Button
       v-if="compact"
       variant="ghost"
@@ -175,13 +175,13 @@ import {
   ErrorMessage,
   FormControl,
   PageHeader,
-  PageHeaderTitle,
   Progress,
   TabButtons,
   Tooltip,
   createResource,
 } from 'frappe-ui'
 import { List, ListCell, ListRow } from 'frappe-ui/list'
+import AppBreadcrumbs from '@/components/Layouts/AppBreadcrumbs.vue'
 import { shortDate } from '@/utils/format'
 
 defineProps({ compact: { type: Boolean, default: false } })

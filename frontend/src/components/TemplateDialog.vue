@@ -38,9 +38,14 @@ import { computed, ref, watch } from 'vue'
 import { Button, Dialog, ErrorMessage, FormControl } from 'frappe-ui'
 import { applyTemplate, templates } from '@/data/processes'
 import { activeSpace, spaces } from '@/data/navigation'
-import { templateDialog } from '@/data/ui'
+import { useUI } from '@/stores/ui'
 
-const open = templateDialog
+const ui = useUI()
+
+const open = computed({
+  get: () => ui.templateDialog,
+  set: (value) => (ui.templateDialog = value),
+})
 
 const template = ref('')
 const withDrafts = ref(false)

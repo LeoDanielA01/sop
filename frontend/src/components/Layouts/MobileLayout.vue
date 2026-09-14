@@ -18,7 +18,7 @@
 
       <div class="flex-1" />
 
-      <Button variant="ghost" icon="lucide-search" label="Search" @click="searchDialog = true" />
+      <Button variant="ghost" icon="lucide-search" label="Search" @click="ui.searchDialog = true" />
       <Dropdown :options="userMenu">
         <Button variant="ghost" label="Account">
           <Avatar :image="session.user.image" :label="session.user.full_name" size="sm" />
@@ -106,10 +106,11 @@ import { activeSpace, setSpace, spaces, views } from '@/data/navigation'
 import { activeProcess, flatten, processes, setProcess } from '@/data/processes'
 import { session } from '@/data/session'
 import { trainingCounts } from '@/data/training'
-import { searchDialog, settingsDialog, spaceDialog } from '@/data/ui'
+import { useUI } from '@/stores/ui'
 
 const route = useRoute()
 const router = useRouter()
+const ui = useUI()
 const showSpaces = ref(false)
 
 const { space, activeView } = useSection()
@@ -117,7 +118,7 @@ const onList = computed(() => route.name === 'Procedures')
 const tree = computed(() => flatten(processes.value))
 
 const userMenu = [
-  { label: 'Settings', icon: 'lucide-settings', onClick: () => (settingsDialog.value = true) },
+  { label: 'Settings', icon: 'lucide-settings', onClick: () => (ui.settingsDialog = true) },
   { label: 'Log out', icon: 'lucide-log-out', onClick: () => session.logout() },
 ]
 
@@ -148,7 +149,7 @@ function isActive(item) {
 
 function newSpace() {
   showSpaces.value = false
-  spaceDialog.value = true
+  ui.spaceDialog = true
 }
 
 function pickSpace(name) {

@@ -129,7 +129,6 @@ onBeforeUnmount(() => {
 
 watch(pinned, (value) => {
   if (value) close()
-  localStorage.setItem('sop:editor-tools-pinned', value ? '1' : '0')
 })
 
 defineExpose({ onContextMenu, onTouchStart, cancelPress })
