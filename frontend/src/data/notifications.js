@@ -9,7 +9,11 @@ export const unreadResource = createRetryingResource({
   auto: true,
 })
 
-export const unreadCount = computed(() => unreadResource.data || 0)
+export const counts = computed(
+  () => unreadResource.data || { total: 0, procedure: 0, training: 0 },
+)
+
+export const unreadCount = computed(() => counts.value.total)
 
 export const read = createResource({
   url: 'sop.api.notifications.mark_read',

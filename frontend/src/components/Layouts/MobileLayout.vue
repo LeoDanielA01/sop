@@ -39,13 +39,24 @@
         :label="item.label"
         @click="go(item)"
       >
+        <span class="relative">
+          <span
+            :class="[item.icon, isActive(item) ? 'text-ink-gray-9' : 'text-ink-gray-5']"
+            class="size-5"
+            aria-hidden="true"
+          />
+          <span
+            v-if="item.count"
+            class="absolute -right-2 -top-1 grid min-w-4 place-content-center rounded-full bg-surface-red-6 px-1 text-[10px] font-medium text-white"
+          >
+            {{ item.count }}
+          </span>
+        </span>
         <span
-          :class="[item.icon, isActive(item) ? 'text-ink-gray-9' : 'text-ink-gray-5']"
-          class="size-5"
-          aria-hidden="true"
-        />
-        <span class="text-xs" :class="isActive(item) ? 'text-ink-gray-9' : 'text-ink-gray-5'">
-          {{ item.label }}<template v-if="item.count"> · {{ item.count }}</template>
+          class="max-w-full truncate text-xs"
+          :class="isActive(item) ? 'text-ink-gray-9' : 'text-ink-gray-5'"
+        >
+          {{ item.label }}
         </span>
       </Button>
     </nav>

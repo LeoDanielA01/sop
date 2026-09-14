@@ -10,26 +10,29 @@
 
     <div class="flex items-center gap-2">
       <Select
-        v-if="doc.revisions?.length > 1"
+        v-if="isDesktop && doc.revisions?.length > 1"
         v-model="revision"
         :options="doc.revisions.map((r) => ({ label: `Rev ${r.version}`, value: r.version }))"
       />
+
       <Button
-        v-if="doc.can_edit"
+        v-if="isDesktop && doc.can_edit"
         variant="ghost"
         icon-left="lucide-pencil"
         label="Edit"
         @click="router.push(`/${route.params.name}/edit`)"
       />
+
       <Button
         v-if="primary"
         variant="solid"
         :icon-left="primary.icon"
-        :label="primary.label"
+        :label="isDesktop ? primary.label : ''"
         :loading="primary.loading"
         @click="primary.onClick"
       />
-      <Tooltip :text="fullWidth ? 'Narrow the page' : 'Use the full width'">
+
+      <Tooltip v-if="isDesktop" :text="fullWidth ? 'Narrow the page' : 'Use the full width'">
         <Button
           variant="ghost"
           :icon="fullWidth ? 'lucide-minimize-2' : 'lucide-maximize-2'"
@@ -37,6 +40,7 @@
           @click="toggleWidth"
         />
       </Tooltip>
+
       <Dropdown :options="actions">
         <Button variant="ghost" icon="lucide-ellipsis" label="More" />
       </Dropdown>
@@ -106,7 +110,7 @@
     <div class="flex flex-col gap-6 lg:grid lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-start lg:gap-8">
       <aside class="order-first min-w-0 lg:order-last lg:sticky lg:top-6">
         <dl
-          class="grid grid-cols-2 gap-x-5 gap-y-4 rounded-4 border border-outline-gray-2 bg-surface-gray-1 px-4 py-4 sm:grid-cols-3 lg:grid-cols-1 lg:gap-y-3.5"
+          class="grid grid-cols-1 gap-x-5 gap-y-3.5 rounded-4 border border-outline-gray-2 bg-surface-gray-1 px-4 py-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-1"
         >
           <div class="flex min-w-0 items-center gap-2.5">
             <Avatar :image="doc.owner_image" :label="ownerName" size="lg" />
@@ -214,7 +218,7 @@
 
           <div
             v-if="doc.tags?.length"
-            class="col-span-2 flex flex-wrap items-center gap-1.5 border-t border-outline-gray-1 pt-3 sm:col-span-3 lg:col-span-1"
+            class="flex flex-wrap items-center gap-1.5 border-t border-outline-gray-1 pt-3 sm:col-span-2 md:col-span-3 lg:col-span-1"
           >
             <span class="lucide-tags size-4 shrink-0 text-ink-gray-5" aria-hidden="true" />
             <Badge v-for="tag in doc.tags" :key="tag" variant="subtle" size="sm">{{ tag }}</Badge>
@@ -405,11 +409,13 @@ import ReviewComments from '@/components/ReviewComments.vue'
 import MentionChip from '@/components/MentionChip.vue'
 import { acknowledge, procedure } from '@/data/procedures'
 import { fullWidth, readingWidth, toggleWidth } from '@/data/preferences'
+import { useBreakpoint } from '@/composables/useBreakpoint'
 import { refreshCounts } from '@/data/navigation'
 import { STATUS_THEME, reviewTone, shortDate, today } from '@/utils/format'
 
 const route = useRoute()
 const router = useRouter()
+const { isDesktop } = useBreakpoint()
 
 const RISK_THEME = { High: 'red', Medium: 'orange', Low: 'green' }
 
@@ -524,6 +530,17 @@ const primary = computed(() => {
 
 const actions = computed(() =>
   [
+    !isDesktop.value &&
+      doc.value.can_edit && {
+        label: 'Edit',
+        icon: 'lucide-pencil',
+        onClick: () => router.push(`/${route.params.name}/edit`),
+      },
+    !isDesktop.value && {
+      label: fullWidth.value ? 'Narrow the page' : 'Use the full width',
+      icon: fullWidth.value ? 'lucide-minimize-2' : 'lucide-maximize-2',
+      onClick: toggleWidth,
+    },
     {
       label: 'Revision history',
       icon: 'lucide-history',

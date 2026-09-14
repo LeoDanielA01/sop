@@ -10,7 +10,7 @@
     />
   </PageHeader>
 
-  <div class="mx-auto mt-5 w-full max-w-[940px] px-3 pb-10 sm:px-5">
+  <div class="mx-auto flex min-h-full w-full max-w-[940px] flex-col px-3 pb-4 pt-5 sm:px-5">
     <div class="mb-4 flex items-center justify-between">
       <TabButtons
         v-model="scope"
@@ -86,6 +86,7 @@
 
     <Pagination
       v-if="paged"
+      class="mt-auto"
       v-model:page="page"
       v-model:page-length="pageLength"
       :total="total"
