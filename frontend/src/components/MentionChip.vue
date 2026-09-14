@@ -3,7 +3,7 @@
     <a
       :href="reference.url"
       target="_blank"
-      class="inline-flex items-center gap-1.5 rounded border border-outline-gray-2 bg-surface-gray-1 px-1.5 py-px align-baseline text-ink-gray-8 no-underline hover:bg-surface-gray-2"
+      class="inline-flex items-center gap-1.5 rounded-md border border-outline-gray-2 bg-surface-gray-1 px-1.5 py-px align-baseline text-ink-gray-8 no-underline hover:bg-surface-gray-2"
     >
       <span class="text-xs uppercase tracking-wide text-ink-gray-5">
         {{ reference.short_type || reference.reference_doctype }}
@@ -37,8 +37,11 @@ const target = computed(() => {
 
   const { reference_doctype: doctype, reference_name: name } = props.reference
 
+  const escaped = CSS.escape ? CSS.escape(name) : name
+
   return (
     props.root.querySelector(`a[href="#mention:${doctype}:${name}"]`) ||
+    props.root.querySelector(`span[data-type="mention"][data-id="${escaped}"]`) ||
     props.root.querySelector(`[data-mention][data-doctype="${doctype}"][data-name="${name}"]`)
   )
 })

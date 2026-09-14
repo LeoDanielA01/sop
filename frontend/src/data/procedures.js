@@ -1,4 +1,4 @@
-import { createResource } from 'frappe-ui'
+import { createResource, debounce } from 'frappe-ui'
 import { computed, ref, watch } from 'vue'
 import { activeSpace } from '@/data/navigation'
 import { activeProcess } from '@/data/processes'
@@ -26,11 +26,33 @@ export const procedures = createRetryingResource({
   }),
 })
 
-watch([page, pageLength], () => procedures.reload())
+function snapshot() {
+  return JSON.stringify([
+    activeSpace.value,
+    activeProcess.value,
+    view.value,
+    search.value,
+    page.value,
+    pageLength.value,
+  ])
+}
+
+const refresh = debounce(async () => {
+  const mine = snapshot()
+  await procedures.reload()
+
+  if (mine !== snapshot()) refresh()
+}, 60)
+
+export function reloadProcedures() {
+  refresh()
+}
+
+watch([page, pageLength], refresh)
 
 watch([activeSpace, activeProcess, view, search], () => {
   page.value = 1
-  procedures.reload()
+  refresh()
 })
 
 export const procedure = createResource({

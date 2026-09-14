@@ -15,6 +15,13 @@
         badge-style="count"
         @click="router.push(item.route)"
       />
+
+      <SidebarRailItem
+        label="Find and replace"
+        variant="ghost"
+        icon="lucide-replace"
+        @click="ui.replaceDialog = true"
+      />
     </div>
 
     <div class="flex flex-col items-center gap-2.5">
@@ -88,30 +95,22 @@ function railLabel(item) {
 }
 
 const userMenu = computed(() => [
-  { group: '', items: [{ component: markRaw(UserCard) }] },
+  { component: markRaw(UserCard) },
   {
-    group: '',
-    items: [
-      {
-        icon: 'lucide-settings',
-        label: 'Settings',
-        onClick: () => (ui.settingsDialog = true),
-      },
-      {
-        icon: colorScheme.value === 'dark' ? 'lucide-sun' : 'lucide-moon',
-        label: colorScheme.value === 'dark' ? 'Switch to light' : 'Switch to dark',
-        onClick: () => setColorScheme(colorScheme.value === 'dark' ? 'light' : 'dark'),
-      },
-      {
-        icon: 'lucide-layout-grid',
-        label: 'Open the desk',
-        onClick: () => window.open('/app/sop', '_blank'),
-      },
-    ],
+    icon: 'lucide-settings',
+    label: 'Settings',
+    onClick: () => ui.openSettings('preferences'),
   },
   {
-    group: '',
-    items: [{ icon: 'lucide-log-out', label: 'Log out', onClick: () => session.logout() }],
+    icon: colorScheme.value === 'dark' ? 'lucide-sun' : 'lucide-moon',
+    label: colorScheme.value === 'dark' ? 'Switch to light' : 'Switch to dark',
+    onClick: () => setColorScheme(colorScheme.value === 'dark' ? 'light' : 'dark'),
   },
+  {
+    icon: 'lucide-layout-grid',
+    label: 'Open the desk',
+    onClick: () => window.open('/app/sop', '_blank'),
+  },
+  { icon: 'lucide-log-out', label: 'Log out', onClick: () => session.logout() },
 ])
 </script>

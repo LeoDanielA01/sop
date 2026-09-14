@@ -2,6 +2,7 @@
 # For license information, please see license.txt
 
 import re
+from html import unescape
 
 import frappe
 from frappe import _
@@ -19,6 +20,7 @@ class SOP(Document):
 
 	def validate(self):
 		self.validate_process()
+		self.collect_mentions()
 		self.set_review_dates()
 		self.build_search_text()
 		self.validate_steps()
@@ -33,6 +35,36 @@ class SOP(Document):
 				_("{0} is a process of another space. Pick one from {1}.").format(
 					frappe.bold(self.sop_process), frappe.bold(self.space)
 				)
+			)
+
+	def collect_mentions(self):
+		found = mentions_in(self.content)
+		kept = {
+			(row.reference_doctype, row.reference_name): row
+			for row in self.references
+			if row.mention_kind == "Tag"
+		}
+
+		self.references = []
+
+		for doctype, name, kind in found:
+			if (doctype, name) in kept:
+				continue
+
+			self.append(
+				"references",
+				{"reference_doctype": doctype, "reference_name": name, "mention_kind": kind},
+			)
+
+		for row in kept.values():
+			self.append(
+				"references",
+				{
+					"reference_doctype": row.reference_doctype,
+					"reference_name": row.reference_name,
+					"mention_kind": row.mention_kind,
+					"context_snippet": row.context_snippet,
+				},
 			)
 
 	def set_review_dates(self):
@@ -71,6 +103,38 @@ class SOP(Document):
 			["name", "version", "content", "effective_from", "approved_by", "approved_on"],
 			as_dict=True,
 		)
+
+
+LINK_MENTION = re.compile(r'href="#mention:([^:"]+):([^"]+)"')
+NODE_MENTION = re.compile(r'data-type="mention"[^>]*data-id="([^"]+)"')
+LEGACY_MENTION = re.compile(r'data-doctype="([^"]+)" data-name="([^"]+)"')
+
+
+def mentions_in(content):
+	if not content:
+		return []
+
+	found = []
+
+	for doctype, name in LINK_MENTION.findall(content):
+		found.append((unescape(doctype), unescape(name), kind_of(doctype)))
+
+	for name in NODE_MENTION.findall(content):
+		found.append(("User", unescape(name), "Person"))
+
+	for doctype, name in LEGACY_MENTION.findall(content):
+		found.append((unescape(doctype), unescape(name), kind_of(doctype)))
+
+	seen = []
+	for row in found:
+		if row not in seen:
+			seen.append(row)
+
+	return seen
+
+
+def kind_of(doctype):
+	return "Person" if doctype == "User" else "Record"
 
 
 def next_number(space):

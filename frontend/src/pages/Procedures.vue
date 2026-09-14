@@ -136,7 +136,7 @@ import {
 import { List, ListCell, ListRow } from 'frappe-ui/list'
 import AppBreadcrumbs from '@/components/Layouts/AppBreadcrumbs.vue'
 import Pagination from '@/components/Pagination.vue'
-import { procedures, page, pageLength, view } from '@/data/procedures'
+import { procedures, page, pageLength, reloadProcedures, view } from '@/data/procedures'
 import { activeSpace, setSpace, spaces } from '@/data/navigation'
 import { activeProcess, setProcess } from '@/data/processes'
 import { useUI } from '@/stores/ui'
@@ -180,7 +180,7 @@ const rows = computed(() => {
 
 const total = computed(() => procedures.data?.total || 0)
 
-onMounted(() => procedures.reload())
+onMounted(() => reloadProcedures())
 
 function open(procedure) {
   router.push(`/${procedure.name}`)

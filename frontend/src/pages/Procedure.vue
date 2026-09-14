@@ -49,7 +49,7 @@
     <div
       v-if="doc.status && !isEffective"
       role="status"
-      class="mb-5 flex items-start gap-3 rounded-xl border px-4 py-3.5 text-base"
+      class="mb-5 flex items-start gap-3 rounded-lg border px-4 py-3.5 text-base"
       :class="
         doc.status === 'Retired'
           ? 'border-outline-red-2 bg-surface-red-1 text-ink-red-6'
@@ -82,7 +82,7 @@
 
     <div
       v-if="doc.approvals?.length && !isEffective"
-      class="mb-5 rounded-xl border border-outline-gray-2 bg-surface-gray-1"
+      class="mb-5 rounded-lg border border-outline-gray-2 bg-surface-gray-1"
     >
       <div class="flex items-center justify-between px-4 pb-2 pt-3">
         <span class="text-sm text-ink-gray-5">Sign-off</span>
@@ -113,7 +113,7 @@
     <div v-if="!doc.summary" class="mb-5" />
 
     <dl
-      class="mb-8 grid grid-cols-2 gap-x-5 gap-y-4 rounded-xl border border-outline-gray-2 bg-surface-gray-1 px-4 py-4 sm:grid-cols-3"
+      class="mb-8 grid grid-cols-2 gap-x-5 gap-y-4 rounded-lg border border-outline-gray-2 bg-surface-gray-1 px-4 py-4 sm:grid-cols-3"
     >
       <div class="flex min-w-0 items-center gap-2.5">
         <Avatar :image="doc.owner_image" :label="ownerName" size="lg" />
@@ -188,10 +188,16 @@
           />
         </span>
         <div class="min-w-0">
-          <dt class="text-sm text-ink-gray-5">You have read it</dt>
+          <Tooltip
+            text="Sign-off is per revision, not per reading. When a new revision comes into force you are asked again."
+          >
+            <dt class="w-fit text-sm text-ink-gray-5">Read &amp; understood</dt>
+          </Tooltip>
           <dd class="truncate text-base text-ink-gray-8">
-            <template v-if="doc.acknowledged_on">{{ shortDate(doc.acknowledged_on) }}</template>
-            <template v-else-if="isEffective">Not yet</template>
+            <template v-if="doc.acknowledged_on">
+              Rev {{ doc.acknowledged_version }} · {{ shortDate(doc.acknowledged_on) }}
+            </template>
+            <template v-else-if="isEffective">Not signed off</template>
             <template v-else>—</template>
           </dd>
         </div>
@@ -283,7 +289,8 @@
   >
     <div :class="readingWidth" class="mx-auto flex items-center justify-between gap-4">
       <p class="text-sm text-ink-gray-6">
-        Confirm you have read and understood Rev {{ doc.version }}.
+        Confirm you have read and understood <b>Rev {{ doc.version }}</b>. You will be asked again
+        when a new revision comes into force — not every time you open it.
       </p>
       <Button
         variant="solid"
@@ -299,7 +306,8 @@
     :class="readingWidth"
     class="mx-auto px-3 pb-10 text-sm text-ink-gray-5 sm:px-5"
   >
-    You acknowledged Rev {{ doc.acknowledged_version }} on {{ shortDate(doc.acknowledged_on) }}.
+    You signed off Rev {{ doc.acknowledged_version }} on {{ shortDate(doc.acknowledged_on) }}. The
+    next revision will ask again.
   </div>
 
   <ApproversDialog

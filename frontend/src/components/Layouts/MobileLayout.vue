@@ -120,22 +120,14 @@ const onList = computed(() => route.name === 'Procedures')
 const tree = computed(() => flatten(processes.value))
 
 const userMenu = computed(() => [
-  { group: '', items: [{ component: markRaw(UserCard) }] },
+  { component: markRaw(UserCard) },
+  { label: 'Settings', icon: 'lucide-settings', onClick: () => ui.openSettings('preferences') },
   {
-    group: '',
-    items: [
-      { label: 'Settings', icon: 'lucide-settings', onClick: () => (ui.settingsDialog = true) },
-      {
-        icon: colorScheme.value === 'dark' ? 'lucide-sun' : 'lucide-moon',
-        label: colorScheme.value === 'dark' ? 'Switch to light' : 'Switch to dark',
-        onClick: () => setColorScheme(colorScheme.value === 'dark' ? 'light' : 'dark'),
-      },
-    ],
+    icon: colorScheme.value === 'dark' ? 'lucide-sun' : 'lucide-moon',
+    label: colorScheme.value === 'dark' ? 'Switch to light' : 'Switch to dark',
+    onClick: () => setColorScheme(colorScheme.value === 'dark' ? 'light' : 'dark'),
   },
-  {
-    group: '',
-    items: [{ label: 'Log out', icon: 'lucide-log-out', onClick: () => session.logout() }],
-  },
+  { label: 'Log out', icon: 'lucide-log-out', onClick: () => session.logout() },
 ])
 
 const bottom = computed(() => [

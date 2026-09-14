@@ -82,7 +82,17 @@
             :options="['Role', 'Team', 'User', 'Designation', 'Department']"
             v-model="draft.applies_to"
           />
-          <FormControl type="text" :label="draft.applies_to" v-model="draft.target" />
+          <div class="flex flex-col gap-1.5">
+            <FormLabel :label="draft.applies_to" />
+            <Combobox
+              :options="targetOptions"
+              :modelValue="draft.target"
+              :loading="targets.loading"
+              :placeholder="`Search ${draft.applies_to.toLowerCase()}`"
+              @update:modelValue="(value) => (draft.target = value)"
+              @update:query="searchTargets"
+            />
+          </div>
           <FormControl
             type="select"
             label="Covers"
@@ -96,7 +106,17 @@
             :options="spaceOptions"
             v-model="draft.space"
           />
-          <FormControl v-else type="text" label="Procedure" v-model="draft.sop" />
+          <div v-else class="flex flex-col gap-1.5">
+            <FormLabel label="Procedure" />
+            <Combobox
+              :options="procedureOptions"
+              :modelValue="draft.sop"
+              :loading="picks.loading"
+              placeholder="Search procedures"
+              @update:modelValue="(value) => (draft.sop = value)"
+              @update:query="searchProcedures"
+            />
+          </div>
           <FormControl
             type="select"
             label="How they train"
@@ -143,13 +163,15 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import {
   Badge,
   Button,
+  Combobox,
   Dialog,
   ErrorMessage,
   FormControl,
+  FormLabel,
   PageHeader,
   Switch,
   Tooltip,
@@ -161,6 +183,13 @@ import AppBreadcrumbs from '@/components/Layouts/AppBreadcrumbs.vue'
 import { spaces } from '@/data/navigation'
 
 const METHODS = ['Read & Understand', 'Classroom', 'On the Job', 'Assessment']
+const TARGET_DOCTYPE = {
+  Role: 'Role',
+  Team: 'SOP Team',
+  User: 'User',
+  Designation: 'Designation',
+  Department: 'Department',
+}
 const TARGETS = { Role: 'role', Team: 'team', User: 'user', Designation: 'designation', Department: 'department' }
 
 const showForm = ref(false)
@@ -182,6 +211,29 @@ const draft = reactive({
 })
 
 const requirements = createResource({ url: 'sop.api.requirements.requirements', auto: true })
+
+const targets = createResource({ url: 'sop.api.mentions.find' })
+const picks = createResource({ url: 'sop.api.mentions.find' })
+
+const targetOptions = computed(() =>
+  (targets.data || []).map((row) => ({
+    label: row.label,
+    value: row.name,
+    description: row.label === row.name ? null : row.name,
+  })),
+)
+
+const procedureOptions = computed(() =>
+  (picks.data || []).map((row) => ({ label: row.label, value: row.name, description: row.name })),
+)
+
+function searchTargets(text) {
+  targets.submit({ doctype: TARGET_DOCTYPE[draft.applies_to] || 'Role', text: text || '' })
+}
+
+function searchProcedures(text) {
+  picks.submit({ doctype: 'SOP', text: text || '' })
+}
 
 const save = createResource({
   url: 'sop.api.requirements.save_requirement',
@@ -235,8 +287,18 @@ function edit(row) {
     enabled: row ? row.enabled : 1,
   })
 
+  searchTargets('')
+  searchProcedures('')
   showForm.value = true
 }
+
+watch(
+  () => draft.applies_to,
+  () => {
+    draft.target = ''
+    searchTargets('')
+  },
+)
 
 function submit() {
   save.submit({

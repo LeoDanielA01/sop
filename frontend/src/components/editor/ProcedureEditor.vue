@@ -9,6 +9,7 @@
     <ToolPalette ref="palette" v-model:pinned="ui.editorToolsPinned" :editor="editor" :api="api" />
 
     <EditorBubbleMenu v-if="editor && editable" :editor="editor" :items="BUBBLE_ITEMS" />
+    <MentionSuggest :editor="editor" />
     <EditorTableMenu v-if="editor && editable" :editor="editor" />
 
     <EditorContent
@@ -25,67 +26,11 @@
       to keep a toolbar
     </div>
   </div>
-
-  <Dialog v-model:open="picker.open" :title="PICKER_TITLE[picker.kind]" size="md">
-    <template #default>
-      <div class="flex flex-col gap-3">
-        <Select
-          v-if="picker.kind === 'record' && targets.data?.length > 1"
-          :options="targets.data.map((row) => ({ label: row.doctype, value: row.doctype }))"
-          :modelValue="picker.doctype"
-          @update:modelValue="switchDoctype"
-        />
-
-        <FormControl
-          type="text"
-          placeholder="Search"
-          v-model="picker.query"
-          @update:modelValue="runSearch"
-        />
-
-        <div class="flex max-h-72 flex-col gap-1 overflow-y-auto">
-          <Button
-            v-for="row in picker.results"
-            :key="row.name"
-            variant="ghost"
-            class="!justify-start"
-            @click="choose(row)"
-          >
-            <span class="min-w-0 flex-1 truncate text-left">{{ row.label }}</span>
-            <span class="ml-2 shrink-0 truncate font-mono text-sm text-ink-gray-4">
-              {{ row.name }}
-            </span>
-          </Button>
-
-          <p
-            v-if="picker.kind === 'record' && !targets.data?.length"
-            class="px-2 py-6 text-center text-sm text-ink-gray-5"
-          >
-            No doctype is set up for mentions yet. Settings → Mention chips decides what a mentioned
-            record shows.
-          </p>
-          <p
-            v-else-if="!loading && !picker.results.length"
-            class="px-2 py-6 text-center text-sm text-ink-gray-5"
-          >
-            Nothing matches that.
-          </p>
-        </div>
-      </div>
-    </template>
-  </Dialog>
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
-import {
-  Button,
-  Dialog,
-  FormControl,
-  Select,
-  createResource,
-  useFileUpload,
-} from 'frappe-ui'
+import { ref } from 'vue'
+import { useFileUpload } from 'frappe-ui'
 import {
   EditorBubbleMenu,
   EditorContent,
@@ -93,6 +38,7 @@ import {
   RichTextKit,
   useEditor,
 } from 'frappe-ui/editor'
+import MentionSuggest from './MentionSuggest.vue'
 import ToolPalette from './ToolPalette.vue'
 import { useUI } from '@/stores/ui'
 import { BUBBLE_ITEMS } from './tools'
@@ -104,11 +50,6 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['change'])
-
-const PICKER_TITLE = {
-  record: 'Mention a record',
-  person: 'Mention a person',
-}
 
 const palette = ref(null)
 const ui = useUI()
@@ -126,26 +67,6 @@ const editor = useEditor({
     emit('change', content.value)
   },
 })
-
-const picker = ref({ open: false, kind: null, doctype: null, query: '', results: [] })
-
-const targets = createResource({ url: 'sop.api.mentions.targets' })
-
-const records = createResource({
-  url: 'sop.api.mentions.find',
-  onSuccess(rows) {
-    picker.value.results = rows
-  },
-})
-
-const people = createResource({
-  url: 'sop.api.procedures.people',
-  onSuccess(rows) {
-    picker.value.results = rows.map((row) => ({ name: row.name, label: row.full_name }))
-  },
-})
-
-const loading = computed(() => records.loading || people.loading)
 
 function insertStep() {
   editor.value
@@ -168,50 +89,14 @@ function insertCallout(kind) {
     .run()
 }
 
-function runSearch() {
-  const { kind, doctype, query } = picker.value
-
-  if (kind === 'person') return people.submit({ search: query })
-  if (doctype) records.submit({ doctype, text: query })
+function mention(trigger) {
+  editor.value?.chain().focus().insertContent(trigger).run()
 }
 
-function switchDoctype(doctype) {
-  picker.value.doctype = doctype
-  picker.value.results = []
-  runSearch()
+const api = {
+  insertStep,
+  insertCallout,
+  pickRecord: () => mention('#'),
+  pickPerson: () => mention('@'),
 }
-
-async function pickRecord() {
-  picker.value = { open: true, kind: 'record', doctype: null, query: '', results: [] }
-
-  if (!targets.data) await targets.fetch()
-  picker.value.doctype = targets.data?.[0]?.doctype || null
-  if (picker.value.doctype) runSearch()
-}
-
-function pickPerson() {
-  picker.value = { open: true, kind: 'person', doctype: 'User', query: '', results: [] }
-  runSearch()
-}
-
-function choose(row) {
-  const { doctype } = picker.value
-
-  editor.value
-    ?.chain()
-    .focus()
-    .insertContent([
-      {
-        type: 'text',
-        text: row.label,
-        marks: [{ type: 'link', attrs: { href: `#mention:${doctype}:${row.name}` } }],
-      },
-      { type: 'text', text: ' ' },
-    ])
-    .run()
-
-  picker.value.open = false
-}
-
-const api = { insertStep, insertCallout, pickRecord, pickPerson }
 </script>

@@ -46,6 +46,32 @@ def targets():
 
 
 @frappe.whitelist()
+def doctypes(search=None, limit=12):
+	filters = {"istable": 0, "issingle": 0}
+	or_filters = {"name": ("like", f"%{search}%")} if search else None
+
+	rows = frappe.get_all(
+		"DocType",
+		filters=filters,
+		or_filters=or_filters,
+		pluck="name",
+		order_by="name asc",
+		limit_page_length=300,
+	)
+
+	preferred = set(
+		frappe.get_all(
+			"SOP Mention Config", filters={"enabled": 1}, pluck="document_type", limit_page_length=0
+		)
+	)
+
+	allowed = [name for name in rows if frappe.has_permission(name, "read")]
+	allowed.sort(key=lambda name: (name not in preferred, name))
+
+	return allowed[: frappe.utils.cint(limit) or 12]
+
+
+@frappe.whitelist()
 def find(doctype, text=None, limit=10):
 	if not frappe.has_permission(doctype, "read"):
 		frappe.throw(_("You are not allowed to read {0}.").format(doctype), frappe.PermissionError)

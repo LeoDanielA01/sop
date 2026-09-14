@@ -89,7 +89,7 @@
           <div
             v-for="task in detail.tasks"
             :key="task.idx"
-            class="flex items-center gap-3 rounded-md border border-outline-gray-1 px-3 py-2"
+            class="flex items-center gap-3 rounded-lg border border-outline-gray-1 px-3 py-2"
           >
             <span
               :class="task.completed ? 'lucide-circle-check-big text-ink-green-3' : 'lucide-circle'"
@@ -121,7 +121,7 @@
 
         <div
           v-if="detail.can_assess"
-          class="flex items-center justify-between rounded-md border border-outline-gray-2 px-3 py-2"
+          class="flex items-center justify-between rounded-lg border border-outline-gray-2 px-3 py-2"
         >
           <div class="text-sm text-ink-gray-6">
             Record the outcome
