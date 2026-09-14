@@ -1,5 +1,5 @@
 <template>
-  <SettingsDialog v-model:open="open" v-model:tab="tab" size="5xl">
+  <SettingsDialog v-model:open="open" v-model:tab="ui.settingsTab" size="5xl">
     <SettingsSidebar>
       <SettingsNavGroup label="My settings">
         <SettingsNavItem value="preferences">
@@ -251,7 +251,6 @@ import { pageLength } from '@/data/procedures'
 import { preferences, preferencesError, setPreference } from '@/data/preferences'
 
 const open = defineModel('open', { type: Boolean, default: false })
-const tab = ref('preferences')
 const ui = useUI()
 
 const { colorScheme, setColorScheme } = useColorScheme()

@@ -169,7 +169,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import {
   Avatar,
   Badge,
@@ -187,9 +187,12 @@ import AppBreadcrumbs from '@/components/Layouts/AppBreadcrumbs.vue'
 import SessionDialog from '@/components/SessionDialog.vue'
 import { trainingCounts } from '@/data/training'
 import { shortDate } from '@/utils/format'
+import { useUI } from '@/stores/ui'
 
 const TONE = { Planned: 'blue', Held: 'green', Cancelled: 'gray' }
 const OUTCOMES = ['Pending', 'Competent', 'Needs More Practice', 'Not Competent']
+
+const ui = useUI()
 
 const status = ref('Planned')
 const detail = ref(null)
@@ -253,6 +256,17 @@ function refresh() {
   editable.value = null
   sessions.reload()
 }
+
+watch(
+  () => ui.sessionDialog,
+  (open) => {
+    if (!open) return
+
+    plan(null)
+    ui.sessionDialog = false
+  },
+  { immediate: true },
+)
 
 onMounted(() => sessions.reload())
 </script>

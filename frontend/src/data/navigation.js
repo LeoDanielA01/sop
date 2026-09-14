@@ -62,6 +62,13 @@ export function setSpace(name) {
 
 watch(activeSpace, () => viewsResource.reload())
 
+if (typeof window !== 'undefined') {
+  window.addEventListener('focus', () => {
+    viewsResource.reload()
+    spacesResource.reload()
+  })
+}
+
 export function refreshCounts() {
   viewsResource.reload()
   spacesResource.reload()

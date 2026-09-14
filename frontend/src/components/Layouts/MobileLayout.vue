@@ -98,9 +98,10 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, markRaw, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Avatar, Button, Dialog, Dropdown } from 'frappe-ui'
+import { Avatar, Button, Dialog, Dropdown, useColorScheme } from 'frappe-ui'
+import UserCard from './UserCard.vue'
 import { useSection } from '@/composables/useSection'
 import { activeSpace, setSpace, spaces, views } from '@/data/navigation'
 import { activeProcess, flatten, processes, setProcess } from '@/data/processes'
@@ -112,15 +113,30 @@ const route = useRoute()
 const router = useRouter()
 const ui = useUI()
 const showSpaces = ref(false)
+const { colorScheme, setColorScheme } = useColorScheme()
 
 const { space, activeView } = useSection()
 const onList = computed(() => route.name === 'Procedures')
 const tree = computed(() => flatten(processes.value))
 
-const userMenu = [
-  { label: 'Settings', icon: 'lucide-settings', onClick: () => (ui.settingsDialog = true) },
-  { label: 'Log out', icon: 'lucide-log-out', onClick: () => session.logout() },
-]
+const userMenu = computed(() => [
+  { group: '', items: [{ component: markRaw(UserCard) }] },
+  {
+    group: '',
+    items: [
+      { label: 'Settings', icon: 'lucide-settings', onClick: () => (ui.settingsDialog = true) },
+      {
+        icon: colorScheme.value === 'dark' ? 'lucide-sun' : 'lucide-moon',
+        label: colorScheme.value === 'dark' ? 'Switch to light' : 'Switch to dark',
+        onClick: () => setColorScheme(colorScheme.value === 'dark' ? 'light' : 'dark'),
+      },
+    ],
+  },
+  {
+    group: '',
+    items: [{ label: 'Log out', icon: 'lucide-log-out', onClick: () => session.logout() }],
+  },
+])
 
 const bottom = computed(() => [
   { label: 'Procedures', icon: 'lucide-library', value: 'all' },

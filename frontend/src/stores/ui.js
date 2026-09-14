@@ -6,6 +6,8 @@ export const useUI = defineStore('ui', () => {
   const settingsDialog = ref(false)
   const spaceDialog = ref(false)
   const templateDialog = ref(false)
+  const sessionDialog = ref(false)
+  const settingsTab = ref('preferences')
   const processDialog = ref({ open: false, space: null, parent: null, parentTitle: null })
 
   const sidebarCollapsed = ref(false)
@@ -24,9 +26,17 @@ export const useUI = defineStore('ui', () => {
     sidebarCollapsed.value = !sidebarCollapsed.value
   }
 
+  function openSettings(tab = 'preferences') {
+    settingsTab.value = tab
+    settingsDialog.value = true
+  }
+
   return {
     searchDialog,
     settingsDialog,
+    settingsTab,
+    sessionDialog,
+    openSettings,
     spaceDialog,
     templateDialog,
     processDialog,

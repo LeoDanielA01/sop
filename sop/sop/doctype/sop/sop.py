@@ -18,9 +18,22 @@ class SOP(Document):
 		self.name = self.sop_no
 
 	def validate(self):
+		self.validate_process()
 		self.set_review_dates()
 		self.build_search_text()
 		self.validate_steps()
+
+	def validate_process(self):
+		if not self.sop_process:
+			return
+
+		space = frappe.db.get_value("SOP Process", self.sop_process, "space")
+		if space and space != self.space:
+			frappe.throw(
+				_("{0} is a process of another space. Pick one from {1}.").format(
+					frappe.bold(self.sop_process), frappe.bold(self.space)
+				)
+			)
 
 	def set_review_dates(self):
 		if not self.review_interval_months:

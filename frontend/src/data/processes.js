@@ -51,6 +51,28 @@ export function toggle(name) {
   expanded.value = next
 }
 
+export const anyExpanded = computed(() => expanded.value.size > 0)
+
+export function toggleAll() {
+  if (anyExpanded.value) {
+    expanded.value = new Set()
+    return
+  }
+
+  expanded.value = new Set(branches(processes.value))
+}
+
+function branches(nodes, out = []) {
+  for (const node of nodes) {
+    if (node.children?.length) {
+      out.push(node.name)
+      branches(node.children, out)
+    }
+  }
+
+  return out
+}
+
 export function flatten(nodes, depth = 0, out = []) {
   for (const node of nodes) {
     out.push({ ...node, depth })

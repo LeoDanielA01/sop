@@ -8,7 +8,7 @@
       <SidebarRailItem
         v-for="item in SECTIONS"
         :key="item.route"
-        :label="item.label"
+        :label="railLabel(item)"
         :icon="item.icon"
         :active="section === item.key"
         :badge="badges[item.key]"
@@ -18,6 +18,12 @@
     </div>
 
     <div class="flex flex-col items-center gap-2.5">
+      <SidebarRailItem
+        label="New procedure"
+        variant="ghost"
+        icon="lucide-plus"
+        @click="router.push('/new')"
+      />
       <SidebarRailItem
         :label="ui.sidebarCollapsed ? 'Show the sidebar' : 'Hide the sidebar'"
         variant="ghost"
@@ -54,9 +60,10 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, markRaw } from 'vue'
 import { useRouter } from 'vue-router'
-import { Avatar, Dropdown, SidebarRail, SidebarRailItem } from 'frappe-ui'
+import { Avatar, Dropdown, SidebarRail, SidebarRailItem, useColorScheme } from 'frappe-ui'
+import UserCard from './UserCard.vue'
 import { useSection } from '@/composables/useSection'
 import { SECTIONS, attention } from '@/data/navigation'
 import { session } from '@/data/session'
@@ -66,11 +73,45 @@ import { useUI } from '@/stores/ui'
 const router = useRouter()
 const ui = useUI()
 const { section } = useSection()
+const { colorScheme, setColorScheme } = useColorScheme()
 
 const badges = computed(() => ({
   procedures: attention.value || undefined,
   training: trainingCounts.data?.open || undefined,
 }))
 
-const userMenu = [{ label: 'Log out', icon: 'lucide-log-out', onClick: () => session.logout() }]
+function railLabel(item) {
+  const count = badges.value[item.key]
+  if (!count) return item.label
+
+  return `${item.label} — ${count} waiting on you`
+}
+
+const userMenu = computed(() => [
+  { group: '', items: [{ component: markRaw(UserCard) }] },
+  {
+    group: '',
+    items: [
+      {
+        icon: 'lucide-settings',
+        label: 'Settings',
+        onClick: () => (ui.settingsDialog = true),
+      },
+      {
+        icon: colorScheme.value === 'dark' ? 'lucide-sun' : 'lucide-moon',
+        label: colorScheme.value === 'dark' ? 'Switch to light' : 'Switch to dark',
+        onClick: () => setColorScheme(colorScheme.value === 'dark' ? 'light' : 'dark'),
+      },
+      {
+        icon: 'lucide-layout-grid',
+        label: 'Open the desk',
+        onClick: () => window.open('/app/sop', '_blank'),
+      },
+    ],
+  },
+  {
+    group: '',
+    items: [{ icon: 'lucide-log-out', label: 'Log out', onClick: () => session.logout() }],
+  },
+])
 </script>

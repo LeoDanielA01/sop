@@ -96,7 +96,7 @@ import AppBreadcrumbs from '@/components/Layouts/AppBreadcrumbs.vue'
 import SaveIndicator from '@/components/SaveIndicator.vue'
 import ProcedureEditor from '@/components/editor/ProcedureEditor.vue'
 import { activeSpace, spaces } from '@/data/navigation'
-import { activeProcess, flatten, processes } from '@/data/processes'
+import { activeProcess, flatten } from '@/data/processes'
 import { useUI } from '@/stores/ui'
 
 const route = useRoute()
@@ -121,9 +121,14 @@ const isNew = computed(() => !route.params.name)
 const crumbRoute = computed(() => (isNew.value ? '/' : `/${route.params.name}`))
 const spaceOptions = computed(() => spaces.value.map((s) => ({ label: s.title, value: s.name })))
 
+const spaceProcesses = createResource({
+  url: 'sop.api.processes.tree',
+  makeParams: () => ({ space: draft.space }),
+})
+
 const processOptions = computed(() => [
   { label: 'Not filed under a process', value: null },
-  ...flatten(processes.value).map((node) => ({
+  ...flatten(spaceProcesses.data || []).map((node) => ({
     label: `${'— '.repeat(node.depth)}${node.title}`,
     value: node.name,
   })),
@@ -193,6 +198,19 @@ onMounted(() => {
 watch(spaces, (list) => {
   if (isNew.value && !draft.space) draft.space = activeSpace.value || list[0]?.name
 })
+
+watch(
+  () => draft.space,
+  (space) => {
+    if (!space) return
+
+    spaceProcesses.submit({ space }).then(() => {
+      const names = flatten(spaceProcesses.data || []).map((node) => node.name)
+      if (draft.process && !names.includes(draft.process)) draft.process = null
+    })
+  },
+  { immediate: true },
+)
 
 function onKeydown(event) {
   if (!(event.metaKey || event.ctrlKey) || event.key.toLowerCase() !== 's') return

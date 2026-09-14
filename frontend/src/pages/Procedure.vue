@@ -48,26 +48,52 @@
 
     <div
       v-if="doc.status && !isEffective"
-      class="mb-5 rounded-lg border border-outline-gray-2 bg-surface-gray-1 px-4 py-3 text-base text-ink-gray-7"
+      role="status"
+      class="mb-5 flex items-start gap-3 rounded-xl border px-4 py-3.5 text-base"
+      :class="
+        doc.status === 'Retired'
+          ? 'border-outline-red-2 bg-surface-red-1 text-ink-red-6'
+          : 'border-outline-amber-1 bg-surface-amber-1 text-ink-amber-6'
+      "
     >
-      This is a <b>{{ doc.status?.toLowerCase() }}</b> version and is not in force.
-      <template v-if="doc.effective_revision">
-        The one in force is
+      <span
+        class="lucide-triangle-alert mt-0.5 size-4 shrink-0"
+        aria-hidden="true"
+      />
+      <div class="min-w-0">
+        <p class="font-medium">Not the version in force</p>
+        <p class="mt-0.5 text-ink-gray-7">
+          You are reading the <b>{{ doc.status?.toLowerCase() }}</b> version.
+          <template v-if="doc.effective_revision">
+            Rev {{ doc.effective_revision }} is what applies on the floor.
+          </template>
+        </p>
         <Button
-          variant="ghost"
+          v-if="doc.effective_revision"
+          class="mt-2"
+          variant="subtle"
           size="sm"
-          :label="`Rev ${doc.effective_revision}`"
+          icon-left="lucide-badge-check"
+          :label="`Read Rev ${doc.effective_revision}`"
           @click="revision = doc.effective_revision"
         />
-      </template>
+      </div>
     </div>
 
     <div
       v-if="doc.approvals?.length && !isEffective"
-      class="mb-5 flex flex-col gap-2.5 rounded-lg border border-outline-gray-2 bg-surface-gray-1 px-4 py-3"
+      class="mb-5 rounded-xl border border-outline-gray-2 bg-surface-gray-1"
     >
-      <span class="text-sm text-ink-gray-5">Approval</span>
-      <div v-for="row in doc.approvals" :key="row.approver" class="flex items-center gap-2.5">
+      <div class="flex items-center justify-between px-4 pb-2 pt-3">
+        <span class="text-sm text-ink-gray-5">Sign-off</span>
+        <span class="text-sm text-ink-gray-5">{{ signedOff }} of {{ doc.approvals.length }}</span>
+      </div>
+
+      <div
+        v-for="row in doc.approvals"
+        :key="row.approver"
+        class="flex items-center gap-2.5 border-t border-outline-gray-1 px-4 py-2.5"
+      >
         <Avatar :image="row.approver_image" :label="row.approver_name" size="sm" />
         <span class="min-w-0 flex-1 truncate text-base text-ink-gray-8">
           {{ row.approver_name }}
@@ -80,14 +106,14 @@
       </div>
     </div>
 
-    <h1 class="text-2xl font-semibold text-ink-gray-9">{{ doc.title }}</h1>
+    <h1 class="text-2xl font-semibold tracking-tight text-ink-gray-9">{{ doc.title }}</h1>
 
     <p v-if="doc.summary" class="mb-5 mt-1.5 text-lg text-ink-gray-7">{{ doc.summary }}</p>
 
     <div v-if="!doc.summary" class="mb-5" />
 
     <dl
-      class="mb-7 grid grid-cols-2 gap-x-5 gap-y-4 rounded-lg border border-outline-gray-2 bg-surface-gray-1 px-4 py-4 sm:grid-cols-3"
+      class="mb-8 grid grid-cols-2 gap-x-5 gap-y-4 rounded-xl border border-outline-gray-2 bg-surface-gray-1 px-4 py-4 sm:grid-cols-3"
     >
       <div class="flex min-w-0 items-center gap-2.5">
         <Avatar :image="doc.owner_image" :label="ownerName" size="lg" />
@@ -196,7 +222,11 @@
       </div>
     </dl>
 
-    <article ref="body" class="prose-sop text-base text-ink-gray-8" v-html="doc.content" />
+    <article
+      ref="body"
+      class="prose-sop max-w-[68ch] text-base leading-relaxed text-ink-gray-8"
+      v-html="doc.content"
+    />
 
     <MentionChip
       v-for="reference in doc.references || []"
@@ -376,6 +406,9 @@ const doc = computed(() => procedure.data || {})
 const isEffective = computed(() => doc.value.status === 'Effective')
 const ownerName = computed(() => doc.value.process_owner_name || doc.value.process_owner)
 const overdue = computed(() => reviewTone(doc.value.review_due) === 'red')
+const signedOff = computed(
+  () => (doc.value.approvals || []).filter((row) => row.decision === 'Approved').length,
+)
 const needsAcknowledgement = computed(() => isEffective.value && !doc.value.acknowledged)
 
 function load() {

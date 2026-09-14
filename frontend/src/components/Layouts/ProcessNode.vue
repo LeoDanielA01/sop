@@ -1,5 +1,5 @@
 <template>
-  <SidebarItem :active="activeProcess === node.name" @click="open">
+  <SidebarItem class="group" :active="activeProcess === node.name" @click="open">
     <template v-if="node.children.length" #prefix>
       <Button
         variant="ghost"
@@ -18,13 +18,16 @@
         <Button
           variant="ghost"
           size="sm"
-          class="!size-5 !p-0"
+          class="!size-5 !p-0 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100"
           icon="lucide-plus"
           label="Add a step"
           @click.stop="emit('add', node)"
         />
       </Tooltip>
-      <span v-if="node.total" class="grid size-4 place-content-center text-xs text-ink-gray-5">
+      <span
+        v-if="node.total"
+        class="min-w-4 text-right text-xs tabular-nums text-ink-gray-5 group-hover:hidden"
+      >
         {{ node.total }}
       </span>
     </template>

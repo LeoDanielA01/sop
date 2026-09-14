@@ -10,20 +10,36 @@
 
   <div class="mt-4 flex h-7 items-center justify-between">
     <SidebarLabel>Spaces</SidebarLabel>
-    <Tooltip text="New space">
-      <Button
-        variant="ghost"
-        size="sm"
-        icon="lucide-plus"
-        label="New space"
-        @click="ui.spaceDialog = true"
-      />
-    </Tooltip>
+
+    <div class="flex items-center">
+      <Tooltip :text="anyExpanded ? 'Collapse every process' : 'Expand every process'">
+        <Button
+          variant="ghost"
+          size="sm"
+          :icon="anyExpanded ? 'lucide-chevrons-down-up' : 'lucide-chevrons-up-down'"
+          :label="anyExpanded ? 'Collapse all' : 'Expand all'"
+          @click="toggleAll"
+        />
+      </Tooltip>
+      <Tooltip text="New space">
+        <Button
+          variant="ghost"
+          size="sm"
+          icon="lucide-plus"
+          label="New space"
+          @click="ui.spaceDialog = true"
+        />
+      </Tooltip>
+    </div>
   </div>
 
   <nav class="mt-0.5 space-y-0.5">
     <template v-for="space in spaces" :key="space.name">
-      <SidebarItem :active="activeSpace === space.name && !activeProcess" @click="pick(space)">
+      <SidebarItem
+        class="group"
+        :active="activeSpace === space.name && !activeProcess"
+        @click="pick(space)"
+      >
         <template #prefix>
           <span
             :class="activeSpace === space.name ? 'lucide-folder-open' : 'lucide-folder'"
@@ -37,7 +53,7 @@
             <Button
               variant="ghost"
               size="sm"
-              class="!size-5 !p-0"
+              class="!size-5 !p-0 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100"
               icon="lucide-plus"
               label="Add a process"
               @click.stop="add(space, null)"
@@ -45,7 +61,7 @@
           </Tooltip>
           <span
             v-if="space.overdue"
-            class="grid size-4 place-content-center text-xs text-ink-red-3"
+            class="min-w-4 text-right text-xs tabular-nums text-ink-red-3 group-hover:hidden"
           >
             {{ space.overdue }}
           </span>
@@ -143,7 +159,14 @@ import { Button, SidebarItem, SidebarLabel, Tooltip } from 'frappe-ui'
 import ProcessNode from './ProcessNode.vue'
 import { useSection } from '@/composables/useSection'
 import { activeSpace, setSpace, spaces, spacesResource, views } from '@/data/navigation'
-import { activeProcess, processTree, processes, setProcess } from '@/data/processes'
+import {
+  activeProcess,
+  anyExpanded,
+  processTree,
+  processes,
+  setProcess,
+  toggleAll,
+} from '@/data/processes'
 import { useUI } from '@/stores/ui'
 
 const route = useRoute()

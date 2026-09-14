@@ -4,14 +4,36 @@
   margin-top: 0.9em;
 }
 .prose-sop h2 {
-  margin-top: 1.6em;
-  font-size: 1.125rem;
+  margin-top: 2em;
+  margin-bottom: 0.6em;
+  font-size: 1.1875rem;
   font-weight: 600;
-  color: var(--ink-gray-8);
+  letter-spacing: -0.01em;
+  color: var(--ink-gray-9);
 }
 .prose-sop h3 {
-  margin-top: 1.3em;
+  margin-top: 1.5em;
+  margin-bottom: 0.4em;
+  font-size: 1rem;
   font-weight: 600;
+  color: var(--ink-gray-9);
+}
+.prose-sop p {
+  line-height: 1.7;
+}
+.prose-sop li {
+  line-height: 1.7;
+  margin-top: 0.35em;
+}
+.prose-sop a {
+  color: var(--ink-blue-3);
+  text-underline-offset: 2px;
+}
+.prose-sop a:focus-visible,
+.prose-sop [data-mention]:focus-visible {
+  outline: 2px solid var(--outline-blue-2);
+  outline-offset: 2px;
+  border-radius: 3px;
 }
 .prose-sop ul,
 .prose-sop ol {
