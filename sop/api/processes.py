@@ -131,7 +131,8 @@ def trail(process):
 	titles = {
 		row.name: row.title
 		for row in frappe.get_all(
-			"SOP Process", filters={"name": ("in", names)}, fields=["name", "title"]
+			"SOP Process", filters={"name": ("in", names)}, fields=["name", "title"],
+			limit_page_length=0,
 		)
 	}
 	return [{"name": name, "title": titles.get(name, name)} for name in names]

@@ -70,7 +70,10 @@ def descendants_of(process):
 
 	while frontier:
 		children = frappe.get_all(
-			"SOP Process", filters={"parent_process": ("in", frontier)}, pluck="name"
+			"SOP Process",
+			filters={"parent_process": ("in", frontier)},
+			pluck="name",
+			limit_page_length=0,
 		)
 		children = [row for row in children if row not in found and row != process]
 		if not children:

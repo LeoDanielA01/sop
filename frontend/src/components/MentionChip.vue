@@ -34,8 +34,12 @@ const props = defineProps({
 
 const target = computed(() => {
   if (!props.root) return null
-  return props.root.querySelector(
-    `[data-mention][data-doctype="${props.reference.reference_doctype}"][data-name="${props.reference.reference_name}"]`,
+
+  const { reference_doctype: doctype, reference_name: name } = props.reference
+
+  return (
+    props.root.querySelector(`a[href="#mention:${doctype}:${name}"]`) ||
+    props.root.querySelector(`[data-mention][data-doctype="${doctype}"][data-name="${name}"]`)
   )
 })
 

@@ -11,7 +11,7 @@
         :label="item.label"
         :icon="item.icon"
         :active="section === item.key"
-        :badge="item.key === 'training' ? trainingCounts.data?.open : undefined"
+        :badge="badges[item.key]"
         badge-style="count"
         @click="router.push(item.route)"
       />
@@ -54,10 +54,11 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { Avatar, Dropdown, SidebarRail, SidebarRailItem } from 'frappe-ui'
 import { useSection } from '@/composables/useSection'
-import { SECTIONS } from '@/data/navigation'
+import { SECTIONS, attention } from '@/data/navigation'
 import { session } from '@/data/session'
 import { trainingCounts } from '@/data/training'
 import { useUI } from '@/stores/ui'
@@ -65,6 +66,11 @@ import { useUI } from '@/stores/ui'
 const router = useRouter()
 const ui = useUI()
 const { section } = useSection()
+
+const badges = computed(() => ({
+  procedures: attention.value || undefined,
+  training: trainingCounts.data?.open || undefined,
+}))
 
 const userMenu = [{ label: 'Log out', icon: 'lucide-log-out', onClick: () => session.logout() }]
 </script>

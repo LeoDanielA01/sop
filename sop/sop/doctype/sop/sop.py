@@ -65,4 +65,6 @@ def next_number(space):
 		frappe.throw(_("Pick a space before saving — the procedure number comes from it."))
 
 	code = frappe.db.get_value("SOP Space", space, "space_code") or "GEN"
+	code = re.sub(r"[^A-Z0-9-]", "", code.upper()) or "GEN"
+
 	return make_autoname(f"SOP-{code}-.####")

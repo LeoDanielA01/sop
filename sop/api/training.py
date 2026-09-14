@@ -152,6 +152,7 @@ def procedure_titles(names):
 		return {}
 
 	rows = frappe.get_all(
-		"SOP", filters={"name": ("in", names)}, fields=["name", "sop_no", "title"]
+		"SOP", filters={"name": ("in", names)}, fields=["name", "sop_no", "title"],
+		limit_page_length=0,
 	)
 	return {row.name: row for row in rows}

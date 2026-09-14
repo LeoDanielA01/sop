@@ -35,6 +35,7 @@ def targets():
 		filters={"enabled": 1},
 		fields=["document_type", "title_field"],
 		order_by="document_type asc",
+		limit_page_length=0,
 	)
 
 	return [
@@ -133,7 +134,7 @@ def configured(doctype, names):
 	if config.status_field and config.status_field not in fields:
 		fields.append(config.status_field)
 
-	rows = frappe.get_all(doctype, filters={"name": ("in", names)}, fields=fields)
+	rows = frappe.get_all(doctype, filters={"name": ("in", names)}, fields=fields, limit_page_length=0)
 	labels = {row.fieldname: row.label for row in config.badge_fields}
 
 	out = []
@@ -162,7 +163,7 @@ def generic(doctype, names):
 	if meta.has_field("status"):
 		fields.append("status")
 
-	rows = frappe.get_all(doctype, filters={"name": ("in", names)}, fields=fields)
+	rows = frappe.get_all(doctype, filters={"name": ("in", names)}, fields=fields, limit_page_length=0)
 
 	out = []
 	for row in rows:

@@ -103,34 +103,39 @@ const TABLE_ITEMS = [
 ]
 
 function procedureItems(api) {
-  return [
-    {
+  return {
+    step: {
       icon: 'lucide-list-checks',
       label: 'Step',
       action: () => api.insertStep(),
     },
-    {
+    warning: {
       icon: 'lucide-triangle-alert',
       label: 'Warning',
       action: () => api.insertCallout('warning'),
     },
-    {
+    note: {
       icon: 'lucide-info',
       label: 'Note',
       action: () => api.insertCallout('note'),
     },
-    Separator,
-    {
+    record: {
       icon: 'lucide-at-sign',
       label: 'Mention a record',
       action: () => api.pickRecord(),
     },
-    {
+    person: {
       icon: 'lucide-user',
       label: 'Mention a person',
       action: () => api.pickPerson(),
     },
-  ]
+  }
+}
+
+function procedureGroup(api) {
+  const items = procedureItems(api)
+
+  return [items.step, items.warning, items.note, Separator, items.record, items.person]
 }
 
 const FORMAT_ITEMS = [
@@ -164,32 +169,28 @@ const LAYOUT_ITEMS = [AlignLeft, AlignCenter, AlignRight]
 const HISTORY_ITEMS = [Undo, Redo]
 
 export function fixedItems(api) {
+  const sop = procedureItems(api)
+
   return [
     HeadingGroup,
     Separator,
     Bold,
     Italic,
     Strike,
-    InlineCode,
-    FontColor,
+    InsertLink,
     Separator,
     BulletList,
     OrderedList,
     ChecklistItem,
     Separator,
     Blockquote,
-    CodeBlockItem,
-    HorizontalRule,
-    Separator,
-    InsertLink,
     InsertTable,
     InsertImage,
     Separator,
-    AlignLeft,
-    AlignCenter,
-    AlignRight,
-    Separator,
-    ...procedureItems(api),
+    sop.step,
+    sop.warning,
+    sop.record,
+    sop.person,
     Separator,
     Undo,
     Redo,
@@ -239,7 +240,7 @@ export function paletteGroups(context, api) {
   }
 
   groups.push({ name: 'Insert', items: STRUCTURE_ITEMS })
-  groups.push({ name: 'Procedure', items: procedureItems(api) })
+  groups.push({ name: 'Procedure', items: procedureGroup(api) })
 
   if (context.kind === CONTEXTS.EMPTY) {
     groups.push({ name: 'Edit', items: [...HISTORY_ITEMS, ClearFormatItem] })

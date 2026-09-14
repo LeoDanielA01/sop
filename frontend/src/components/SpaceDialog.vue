@@ -14,9 +14,9 @@
         <FormControl
           type="text"
           label="Code"
-          description="Procedures here are numbered SOP-CODE-0001"
-          v-model="code"
-          @update:modelValue="edited = true"
+          :description="`Procedures here are numbered SOP-${code || 'CODE'}-0001`"
+          :modelValue="code"
+          @update:modelValue="setCode"
         />
         <FormControl
           type="select"
@@ -88,6 +88,14 @@ function touchCode() {
   const words = title.value.split(/[^A-Za-z0-9]+/).filter(Boolean)
   const initials = words.map((word) => word[0]).join('')
   code.value = (words.length > 1 ? initials.slice(0, 4) : (words[0] || '').slice(0, 3)).toUpperCase()
+}
+
+function setCode(value) {
+  edited.value = true
+  code.value = (value || '')
+    .toUpperCase()
+    .replace(/[^A-Z0-9-]/g, '')
+    .slice(0, 10)
 }
 
 function submit() {

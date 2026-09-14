@@ -17,6 +17,7 @@ def spaces():
 		"SOP Space",
 		fields=["name", "title", "space_code", "visibility", "icon"],
 		order_by="title asc",
+		limit_page_length=0,
 	)
 
 	for row in rows:
@@ -33,19 +34,27 @@ def counts(space=None):
 	user = frappe.session.user
 	scope = {"space": space} if space else {}
 
+	waiting = pending_approvals(user, space)
+	unsigned = unacknowledged_count(user, space)
+
 	return {
-		"approval": pending_approvals(user, space),
+		"approval": waiting,
 		"drafts": frappe.db.count("SOP", dict(scope, status="Draft", owner=user)),
-		"unacknowledged": unacknowledged_count(user, space),
+		"unacknowledged": unsigned,
 		"review": frappe.db.count(
 			"SOP", dict(scope, status="Effective", review_due=("<=", add_days(nowdate(), 30)))
 		),
+		"attention": attention(user) if space else waiting + unsigned,
 	}
+
+
+def attention(user):
+	return pending_approvals(user) + unacknowledged_count(user)
 
 
 def pending_approvals(user, space=None):
 	filters = {"parenttype": "SOP", "approver": user, "decision": "Pending"}
-	names = frappe.get_all("SOP Approval", filters=filters, pluck="parent")
+	names = frappe.get_all("SOP Approval", filters=filters, pluck="parent", limit_page_length=0)
 	if not names:
 		return 0
 
@@ -60,7 +69,7 @@ def unacknowledged_count(user, space=None):
 	if space:
 		scope["space"] = space
 
-	effective = frappe.get_all("SOP", filters=scope, fields=["name", "version"])
+	effective = frappe.get_all("SOP", filters=scope, fields=["name", "version"], limit_page_length=0)
 	if not effective:
 		return 0
 
@@ -70,6 +79,7 @@ def unacknowledged_count(user, space=None):
 			"SOP Acknowledgement",
 			filters={"user": user, "sop": ("in", [row.name for row in effective])},
 			fields=["sop", "version"],
+			limit_page_length=0,
 		)
 	}
 	return len([row for row in effective if (row.name, row.version) not in signed])
@@ -142,6 +152,7 @@ def view_filters(space, view):
 			"SOP Approval",
 			filters={"parenttype": "SOP", "approver": user, "decision": "Pending"},
 			pluck="parent",
+			limit_page_length=0,
 		)
 		filters.update({"name": ("in", names or [""]), "status": "In Review"})
 	elif view == "unacknowledged":
@@ -155,7 +166,7 @@ def unacknowledged_names(user, space=None):
 	if space:
 		scope["space"] = space
 
-	effective = frappe.get_all("SOP", filters=scope, fields=["name", "version"])
+	effective = frappe.get_all("SOP", filters=scope, fields=["name", "version"], limit_page_length=0)
 	if not effective:
 		return []
 
@@ -165,6 +176,7 @@ def unacknowledged_names(user, space=None):
 			"SOP Acknowledgement",
 			filters={"user": user, "sop": ("in", [row.name for row in effective])},
 			fields=["sop", "version"],
+			limit_page_length=0,
 		)
 	}
 	return [row.name for row in effective if (row.name, row.version) not in signed]
@@ -207,6 +219,7 @@ def get_procedure(name, revision=None):
 			filters={"sop": doc.name},
 			fields=["version", "effective_from"],
 			order_by="version desc",
+			limit_page_length=0,
 		),
 		"acknowledged": bool(signed and signed.version == doc.version),
 		"acknowledged_on": signed.acknowledged_at if signed else None,
@@ -255,7 +268,8 @@ def user_names(users):
 		return {}
 
 	rows = frappe.get_all(
-		"User", filters={"name": ("in", users)}, fields=["name", "full_name", "user_image"]
+		"User", filters={"name": ("in", users)}, fields=["name", "full_name", "user_image"],
+		limit_page_length=0,
 	)
 	return {row.name: row for row in rows}
 

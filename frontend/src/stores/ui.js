@@ -9,7 +9,7 @@ export const useUI = defineStore('ui', () => {
   const processDialog = ref({ open: false, space: null, parent: null, parentTitle: null })
 
   const sidebarCollapsed = ref(false)
-  const editorToolsPinned = ref(false)
+  const editorToolsPinned = ref(true)
 
   function askForProcess({ space, parent = null }) {
     processDialog.value = {

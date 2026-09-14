@@ -432,7 +432,8 @@ def sign(sop, users):
 def seed_training(space, people):
 	requirement = ensure_requirement(space)
 	effective = frappe.get_all(
-		"SOP", filters={"space": space, "status": "Effective"}, fields=["name", "version", "title"]
+		"SOP", filters={"space": space, "status": "Effective"}, fields=["name", "version", "title"],
+		limit_page_length=0,
 	)
 	if not effective:
 		return
@@ -515,7 +516,7 @@ def status():
 		"user": frappe.session.user,
 		"developer_mode": bool(frappe.conf.get("developer_mode")),
 		"demo_enabled": wanted(),
-		"spaces": frappe.get_all("SOP Space", fields=["name", "title", "space_code", "visibility"]),
+		"spaces": frappe.get_all("SOP Space", fields=["name", "title", "space_code", "visibility"], limit_page_length=0),
 		"processes": frappe.db.count("SOP Process"),
 		"procedures": frappe.db.count("SOP"),
 		"by_status": by_status(),
@@ -551,26 +552,28 @@ def last_error():
 
 def clear():
 	spaces = frappe.get_all(
-		"SOP Space", filters={"space_code": ("in", ["MFG", "QA"])}, pluck="name"
+		"SOP Space", filters={"space_code": ("in", ["MFG", "QA"])}, pluck="name",
+		limit_page_length=0,
 	)
 	if not spaces:
 		return {"cleared": 0}
 
-	procedures = frappe.get_all("SOP", filters={"space": ("in", spaces)}, pluck="name")
+	procedures = frappe.get_all("SOP", filters={"space": ("in", spaces)}, pluck="name", limit_page_length=0)
 
 	for doctype, field in (
 		("SOP Training Assignment", "sop"),
 		("SOP Acknowledgement", "sop"),
 		("SOP Revision", "sop"),
 	):
-		for name in frappe.get_all(doctype, filters={field: ("in", procedures or [""])}, pluck="name"):
+		for name in frappe.get_all(doctype, filters={field: ("in", procedures or [""])}, pluck="name", limit_page_length=0):
 			frappe.delete_doc(doctype, name, force=True, ignore_permissions=True)
 
 	for name in procedures:
 		frappe.delete_doc("SOP", name, force=True, ignore_permissions=True)
 
 	for name in frappe.get_all(
-		"SOP Training Requirement", filters={"space": ("in", spaces)}, pluck="name"
+		"SOP Training Requirement", filters={"space": ("in", spaces)}, pluck="name",
+		limit_page_length=0,
 	):
 		frappe.delete_doc("SOP Training Requirement", name, force=True, ignore_permissions=True)
 
@@ -584,7 +587,8 @@ def clear():
 
 def deepest_first(spaces):
 	rows = frappe.get_all(
-		"SOP Process", filters={"space": ("in", spaces)}, fields=["name", "parent_process"]
+		"SOP Process", filters={"space": ("in", spaces)}, fields=["name", "parent_process"],
+		limit_page_length=0,
 	)
 	depth = {row.name: 0 for row in rows}
 	parents = {row.name: row.parent_process for row in rows}

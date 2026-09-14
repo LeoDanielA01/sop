@@ -151,22 +151,20 @@ function insertStep() {
   editor.value
     ?.chain()
     .focus()
-    .insertContent(
-      '<div data-sop="step"><p><strong>Step</strong> — what is done</p>' +
-        '<p data-sop="step-meta">Responsible: role · Records: document</p></div><p></p>',
-    )
+    .toggleOrderedList()
+    .insertContent('<strong>What is done</strong> — responsible: role · records: document')
     .run()
 }
 
 function insertCallout(kind) {
+  const lead = kind === 'warning' ? 'Warning' : 'Note'
+  const body = kind === 'warning' ? 'the hazard, and what it does if ignored' : 'worth knowing'
+
   editor.value
     ?.chain()
     .focus()
-    .insertContent(
-      `<div data-sop="callout" data-tone="${kind}"><p>${
-        kind === 'warning' ? 'Hazard or caution' : 'Worth knowing'
-      }</p></div><p></p>`,
-    )
+    .toggleBlockquote()
+    .insertContent(`<strong>${lead}</strong> — ${body}`)
     .run()
 }
 
@@ -197,10 +195,21 @@ function pickPerson() {
 }
 
 function choose(row) {
-  const { kind, doctype } = picker.value
-  const html = `<span data-mention="${kind}" data-doctype="${doctype}" data-name="${row.name}">${row.label}</span>&nbsp;`
+  const { doctype } = picker.value
 
-  editor.value?.chain().focus().insertContent(html).run()
+  editor.value
+    ?.chain()
+    .focus()
+    .insertContent([
+      {
+        type: 'text',
+        text: row.label,
+        marks: [{ type: 'link', attrs: { href: `#mention:${doctype}:${row.name}` } }],
+      },
+      { type: 'text', text: ' ' },
+    ])
+    .run()
+
   picker.value.open = false
 }
 

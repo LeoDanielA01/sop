@@ -182,6 +182,7 @@ import {
 } from 'frappe-ui'
 import { List, ListCell, ListRow } from 'frappe-ui/list'
 import AppBreadcrumbs from '@/components/Layouts/AppBreadcrumbs.vue'
+import { trainingCounts } from '@/data/training'
 import { shortDate } from '@/utils/format'
 
 defineProps({ compact: { type: Boolean, default: false } })
@@ -208,6 +209,7 @@ const tick = createResource({
   onSuccess: () => {
     one.reload()
     assignments.reload()
+    trainingCounts.reload()
   },
 })
 
@@ -217,6 +219,7 @@ const judge = createResource({
     outcome.value.open = false
     one.reload()
     assignments.reload()
+    trainingCounts.reload()
   },
 })
 

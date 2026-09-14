@@ -36,13 +36,15 @@
       <SettingsPanel value="preferences">
         <SettingsHeader title="Preferences" />
         <SettingsBody>
+          <ErrorMessage :message="preferencesError" class="pt-4" />
+
           <div class="divide-y divide-outline-gray-1 pt-6">
             <SettingsRow
               title="Appearance"
               description="Choose a light, dark, or system-matched interface"
             >
               <TabButtons
-                :buttons="[
+                :options="[
                   { label: 'Light', value: 'light' },
                   { label: 'Dark', value: 'dark' },
                   { label: 'System', value: 'system' },
@@ -56,7 +58,7 @@
               description="How wide a procedure runs when you read it"
             >
               <TabButtons
-                :buttons="[
+                :options="[
                   { label: 'Comfortable', value: 'Comfortable' },
                   { label: 'Full', value: 'Full' },
                 ]"
@@ -225,6 +227,7 @@ import {
   Avatar,
   Badge,
   Button,
+  ErrorMessage,
   Select,
   SettingsBody,
   SettingsContent,
@@ -245,7 +248,7 @@ import { List, ListCell, ListHeader, ListHeaderCell, ListRow, ListRows } from 'f
 import { spaces } from '@/data/navigation'
 import { useUI } from '@/stores/ui'
 import { pageLength } from '@/data/procedures'
-import { preferences, setPreference } from '@/data/preferences'
+import { preferences, preferencesError, setPreference } from '@/data/preferences'
 
 const open = defineModel('open', { type: Boolean, default: false })
 const tab = ref('preferences')

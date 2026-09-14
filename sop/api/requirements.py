@@ -62,7 +62,7 @@ def titles_of(names):
 	if not names:
 		return {}
 
-	rows = frappe.get_all("SOP", filters={"name": ("in", names)}, fields=["name", "sop_no", "title"])
+	rows = frappe.get_all("SOP", filters={"name": ("in", names)}, fields=["name", "sop_no", "title"], limit_page_length=0)
 	return {row.name: f"{row.sop_no} · {row.title}" for row in rows}
 
 
@@ -71,7 +71,7 @@ def space_titles(names):
 	if not names:
 		return {}
 
-	rows = frappe.get_all("SOP Space", filters={"name": ("in", names)}, fields=["name", "title"])
+	rows = frappe.get_all("SOP Space", filters={"name": ("in", names)}, fields=["name", "title"], limit_page_length=0)
 	return {row.name: row.title for row in rows}
 
 
@@ -160,7 +160,10 @@ def procedures_of(requirement):
 		return [requirement.sop] if requirement.sop else []
 
 	return frappe.get_all(
-		"SOP", filters={"space": requirement.space, "status": "Effective"}, pluck="name"
+		"SOP",
+		filters={"space": requirement.space, "status": "Effective"},
+		pluck="name",
+		limit_page_length=0,
 	)
 
 

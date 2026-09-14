@@ -32,6 +32,7 @@ def sessions(status=None, limit=50):
 		"User",
 		filters={"name": ("in", list({row.trainer for row in rows if row.trainer}) or [""])},
 		fields=["name", "full_name", "user_image"],
+		limit_page_length=0,
 	)
 	by_email = {row.name: row for row in trainers}
 
@@ -65,6 +66,7 @@ def session(name):
 		"User",
 		filters={"name": ("in", [row.user for row in doc.attendees] or [""])},
 		fields=["name", "full_name", "user_image"],
+		limit_page_length=0,
 	)
 	by_email = {row.name: row for row in people}
 

@@ -92,7 +92,7 @@
           </Badge>
         </div>
 
-        <div class="divide-y divide-outline-gray-1 rounded-lg border border-outline-gray-2">
+        <div class="divide-y divide-outline-gray-1 rounded-lg border border-outline-gray-2 bg-surface-gray-1">
           <div
             v-for="person in detail.attendees"
             :key="person.user"
@@ -185,6 +185,7 @@ import {
 import { List, ListCell, ListRow } from 'frappe-ui/list'
 import AppBreadcrumbs from '@/components/Layouts/AppBreadcrumbs.vue'
 import SessionDialog from '@/components/SessionDialog.vue'
+import { trainingCounts } from '@/data/training'
 import { shortDate } from '@/utils/format'
 
 const TONE = { Planned: 'blue', Held: 'green', Cancelled: 'gray' }
@@ -211,6 +212,7 @@ const attendance = createResource({
   onSuccess() {
     detail.value = null
     sessions.reload()
+    trainingCounts.reload()
   },
 })
 

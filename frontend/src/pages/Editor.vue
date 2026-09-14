@@ -8,11 +8,13 @@
         ]"
       />
       <Badge variant="subtle" size="sm">{{ draft.status }}</Badge>
-      <span class="text-sm text-ink-gray-4">
-        <template v-if="save.loading">Saving…</template>
-        <template v-else-if="dirty">Unsaved</template>
-        <template v-else-if="savedAt">Saved</template>
-      </span>
+      <SaveIndicator
+        :loading="save.loading"
+        :dirty="dirty"
+        :saved-at="savedAt"
+        :error="save.error?.messages?.[0] || ''"
+        @retry="submit"
+      />
     </div>
 
     <div class="flex items-center gap-2">
@@ -50,8 +52,6 @@
     </div>
 
     <template v-else>
-    <ErrorMessage :message="save.error?.messages?.[0]" class="mb-3" />
-
     <div class="mb-4 flex flex-col gap-3">
       <FormControl
         type="text"
@@ -83,17 +83,17 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
+import { onBeforeRouteLeave, useRoute, useRouter } from 'vue-router'
 import {
   Badge,
   Button,
-  ErrorMessage,
   FormControl,
   PageHeader,
   createResource,
 } from 'frappe-ui'
 import AppBreadcrumbs from '@/components/Layouts/AppBreadcrumbs.vue'
+import SaveIndicator from '@/components/SaveIndicator.vue'
 import ProcedureEditor from '@/components/editor/ProcedureEditor.vue'
 import { activeSpace, spaces } from '@/data/navigation'
 import { activeProcess, flatten, processes } from '@/data/processes'
@@ -192,5 +192,34 @@ onMounted(() => {
 
 watch(spaces, (list) => {
   if (isNew.value && !draft.space) draft.space = activeSpace.value || list[0]?.name
+})
+
+function onKeydown(event) {
+  if (!(event.metaKey || event.ctrlKey) || event.key.toLowerCase() !== 's') return
+
+  event.preventDefault()
+  if (draft.title && dirty.value) submit()
+}
+
+function onBeforeUnload(event) {
+  if (!dirty.value) return
+
+  event.preventDefault()
+  event.returnValue = ''
+}
+
+onMounted(() => {
+  document.addEventListener('keydown', onKeydown)
+  window.addEventListener('beforeunload', onBeforeUnload)
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('keydown', onKeydown)
+  window.removeEventListener('beforeunload', onBeforeUnload)
+})
+
+onBeforeRouteLeave(() => {
+  clearTimeout(timer)
+  if (dirty.value && draft.title) submit()
 })
 </script>

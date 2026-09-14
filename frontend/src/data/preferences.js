@@ -22,6 +22,10 @@ export const preferencesResource = createResource({
 
 const saveResource = createResource({ url: 'sop.api.preferences.save' })
 
+export const preferencesError = computed(
+  () => preferencesResource.error?.messages?.[0] || saveResource.error?.messages?.[0] || '',
+)
+
 export function setPreference(key, value) {
   if (preferences[key] === value) return
 

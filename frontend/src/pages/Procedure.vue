@@ -64,7 +64,7 @@
 
     <div
       v-if="doc.approvals?.length && !isEffective"
-      class="mb-5 flex flex-col gap-2.5 rounded-lg border border-outline-gray-2 px-4 py-3"
+      class="mb-5 flex flex-col gap-2.5 rounded-lg border border-outline-gray-2 bg-surface-gray-1 px-4 py-3"
     >
       <span class="text-sm text-ink-gray-5">Approval</span>
       <div v-for="row in doc.approvals" :key="row.approver" class="flex items-center gap-2.5">
@@ -87,66 +87,113 @@
     <div v-if="!doc.summary" class="mb-5" />
 
     <dl
-      class="mb-7 grid grid-cols-[8.5rem_minmax(0,1fr)] gap-x-4 gap-y-2.5 rounded-lg border border-outline-gray-2 px-4 py-3.5 text-base sm:grid-cols-[9rem_minmax(0,1fr)_9rem_minmax(0,1fr)]"
+      class="mb-7 grid grid-cols-2 gap-x-5 gap-y-4 rounded-lg border border-outline-gray-2 bg-surface-gray-1 px-4 py-4 sm:grid-cols-3"
     >
-      <dt class="text-sm text-ink-gray-5">Owner</dt>
-      <dd class="flex min-w-0 items-center gap-2 text-ink-gray-8">
-        <Avatar
-          :image="doc.owner_image"
-          :label="doc.process_owner_name || doc.process_owner"
-          size="sm"
-        />
-        <span class="truncate">{{ doc.process_owner_name || doc.process_owner }}</span>
-      </dd>
+      <div class="flex min-w-0 items-center gap-2.5">
+        <Avatar :image="doc.owner_image" :label="ownerName" size="lg" />
+        <div class="min-w-0">
+          <dt class="text-sm text-ink-gray-5">Owner</dt>
+          <dd class="truncate text-base text-ink-gray-8">{{ ownerName }}</dd>
+        </div>
+      </div>
 
-      <dt class="text-sm text-ink-gray-5">Filed under</dt>
-      <dd class="min-w-0 truncate text-ink-gray-8">{{ filedUnder }}</dd>
-
-      <dt class="text-sm text-ink-gray-5">In force since</dt>
-      <dd class="text-ink-gray-8">
-        {{ doc.effective_from ? shortDate(doc.effective_from) : 'Not yet in force' }}
-      </dd>
-
-      <dt class="text-sm text-ink-gray-5">Next review</dt>
-      <dd :class="reviewTone(doc.review_due) === 'red' ? 'text-ink-red-3' : 'text-ink-gray-8'">
-        {{ doc.review_due ? shortDate(doc.review_due) : '—' }}
-      </dd>
-
-      <dt class="text-sm text-ink-gray-5">This version</dt>
-      <dd class="flex items-center gap-2 text-ink-gray-8">
-        Rev {{ doc.version || 1 }}
-        <Button
-          variant="ghost"
-          size="sm"
-          label="History"
-          @click="router.push(`/${route.params.name}/history`)"
-        />
-      </dd>
-
-      <dt class="text-sm text-ink-gray-5">Read it</dt>
-      <dd class="min-w-0 text-ink-gray-8">
-        <span v-if="doc.acknowledged_on">
-          Acknowledged {{ shortDate(doc.acknowledged_on) }}
+      <div class="flex min-w-0 items-center gap-2.5">
+        <span
+          class="grid size-8 shrink-0 place-content-center rounded-md border border-outline-gray-2 bg-surface-base"
+        >
+          <span class="lucide-calendar-check size-4 text-ink-gray-6" aria-hidden="true" />
         </span>
-        <span v-else-if="isEffective" class="text-ink-gray-5">Not acknowledged yet</span>
-        <span v-else class="text-ink-gray-5">—</span>
-      </dd>
+        <div class="min-w-0">
+          <dt class="text-sm text-ink-gray-5">In force since</dt>
+          <dd class="truncate text-base text-ink-gray-8">
+            {{ doc.effective_from ? shortDate(doc.effective_from) : 'Not yet' }}
+          </dd>
+        </div>
+      </div>
 
-      <template v-if="doc.risk_level">
-        <dt class="text-sm text-ink-gray-5">Risk</dt>
-        <dd class="text-ink-gray-8">
-          <Badge :theme="RISK_THEME[doc.risk_level]" variant="subtle" size="sm">
-            {{ doc.risk_level }}
-          </Badge>
-        </dd>
-      </template>
+      <div class="flex min-w-0 items-center gap-2.5">
+        <span
+          class="grid size-8 shrink-0 place-content-center rounded-md border border-outline-gray-2 bg-surface-base"
+        >
+          <span
+            class="lucide-calendar-clock size-4"
+            :class="overdue ? 'text-ink-red-3' : 'text-ink-gray-6'"
+            aria-hidden="true"
+          />
+        </span>
+        <div class="min-w-0">
+          <dt class="text-sm text-ink-gray-5">{{ overdue ? 'Review overdue' : 'Next review' }}</dt>
+          <dd
+            class="truncate text-base"
+            :class="overdue ? 'text-ink-red-3' : 'text-ink-gray-8'"
+          >
+            {{ doc.review_due ? shortDate(doc.review_due) : 'Not scheduled' }}
+          </dd>
+        </div>
+      </div>
 
-      <template v-if="doc.tags?.length">
-        <dt class="text-sm text-ink-gray-5">Tags</dt>
-        <dd class="flex min-w-0 flex-wrap gap-1.5">
-          <Badge v-for="tag in doc.tags" :key="tag" variant="subtle" size="sm">{{ tag }}</Badge>
-        </dd>
-      </template>
+      <div class="flex min-w-0 items-center gap-2.5">
+        <span
+          class="grid size-8 shrink-0 place-content-center rounded-md border border-outline-gray-2 bg-surface-base"
+        >
+          <span class="lucide-git-commit-horizontal size-4 text-ink-gray-6" aria-hidden="true" />
+        </span>
+        <div class="min-w-0">
+          <dt class="text-sm text-ink-gray-5">Version</dt>
+          <dd class="truncate text-base text-ink-gray-8">
+            Rev {{ doc.version || 1 }}
+            <span v-if="doc.revisions?.length > 1" class="text-ink-gray-5">
+              of {{ doc.revisions.length }}
+            </span>
+          </dd>
+        </div>
+      </div>
+
+      <div class="flex min-w-0 items-center gap-2.5">
+        <span
+          class="grid size-8 shrink-0 place-content-center rounded-md border border-outline-gray-2 bg-surface-base"
+        >
+          <span
+            class="size-4"
+            :class="
+              doc.acknowledged_on ? 'lucide-check-check text-ink-green-3' : 'lucide-circle-dashed text-ink-gray-6'
+            "
+            aria-hidden="true"
+          />
+        </span>
+        <div class="min-w-0">
+          <dt class="text-sm text-ink-gray-5">You have read it</dt>
+          <dd class="truncate text-base text-ink-gray-8">
+            <template v-if="doc.acknowledged_on">{{ shortDate(doc.acknowledged_on) }}</template>
+            <template v-else-if="isEffective">Not yet</template>
+            <template v-else>—</template>
+          </dd>
+        </div>
+      </div>
+
+      <div v-if="doc.risk_level" class="flex min-w-0 items-center gap-2.5">
+        <span
+          class="grid size-8 shrink-0 place-content-center rounded-md border border-outline-gray-2 bg-surface-base"
+        >
+          <span class="lucide-shield-alert size-4 text-ink-gray-6" aria-hidden="true" />
+        </span>
+        <div class="min-w-0">
+          <dt class="text-sm text-ink-gray-5">Risk</dt>
+          <dd class="truncate">
+            <Badge :theme="RISK_THEME[doc.risk_level]" variant="subtle" size="sm">
+              {{ doc.risk_level }}
+            </Badge>
+          </dd>
+        </div>
+      </div>
+
+      <div
+        v-if="doc.tags?.length"
+        class="col-span-2 flex flex-wrap items-center gap-1.5 border-t border-outline-gray-1 pt-3 sm:col-span-3"
+      >
+        <span class="lucide-tags size-4 shrink-0 text-ink-gray-5" aria-hidden="true" />
+        <Badge v-for="tag in doc.tags" :key="tag" variant="subtle" size="sm">{{ tag }}</Badge>
+      </div>
     </dl>
 
     <article ref="body" class="prose-sop text-base text-ink-gray-8" v-html="doc.content" />
@@ -326,13 +373,9 @@ const isMaterial = ref(true)
 const changes = reactive({ open: false, comment: '' })
 
 const doc = computed(() => procedure.data || {})
-const filedUnder = computed(() =>
-  [doc.value.space_title || doc.value.space, ...(doc.value.process_trail || []).map((step) => step.title)]
-    .filter(Boolean)
-    .join(' › '),
-)
-
 const isEffective = computed(() => doc.value.status === 'Effective')
+const ownerName = computed(() => doc.value.process_owner_name || doc.value.process_owner)
+const overdue = computed(() => reviewTone(doc.value.review_due) === 'red')
 const needsAcknowledgement = computed(() => isEffective.value && !doc.value.acknowledged)
 
 function load() {

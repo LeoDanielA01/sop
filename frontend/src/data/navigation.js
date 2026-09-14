@@ -1,5 +1,5 @@
 import { createResource } from 'frappe-ui'
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { createRetryingResource } from '@/data/resource'
 
 export const SECTIONS = [
@@ -24,6 +24,8 @@ export const viewsResource = createRetryingResource({
   auto: true,
   makeParams: () => ({ space: activeSpace.value }),
 })
+
+export const attention = computed(() => viewsResource.data?.attention || 0)
 
 export const views = computed(() => {
   const counts = viewsResource.data || {}
@@ -56,8 +58,9 @@ export const createSpace = createResource({
 
 export function setSpace(name) {
   activeSpace.value = name
-  viewsResource.reload()
 }
+
+watch(activeSpace, () => viewsResource.reload())
 
 export function refreshCounts() {
   viewsResource.reload()

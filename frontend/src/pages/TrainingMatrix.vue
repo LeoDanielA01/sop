@@ -11,75 +11,136 @@
   </PageHeader>
 
   <div class="mx-auto mt-5 w-full max-w-[1200px] px-3 pb-10 sm:px-5">
-    <div class="overflow-x-auto rounded-lg border border-outline-gray-2">
+    <div v-if="people.length" class="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div
+        v-for="tile in tiles"
+        :key="tile.label"
+        class="rounded-lg border border-outline-gray-2 bg-surface-gray-1 px-3 py-2.5"
+      >
+        <div class="flex items-center gap-1.5 text-sm text-ink-gray-5">
+          <span :class="tile.icon" class="size-3.5 shrink-0" aria-hidden="true" />
+          {{ tile.label }}
+        </div>
+        <div class="mt-1 text-xl font-semibold" :class="tile.tone || 'text-ink-gray-8'">
+          {{ tile.value }}
+        </div>
+      </div>
+    </div>
+
+    <div v-if="people.length" class="mb-3 flex flex-wrap items-center justify-between gap-2">
+      <TabButtons
+        v-model="scope"
+        :options="[
+          { label: 'Everyone', value: 'all' },
+          { label: 'With gaps', value: 'gaps' },
+          { label: 'Overdue', value: 'overdue' },
+        ]"
+      />
+      <span class="text-sm text-ink-gray-5">
+        Showing {{ rows.length }} of {{ people.length }}
+      </span>
+    </div>
+
+    <div v-if="rows.length" class="overflow-x-auto rounded-lg border border-outline-gray-2">
       <table class="w-full border-collapse text-sm">
         <thead>
           <tr class="bg-surface-gray-1">
             <th
-              class="sticky left-0 z-10 bg-surface-gray-1 px-3 py-2 text-left font-medium text-ink-gray-7"
+              class="sticky left-0 z-10 min-w-[13rem] bg-surface-gray-1 px-3 py-2.5 text-left font-medium text-ink-gray-7"
             >
               Person
+            </th>
+            <th class="hidden w-32 px-3 py-2.5 text-left font-medium text-ink-gray-7 sm:table-cell">
+              Trained
             </th>
             <th
               v-for="procedure in procedures"
               :key="procedure.name"
-              class="px-2 py-2 text-center font-mono text-xs font-normal text-ink-gray-5"
+              class="px-2 py-2.5 text-center font-normal"
             >
               <Tooltip :text="procedure.title">
-                <span>{{ procedure.sop_no }}</span>
+                <span class="font-mono text-xs text-ink-gray-5">{{ procedure.sop_no }}</span>
               </Tooltip>
             </th>
-            <th class="px-3 py-2 text-right font-medium text-ink-gray-7">Gaps</th>
+            <th class="px-3 py-2.5 text-right font-medium text-ink-gray-7">Gaps</th>
           </tr>
         </thead>
+
         <tbody>
-          <tr v-for="person in people" :key="person.user" class="border-t border-outline-gray-1">
-            <td class="sticky left-0 z-10 bg-surface-base px-3 py-2 text-ink-gray-8">
-              <div class="flex items-center gap-2">
-                <Avatar :image="person.user_image" :label="person.full_name" size="sm" />
-                <span class="truncate">{{ person.full_name }}</span>
+          <tr
+            v-for="person in rows"
+            :key="person.user"
+            class="border-t border-outline-gray-1 hover:bg-surface-gray-1"
+          >
+            <td class="sticky left-0 z-10 bg-surface-base px-3 py-2.5">
+              <div class="flex items-center gap-2.5">
+                <Avatar :image="person.user_image" :label="person.full_name" size="md" />
+                <div class="min-w-0">
+                  <div class="truncate text-base text-ink-gray-8">{{ person.full_name }}</div>
+                  <div class="truncate text-sm text-ink-gray-5">{{ person.user }}</div>
+                </div>
               </div>
             </td>
-            <td v-for="procedure in procedures" :key="procedure.name" class="px-2 py-2 text-center">
-              <Tooltip
-                v-if="cell(person, procedure.name)"
-                :text="`${MARK[cell(person, procedure.name).status]?.label} · ${procedure.title}`"
-              >
+
+            <td class="hidden px-3 py-2.5 sm:table-cell">
+              <Progress :value="done(person)" size="sm" />
+              <div class="mt-1 text-xs text-ink-gray-5">{{ done(person) }}%</div>
+            </td>
+
+            <td
+              v-for="procedure in procedures"
+              :key="procedure.name"
+              class="px-2 py-2.5 text-center"
+            >
+              <Tooltip :text="`${mark(person, procedure.name).label} · ${procedure.title}`">
                 <span
-                  :class="[
-                    MARK[cell(person, procedure.name).status]?.icon,
-                    MARK[cell(person, procedure.name).status]?.tone,
-                  ]"
                   class="inline-block size-4"
+                  :class="[mark(person, procedure.name).icon, mark(person, procedure.name).tone]"
                   aria-hidden="true"
                 />
               </Tooltip>
-              <Tooltip v-else text="Not assigned">
-                <span class="text-ink-gray-3">·</span>
-              </Tooltip>
             </td>
-            <td class="px-3 py-2 text-right">
-              <Badge :theme="gaps(person) ? 'amber' : 'green'" variant="subtle" size="sm">
-                {{ gaps(person) }}
-              </Badge>
+
+            <td class="px-3 py-2.5 text-right">
+              <Badge :theme="gapTone(person)" variant="subtle" size="sm">{{ gaps(person) }}</Badge>
             </td>
           </tr>
         </tbody>
       </table>
     </div>
 
-    <p
-      v-if="!matrix.loading && !people.length"
-      class="mt-16 px-6 text-center text-base text-ink-gray-5"
+    <div v-if="people.length" class="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5">
+      <span
+        v-for="entry in legend"
+        :key="entry.label"
+        class="flex items-center gap-1.5 text-sm text-ink-gray-5"
+      >
+        <span :class="[entry.icon, entry.tone]" class="size-3.5" aria-hidden="true" />
+        {{ entry.label }}
+      </span>
+    </div>
+
+    <div
+      v-if="!matrix.loading && !rows.length"
+      class="mt-10 flex flex-col items-center gap-2 rounded-lg border border-dashed border-outline-gray-2 px-4 py-12 text-center"
     >
-      <template v-if="procedures.length">
-        Nobody is training on these yet. Assign someone, or set a training requirement so it happens
-        on its own when a procedure comes into force.
-      </template>
-      <template v-else>
-        Nothing in force in this space yet — the matrix fills in once a procedure is published.
-      </template>
-    </p>
+      <span class="lucide-grid-3x3 size-6 text-ink-gray-4" aria-hidden="true" />
+      <p class="text-base text-ink-gray-7">{{ emptyTitle }}</p>
+      <p class="max-w-[28rem] text-sm text-ink-gray-5">{{ emptyLine }}</p>
+      <Button
+        v-if="procedures.length && scope === 'all'"
+        variant="subtle"
+        icon-left="lucide-user-plus"
+        label="Assign training"
+        @click="showAssign = true"
+      />
+      <Button
+        v-else-if="scope !== 'all'"
+        variant="subtle"
+        label="Show everyone"
+        @click="scope = 'all'"
+      />
+    </div>
   </div>
 
   <AssignTrainingDialog v-model:open="showAssign" :procedures="procedures" @assigned="reload" />
@@ -87,16 +148,11 @@
 
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
-import { Avatar, Badge, Button, PageHeader, Tooltip } from 'frappe-ui'
+import { Avatar, Badge, Button, PageHeader, Progress, TabButtons, Tooltip } from 'frappe-ui'
 import AppBreadcrumbs from '@/components/Layouts/AppBreadcrumbs.vue'
 import AssignTrainingDialog from '@/components/AssignTrainingDialog.vue'
 import { activeSpace } from '@/data/navigation'
 import { matrix, trainingCounts } from '@/data/training'
-
-const showAssign = ref(false)
-
-const procedures = computed(() => matrix.data?.procedures || [])
-const people = computed(() => matrix.data?.people || [])
 
 const MARK = {
   Completed: { icon: 'lucide-circle-check-big', tone: 'text-ink-green-3', label: 'Trained' },
@@ -106,15 +162,87 @@ const MARK = {
   Waived: { icon: 'lucide-circle-minus', tone: 'text-ink-gray-4', label: 'Waived' },
 }
 
+const MISSING = { icon: 'lucide-minus', tone: 'text-ink-gray-3', label: 'Not assigned' }
+
+const showAssign = ref(false)
+const scope = ref('all')
+
+const procedures = computed(() => matrix.data?.procedures || [])
+const people = computed(() => matrix.data?.people || [])
+
+const legend = [MARK.Completed, MARK['In Progress'], MARK.Assigned, MARK.Overdue, MISSING]
+
+const rows = computed(() => {
+  if (scope.value === 'gaps') return people.value.filter((person) => gaps(person))
+  if (scope.value === 'overdue') return people.value.filter((person) => overdue(person))
+
+  return people.value
+})
+
+const tiles = computed(() => {
+  const trained = people.value.filter((person) => !gaps(person)).length
+  const late = people.value.filter((person) => overdue(person)).length
+  const missing = people.value.reduce((total, person) => total + gaps(person), 0)
+
+  return [
+    { label: 'People', value: people.value.length, icon: 'lucide-users' },
+    { label: 'Fully trained', value: trained, icon: 'lucide-circle-check-big' },
+    { label: 'Gaps', value: missing, icon: 'lucide-triangle-alert' },
+    {
+      label: 'Overdue',
+      value: late,
+      icon: 'lucide-calendar-clock',
+      tone: late ? 'text-ink-red-3' : null,
+    },
+  ]
+})
+
+const emptyTitle = computed(() => {
+  if (!procedures.value.length) return 'Nothing in force yet'
+  if (scope.value !== 'all') return 'Nobody in this view'
+
+  return 'Nobody is training on these yet'
+})
+
+const emptyLine = computed(() => {
+  if (!procedures.value.length) {
+    return 'The matrix fills in once a procedure in this space comes into force.'
+  }
+
+  if (scope.value === 'gaps') return 'Everyone shown is trained on every procedure in force.'
+  if (scope.value === 'overdue') return 'Nothing has run past its due date.'
+
+  return 'Assign someone, or write a rule so it happens on its own when a procedure comes into force.'
+})
+
 function cell(person, sop) {
   return person.cells?.[sop] || null
 }
 
+function mark(person, sop) {
+  const row = cell(person, sop)
+  return (row && MARK[row.status]) || MISSING
+}
+
 function gaps(person) {
-  return procedures.value.filter((p) => {
-    const c = cell(person, p.name)
-    return !c || c.status !== 'Completed'
-  }).length
+  return procedures.value.filter((row) => cell(person, row.name)?.status !== 'Completed').length
+}
+
+function overdue(person) {
+  return procedures.value.some((row) => cell(person, row.name)?.status === 'Overdue')
+}
+
+function done(person) {
+  if (!procedures.value.length) return 0
+
+  const trained = procedures.value.length - gaps(person)
+  return Math.round((trained * 100) / procedures.value.length)
+}
+
+function gapTone(person) {
+  if (overdue(person)) return 'red'
+
+  return gaps(person) ? 'amber' : 'green'
 }
 
 function reload() {
