@@ -57,6 +57,8 @@
       </ListRow>
     </List>
 
+    <ListSkeleton v-if="sessions.loading && !rows.length" />
+
     <div
       v-if="!sessions.loading && !rows.length"
       class="mt-10 flex flex-col items-center gap-2 rounded-4 border border-dashed border-outline-gray-2 px-4 py-10 text-center"
@@ -184,6 +186,7 @@ import {
 } from 'frappe-ui'
 import { List, ListCell, ListRow } from 'frappe-ui/list'
 import AppBreadcrumbs from '@/components/Layouts/AppBreadcrumbs.vue'
+import ListSkeleton from '@/components/ListSkeleton.vue'
 import SessionDialog from '@/components/SessionDialog.vue'
 import { trainingCounts } from '@/data/training'
 import { shortDate } from '@/utils/format'

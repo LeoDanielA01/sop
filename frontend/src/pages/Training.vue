@@ -53,6 +53,8 @@
       </ListRow>
     </List>
 
+    <ListSkeleton v-if="assignments.loading && !rows.length" :avatar="false" />
+
     <p
       v-if="!assignments.loading && !rows.length"
       class="mt-16 text-center text-base text-ink-gray-5"
@@ -182,6 +184,7 @@ import {
 } from 'frappe-ui'
 import { List, ListCell, ListRow } from 'frappe-ui/list'
 import AppBreadcrumbs from '@/components/Layouts/AppBreadcrumbs.vue'
+import ListSkeleton from '@/components/ListSkeleton.vue'
 import { trainingCounts } from '@/data/training'
 import { shortDate } from '@/utils/format'
 

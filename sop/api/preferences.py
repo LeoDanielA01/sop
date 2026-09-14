@@ -5,7 +5,7 @@ import frappe
 
 DEFAULTS = {
 	"autosave": 1,
-	"reading_width": "Comfortable",
+	"shortcuts": 1,
 	"rows_per_page": 20,
 	"email_on_approval": 1,
 	"email_on_publish": 1,
@@ -13,7 +13,6 @@ DEFAULTS = {
 	"digest": "Weekly",
 }
 
-WIDTHS = ("Comfortable", "Full")
 DIGESTS = ("Off", "Weekly", "Monthly")
 
 
@@ -48,9 +47,6 @@ def shape(doc):
 
 
 def clean(key, value):
-	if key == "reading_width":
-		return value if value in WIDTHS else DEFAULTS[key]
-
 	if key == "digest":
 		return value if value in DIGESTS else DEFAULTS[key]
 

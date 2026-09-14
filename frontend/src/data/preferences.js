@@ -3,7 +3,7 @@ import { computed, reactive } from 'vue'
 
 const DEFAULTS = {
   autosave: 1,
-  reading_width: 'Comfortable',
+  shortcuts: 1,
   rows_per_page: 20,
   email_on_approval: 1,
   email_on_publish: 1,
@@ -32,12 +32,4 @@ export function setPreference(key, value) {
 
   preferences[key] = value
   saveResource.submit({ [key]: value })
-}
-
-export const fullWidth = computed(() => preferences.reading_width === 'Full')
-
-export const readingWidth = computed(() => (fullWidth.value ? 'max-w-none' : 'max-w-[820px]'))
-
-export function toggleWidth() {
-  setPreference('reading_width', fullWidth.value ? 'Comfortable' : 'Full')
 }

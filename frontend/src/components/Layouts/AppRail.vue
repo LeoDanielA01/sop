@@ -1,7 +1,7 @@
 <template>
   <SidebarRail class="border-r">
     <SidebarRailItem label="Procedures" @click="router.push('/')">
-      <Avatar image="/sop-mark.svg" label="SOP" size="lg" shape="square" class="size-7" />
+      <Avatar :image="mark" label="SOP" size="lg" shape="square" class="size-7" />
     </SidebarRailItem>
 
     <div class="flex w-full flex-1 flex-col items-center gap-3 pt-3">
@@ -75,6 +75,7 @@
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { Avatar, SidebarRail, SidebarRailItem } from 'frappe-ui'
+import mark from '@/assets/sop-mark.svg'
 import { useSection } from '@/composables/useSection'
 import { SECTIONS, attention } from '@/data/navigation'
 import { unreadCount } from '@/data/notifications'

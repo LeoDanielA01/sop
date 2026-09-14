@@ -24,7 +24,18 @@ def stats():
 
 	from sop.api.procedures import attention
 
+	doc = frappe.get_cached_doc("User", user)
+
+	teams = frappe.get_all(
+		"SOP Team Member",
+		filters={"user": user, "parenttype": "SOP Team"},
+		fields=["parent", "team_role"],
+		limit_page_length=0,
+	)
+
 	return {
+		"member_since": doc.creation,
+		"teams": [{"name": row.parent, "role": row.team_role} for row in teams],
 		"waiting": attention(user),
 		"owned": frappe.db.count("SOP", {"process_owner": user}),
 		"drafts": frappe.db.count("SOP", {"owner": user, "status": "Draft"}),

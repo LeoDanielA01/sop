@@ -39,6 +39,8 @@
       </ListRow>
     </List>
 
+    <ListSkeleton v-if="revisions.loading && !rows.length" :avatar="false" />
+
     <p
       v-if="!revisions.loading && !rows.length"
       class="mt-16 text-center text-base text-ink-gray-5"
@@ -54,6 +56,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { Badge, Button, PageHeader, createResource } from 'frappe-ui'
 import { List, ListCell, ListRow } from 'frappe-ui/list'
 import AppBreadcrumbs from '@/components/Layouts/AppBreadcrumbs.vue'
+import ListSkeleton from '@/components/ListSkeleton.vue'
 import { procedure } from '@/data/procedures'
 import { shortDate } from '@/utils/format'
 

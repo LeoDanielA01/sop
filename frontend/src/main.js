@@ -2,6 +2,7 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import { FrappeUI, frappeRequest, setConfig } from 'frappe-ui'
 import router from './router'
+import translationPlugin from './translation'
 import './index.css'
 
 setConfig('resourceFetcher', frappeRequest)
@@ -29,6 +30,7 @@ async function start() {
   app.use(createPinia())
   app.use(router)
   app.use(FrappeUI)
+  app.use(translationPlugin)
   app.mount('#app')
 }
 

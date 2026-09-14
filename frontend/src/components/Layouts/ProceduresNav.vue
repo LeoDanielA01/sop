@@ -95,8 +95,8 @@
       </div>
     </template>
 
-    <div v-if="spacesResource.loading" class="flex flex-col gap-1.5 px-2 py-2">
-      <div v-for="row in 3" :key="row" class="h-4 animate-pulse rounded-3 bg-surface-gray-2" />
+    <div v-if="spacesResource.loading" class="flex flex-col gap-2 px-2 py-2">
+      <Skeleton v-for="row in 3" :key="row" class="h-5 w-full" />
     </div>
 
     <p v-else-if="spacesResource.error" class="px-2 py-2 text-sm text-ink-gray-5">
@@ -155,7 +155,7 @@
 <script setup>
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Button, SidebarItem, SidebarLabel, Tooltip } from 'frappe-ui'
+import { Button, SidebarItem, SidebarLabel, Skeleton, Tooltip } from 'frappe-ui'
 import ProcessNode from './ProcessNode.vue'
 import { useSection } from '@/composables/useSection'
 import { activeSpace, setSpace, spaces, spacesResource, views } from '@/data/navigation'

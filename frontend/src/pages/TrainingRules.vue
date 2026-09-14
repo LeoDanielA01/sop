@@ -56,6 +56,8 @@
       </ListRow>
     </List>
 
+    <ListSkeleton v-if="requirements.loading && !rows.length" :avatar="false" />
+
     <div
       v-if="!requirements.loading && !rows.length"
       class="mt-10 flex flex-col items-center gap-2 rounded-4 border border-dashed border-outline-gray-2 px-4 py-10 text-center"
@@ -180,6 +182,7 @@ import {
 } from 'frappe-ui'
 import { List, ListCell, ListRow } from 'frappe-ui/list'
 import AppBreadcrumbs from '@/components/Layouts/AppBreadcrumbs.vue'
+import ListSkeleton from '@/components/ListSkeleton.vue'
 import { spaces } from '@/data/navigation'
 
 const METHODS = ['Read & Understand', 'Classroom', 'On the Job', 'Assessment']

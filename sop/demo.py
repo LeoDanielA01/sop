@@ -343,10 +343,12 @@ def build(definition, spaces, people):
 				{"instruction": text, "responsible_role": role_of(role), "record_to_capture": record}
 				for text, role, record in definition["steps"]
 			],
-			"tags": [{"tag": ensure_tag(tag)} for tag in definition["tags"]],
 		}
 	)
 	doc.insert(ignore_permissions=True)
+
+	for tag in definition["tags"]:
+		add_tag(tag, "SOP", doc.name)
 
 	advance(doc, definition["state"], people, definition.get("effective_since", -40))
 
@@ -357,11 +359,10 @@ def role_of(role):
 	return role if role and frappe.db.exists("Role", role) else None
 
 
-def ensure_tag(tag):
-	if not frappe.db.exists("Tag", tag):
-		frappe.get_doc({"doctype": "Tag", "name": tag}).insert(ignore_permissions=True)
+def add_tag(tag, doctype, name):
+	from frappe.desk.doctype.tag.tag import add_tag as tag_it
 
-	return tag
+	tag_it(tag, doctype, name)
 
 
 def advance(doc, state, people, since=-40):

@@ -8,6 +8,12 @@
           </template>
           Preferences
         </SettingsNavItem>
+        <SettingsNavItem value="shortcuts">
+          <template #prefix>
+            <span class="lucide-keyboard size-4 shrink-0 text-ink-gray-6" />
+          </template>
+          Shortcuts
+        </SettingsNavItem>
         <SettingsNavItem value="notifications">
           <template #prefix>
             <span class="lucide-bell size-4 shrink-0 text-ink-gray-6" />
@@ -63,19 +69,6 @@
               />
             </SettingsRow>
             <SettingsRow
-              title="Reading width"
-              description="How wide a procedure runs when you read it"
-            >
-              <TabButtons
-                :options="[
-                  { label: 'Comfortable', value: 'Comfortable' },
-                  { label: 'Full', value: 'Full' },
-                ]"
-                :model-value="preferences.reading_width"
-                @update:model-value="(value) => setPreference('reading_width', value)"
-              />
-            </SettingsRow>
-            <SettingsRow
               title="Rows per page"
               description="How many procedures a list page shows before it pages"
             >
@@ -85,6 +78,52 @@
                 @update:model-value="(value) => setPreference('rows_per_page', Number(value))"
               />
             </SettingsRow>
+          </div>
+        </SettingsBody>
+      </SettingsPanel>
+
+      <SettingsPanel value="shortcuts">
+        <SettingsHeader
+          title="Shortcuts"
+          description="Press ? anywhere to bring this list up"
+        />
+        <SettingsBody>
+          <div class="divide-y divide-outline-gray-1 pt-6">
+            <SettingsRow
+              title="Single-key shortcuts"
+              description="Keys like n and f work when you are not typing"
+            >
+              <Switch
+                :model-value="!!preferences.shortcuts"
+                @update:model-value="(value) => setPreference('shortcuts', value ? 1 : 0)"
+              />
+            </SettingsRow>
+          </div>
+
+          <div class="mt-6 flex flex-col gap-5">
+            <div v-for="group in groups" :key="group.name">
+              <p class="mb-2 text-sm text-ink-gray-5">{{ group.name }}</p>
+
+              <div class="divide-y divide-outline-gray-1 rounded-4 border border-outline-gray-2">
+                <div
+                  v-for="row in group.rows"
+                  :key="row.label"
+                  class="flex items-center justify-between gap-4 px-3 py-2"
+                >
+                  <span class="min-w-0 truncate text-base text-ink-gray-7">{{ row.label }}</span>
+
+                  <span class="flex shrink-0 items-center gap-1">
+                    <kbd
+                      v-for="key in row.keys"
+                      :key="key"
+                      class="rounded-3 bg-surface-gray-2 px-1.5 py-0.5 font-mono text-xs text-ink-gray-7"
+                    >
+                      {{ key === 'mod' ? modKey : key }}
+                    </kbd>
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
         </SettingsBody>
       </SettingsPanel>
@@ -235,7 +274,7 @@
 </template>
 
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, watch } from 'vue'
 import {
   Avatar,
   Badge,
@@ -261,9 +300,21 @@ import { List, ListCell, ListHeader, ListHeaderCell, ListRow, ListRows } from 'f
 import { spaces } from '@/data/navigation'
 import { useUI } from '@/stores/ui'
 import { preferences, preferencesError, setPreference } from '@/data/preferences'
+import { SHORTCUTS } from '@/composables/useShortcuts'
 
 const open = defineModel('open', { type: Boolean, default: false })
 const ui = useUI()
+
+const modKey = navigator.platform.toLowerCase().includes('mac') ? '⌘' : 'Ctrl'
+
+const groups = computed(() => {
+  const names = [...new Set(SHORTCUTS.map((row) => row.group))]
+
+  return names.map((name) => ({
+    name,
+    rows: SHORTCUTS.filter((row) => row.group === name),
+  }))
+})
 
 const { colorScheme, setColorScheme } = useColorScheme()
 

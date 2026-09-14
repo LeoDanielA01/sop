@@ -31,7 +31,6 @@
   "approvals_section",
   "approvals",
   "meta_section",
-  "tags",
   "references",
   "search_section",
   "search_text"
@@ -191,12 +190,6 @@
    "fieldname": "meta_section",
    "fieldtype": "Section Break",
    "label": "Tags & References"
-  },
-  {
-   "fieldname": "tags",
-   "fieldtype": "Table MultiSelect",
-   "label": "Tags",
-   "options": "SOP Tag"
   },
   {
    "description": "Filled from the content when the procedure is saved.",

@@ -1,11 +1,11 @@
 <template>
   <DesktopShell>
     <template #rail>
-      <AppRail />
+      <AppRail v-if="!ui.fullScreen" />
     </template>
 
     <template #sidebar>
-      <AppSidebar v-if="!ui.sidebarCollapsed" />
+      <AppSidebar v-if="!ui.sidebarCollapsed && !ui.fullScreen" />
     </template>
 
     <slot />

@@ -183,6 +183,35 @@ def unacknowledged_names(user, space=None):
 
 
 @frappe.whitelist()
+def neighbours(name):
+	doc = frappe.get_doc("SOP", name)
+	doc.check_permission("read")
+
+	filters = {"space": doc.space, "status": ("!=", "Retired")}
+	if doc.sop_process:
+		filters["sop_process"] = doc.sop_process
+
+	rows = frappe.get_list(
+		"SOP",
+		filters=filters,
+		fields=["name", "sop_no", "title"],
+		order_by="sop_no asc",
+		limit_page_length=0,
+	)
+
+	names = [row.name for row in rows]
+	if name not in names:
+		return {"previous": None, "next": None}
+
+	index = names.index(name)
+
+	return {
+		"previous": rows[index - 1] if index else None,
+		"next": rows[index + 1] if index + 1 < len(rows) else None,
+	}
+
+
+@frappe.whitelist()
 def get_procedure(name, revision=None):
 	doc = frappe.get_doc("SOP", name)
 	doc.check_permission("read")
@@ -207,13 +236,17 @@ def get_procedure(name, revision=None):
 		"is_controlled": doc.is_controlled,
 		"content": content,
 		"steps": [step.as_dict() for step in doc.steps],
-		"tags": [row.tag for row in doc.tags],
+		"tags": [tag for tag in (doc._user_tags or "").split(",") if tag],
 		"references": resolve(references_of(doc)),
 		"process_owner": doc.process_owner,
 		"process_owner_name": owner.get("full_name"),
 		"owner_image": owner.get("user_image"),
 		"effective_from": doc.effective_from,
 		"review_due": doc.review_due,
+		"edited": frappe.utils.pretty_date(doc.modified),
+		"edited_by": editor_name(doc.modified_by),
+		"created": frappe.utils.pretty_date(doc.creation),
+		"created_by": editor_name(doc.owner),
 		"revisions": frappe.get_all(
 			"SOP Revision",
 			filters={"sop": doc.name},
@@ -228,6 +261,16 @@ def get_procedure(name, revision=None):
 		"approvals": approvals_of(doc),
 		"actions": actions_for(doc),
 	}
+
+
+def editor_name(user):
+	if not user:
+		return None
+
+	if user == frappe.session.user:
+		return _("you")
+
+	return frappe.db.get_value("User", user, "full_name") or user
 
 
 def process_trail(process):

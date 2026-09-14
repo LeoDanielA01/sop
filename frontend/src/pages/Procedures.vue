@@ -92,6 +92,8 @@
       :total="total"
     />
 
+    <ListSkeleton v-if="procedures.loading && !rows.length" />
+
     <div
       v-if="!procedures.loading && !rows.length"
       class="mt-16 flex flex-col items-center gap-3 px-6 text-center text-base text-ink-gray-5"
@@ -136,6 +138,7 @@ import {
 } from 'frappe-ui'
 import { List, ListCell, ListRow } from 'frappe-ui/list'
 import AppBreadcrumbs from '@/components/Layouts/AppBreadcrumbs.vue'
+import ListSkeleton from '@/components/ListSkeleton.vue'
 import Pagination from '@/components/Pagination.vue'
 import { procedures, page, pageLength, reloadProcedures, view } from '@/data/procedures'
 import { activeSpace, setSpace, spaces } from '@/data/navigation'

@@ -81,7 +81,7 @@ class SOP(Document):
 	def build_search_text(self):
 		parts = [self.sop_no, self.title, self.summary, strip_html(self.content or "")]
 		parts += [strip_html(row.instruction or "") for row in self.steps]
-		parts += [row.tag for row in self.tags]
+		parts.append((self._user_tags or "").replace(",", " "))
 
 		text = " ".join(part for part in parts if part)
 		self.search_text = re.sub(r"\s+", " ", text).strip()[:100000]

@@ -1,6 +1,9 @@
 <template>
   <div class="flex h-screen flex-col bg-surface-base">
-    <header class="flex items-center gap-1 border-b border-outline-gray-1 px-2 py-2">
+    <header
+      v-if="!ui.fullScreen"
+      class="flex items-center gap-1 border-b border-outline-gray-1 px-2 py-2"
+    >
       <Button
         v-if="!onList"
         variant="ghost"
@@ -29,6 +32,7 @@
     </main>
 
     <nav
+      v-if="!ui.fullScreen"
       class="flex items-stretch justify-around border-t border-outline-gray-1 bg-surface-base pb-[env(safe-area-inset-bottom)]"
     >
       <Button

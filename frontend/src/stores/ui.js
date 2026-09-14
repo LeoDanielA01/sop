@@ -14,6 +14,7 @@ export const useUI = defineStore('ui', () => {
   const processDialog = ref({ open: false, space: null, parent: null, parentTitle: null })
 
   const sidebarCollapsed = ref(false)
+  const fullScreen = ref(false)
   const editorToolsPinned = ref(true)
 
   function askForProcess({ space, parent = null }) {
@@ -23,6 +24,10 @@ export const useUI = defineStore('ui', () => {
       parent: parent?.name || null,
       parentTitle: parent?.title || null,
     }
+  }
+
+  function toggleFullScreen() {
+    fullScreen.value = !fullScreen.value
   }
 
   function toggleSidebar() {
@@ -47,6 +52,8 @@ export const useUI = defineStore('ui', () => {
     templateDialog,
     processDialog,
     sidebarCollapsed,
+    fullScreen,
+    toggleFullScreen,
     editorToolsPinned,
     askForProcess,
     toggleSidebar,

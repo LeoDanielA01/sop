@@ -7,8 +7,8 @@
  "engine": "InnoDB",
  "field_order": [
   "user",
+  "shortcuts",
   "autosave",
-  "reading_width",
   "rows_per_page",
   "column_break_mail",
   "email_on_approval",
@@ -28,17 +28,17 @@
   },
   {
    "default": "1",
+   "description": "Single-key shortcuts like n for a new procedure.",
+   "fieldname": "shortcuts",
+   "fieldtype": "Check",
+   "label": "Keyboard Shortcuts"
+  },
+  {
+   "default": "1",
    "description": "Save a draft a couple of seconds after you stop typing.",
    "fieldname": "autosave",
    "fieldtype": "Check",
    "label": "Save As You Type"
-  },
-  {
-   "default": "Comfortable",
-   "fieldname": "reading_width",
-   "fieldtype": "Select",
-   "label": "Reading Width",
-   "options": "Comfortable\nFull"
   },
   {
    "default": "20",
