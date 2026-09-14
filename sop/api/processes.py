@@ -58,10 +58,15 @@ def procedure_counts(space=None):
 	rows = frappe.get_all(
 		"SOP",
 		filters=dict(filters, sop_process=("is", "set")),
-		fields=["sop_process", "count(name) as total"],
-		group_by="sop_process",
+		pluck="sop_process",
+		limit_page_length=0,
 	)
-	return {row.sop_process: row.total for row in rows}
+
+	counts = {}
+	for process in rows:
+		counts[process] = counts.get(process, 0) + 1
+
+	return counts
 
 
 @frappe.whitelist()

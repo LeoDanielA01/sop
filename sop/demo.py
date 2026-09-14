@@ -518,15 +518,21 @@ def status():
 		"spaces": frappe.get_all("SOP Space", fields=["name", "title", "space_code", "visibility"]),
 		"processes": frappe.db.count("SOP Process"),
 		"procedures": frappe.db.count("SOP"),
-		"by_status": frappe.get_all(
-			"SOP", fields=["status", "count(name) as total"], group_by="status"
-		),
+		"by_status": by_status(),
 		"acknowledgements": frappe.db.count("SOP Acknowledgement"),
 		"assignments": frappe.db.count("SOP Training Assignment"),
 		"can_read_spaces": frappe.has_permission("SOP Space", "read"),
 		"spaces_api": len(frappe.call("sop.api.procedures.spaces")),
 		"last_error": last_error(),
 	}
+
+
+def by_status():
+	counts = {}
+	for status in frappe.get_all("SOP", pluck="status", limit_page_length=0):
+		counts[status] = counts.get(status, 0) + 1
+
+	return counts
 
 
 def last_error():
