@@ -2,14 +2,16 @@ import { createResource, debounce } from 'frappe-ui'
 import { computed, ref, watch } from 'vue'
 import { activeSpace } from '@/data/navigation'
 import { activeProcess } from '@/data/processes'
-import { preferences, setPreference } from '@/data/preferences'
+import { preferences } from '@/data/preferences'
 import { createRetryingResource } from '@/data/resource'
 
 export const page = ref(1)
-export const pageLength = computed({
-  get: () => preferences.rows_per_page,
-  set: (value) => setPreference('rows_per_page', Number(value)),
-})
+export const pageLength = ref(preferences.rows_per_page)
+
+watch(
+  () => preferences.rows_per_page,
+  (value) => (pageLength.value = value),
+)
 export const view = ref('all')
 export const search = ref('')
 

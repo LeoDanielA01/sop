@@ -4,6 +4,7 @@
 import frappe
 
 DEFAULTS = {
+	"autosave": 1,
 	"reading_width": "Comfortable",
 	"rows_per_page": 20,
 	"email_on_approval": 1,

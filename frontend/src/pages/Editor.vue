@@ -13,6 +13,7 @@
         :dirty="dirty"
         :saved-at="savedAt"
         :error="save.error?.messages?.[0] || ''"
+        :autosave="!!preferences.autosave"
         @retry="submit"
       />
     </div>
@@ -96,6 +97,7 @@ import AppBreadcrumbs from '@/components/Layouts/AppBreadcrumbs.vue'
 import SaveIndicator from '@/components/SaveIndicator.vue'
 import ProcedureEditor from '@/components/editor/ProcedureEditor.vue'
 import { activeSpace, spaces } from '@/data/navigation'
+import { preferences } from '@/data/preferences'
 import { activeProcess, flatten } from '@/data/processes'
 import { useUI } from '@/stores/ui'
 
@@ -179,9 +181,11 @@ watch(
   () => [draft.title, draft.summary, draft.content],
   () => {
     if (loading) return
+
     dirty.value = true
     clearTimeout(timer)
-    if (draft.title) timer = setTimeout(submit, 2000)
+
+    if (preferences.autosave && draft.title) timer = setTimeout(submit, 2000)
   },
 )
 
@@ -238,6 +242,7 @@ onBeforeUnmount(() => {
 
 onBeforeRouteLeave(() => {
   clearTimeout(timer)
-  if (dirty.value && draft.title) submit()
+
+  if (preferences.autosave && dirty.value && draft.title) submit()
 })
 </script>

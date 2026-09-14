@@ -2,6 +2,7 @@ import { createResource } from 'frappe-ui'
 import { computed, reactive } from 'vue'
 
 const DEFAULTS = {
+  autosave: 1,
   reading_width: 'Comfortable',
   rows_per_page: 20,
   email_on_approval: 1,

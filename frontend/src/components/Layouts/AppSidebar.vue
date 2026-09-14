@@ -21,7 +21,7 @@ import { ScrollArea, Sidebar, SidebarHeader } from 'frappe-ui'
 import ProceduresNav from './ProceduresNav.vue'
 import TrainingNav from './TrainingNav.vue'
 import { useSection } from '@/composables/useSection'
-import { activeSpace } from '@/data/navigation'
+import { activeSpace, spaces } from '@/data/navigation'
 import { trainingCounts } from '@/data/training'
 import { useUI } from '@/stores/ui'
 
@@ -33,11 +33,14 @@ const title = computed(() =>
   section.value === 'training' ? 'Training' : space.value?.title || 'Procedures',
 )
 
-const subtitle = computed(() =>
-  section.value === 'training'
-    ? `${trainingCounts.data?.open || 0} outstanding`
-    : `${space.value?.total || 0} procedures`,
-)
+const subtitle = computed(() => {
+  if (section.value === 'training') return `${trainingCounts.data?.open || 0} outstanding`
+  if (space.value) return `${space.value.total || 0} procedures`
+
+  const total = spaces.value.reduce((sum, row) => sum + (row.total || 0), 0)
+
+  return `${total} across ${spaces.value.length} space${spaces.value.length === 1 ? '' : 's'}`
+})
 
 const menuItems = computed(() => {
   if (section.value === 'training') {

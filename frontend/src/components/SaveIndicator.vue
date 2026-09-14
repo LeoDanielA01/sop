@@ -15,7 +15,7 @@
       Saving
     </span>
 
-    <Tooltip v-else-if="dirty" text="It saves on its own, or press Ctrl+S">
+    <Tooltip v-else-if="dirty" :text="hint">
       <span class="flex items-center gap-1.5 text-sm text-ink-gray-5">
         <span class="size-1.5 rounded-full bg-surface-amber-3" aria-hidden="true" />
         Unsaved changes
@@ -40,9 +40,16 @@ const props = defineProps({
   dirty: { type: Boolean, default: false },
   savedAt: { type: Date, default: null },
   error: { type: String, default: '' },
+  autosave: { type: Boolean, default: true },
 })
 
 const emit = defineEmits(['retry'])
+
+const hint = computed(() =>
+  props.autosave
+    ? 'It saves on its own, or press Ctrl+S'
+    : 'Saving as you type is off — press Ctrl+S or Save draft',
+)
 
 const now = ref(Date.now())
 let timer = null

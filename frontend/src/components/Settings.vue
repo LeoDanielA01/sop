@@ -54,6 +54,15 @@
               />
             </SettingsRow>
             <SettingsRow
+              title="Save as you type"
+              description="Keep a draft saved a couple of seconds after you stop typing"
+            >
+              <Switch
+                :model-value="!!preferences.autosave"
+                @update:model-value="(value) => setPreference('autosave', value ? 1 : 0)"
+              />
+            </SettingsRow>
+            <SettingsRow
               title="Reading width"
               description="How wide a procedure runs when you read it"
             >
@@ -70,7 +79,11 @@
               title="Rows per page"
               description="How many procedures a list page shows before it pages"
             >
-              <Select v-model="rowsPerPage" :options="['10', '20', '50', '100']" />
+              <Select
+                :model-value="String(preferences.rows_per_page)"
+                :options="['10', '20', '50', '100']"
+                @update:model-value="(value) => setPreference('rows_per_page', Number(value))"
+              />
             </SettingsRow>
           </div>
         </SettingsBody>
@@ -247,18 +260,12 @@ import {
 import { List, ListCell, ListHeader, ListHeaderCell, ListRow, ListRows } from 'frappe-ui/list'
 import { spaces } from '@/data/navigation'
 import { useUI } from '@/stores/ui'
-import { pageLength } from '@/data/procedures'
 import { preferences, preferencesError, setPreference } from '@/data/preferences'
 
 const open = defineModel('open', { type: Boolean, default: false })
 const ui = useUI()
 
 const { colorScheme, setColorScheme } = useColorScheme()
-
-const rowsPerPage = computed({
-  get: () => String(pageLength.value),
-  set: (value) => (pageLength.value = Number(value)),
-})
 
 const mentionConfigs = createResource({
   url: 'frappe.client.get_list',

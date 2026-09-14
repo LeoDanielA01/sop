@@ -20,40 +20,40 @@
           <FormControl type="checkbox" label="Whole word only" v-model="wholeWord" />
           <FormControl type="checkbox" label="This space only" v-model="thisSpace" />
 
-          <Button
-            class="ml-auto"
-            variant="subtle"
-            icon-left="lucide-search"
-            label="Find"
-            :loading="preview.loading"
-            :disabled="!find"
-            @click="look"
-          />
+          <span v-if="preview.loading" class="ml-auto text-sm text-ink-gray-5">Searching…</span>
         </div>
 
         <div v-if="rows.length" class="flex flex-col gap-2">
           <div class="flex items-center justify-between">
+            <label class="flex cursor-pointer items-center gap-2 text-sm text-ink-gray-6">
+              <FormControl
+                type="checkbox"
+                :modelValue="allPicked"
+                @update:modelValue="toggleAll"
+              />
+              Select all
+            </label>
             <span class="text-sm text-ink-gray-5">
-              {{ hits }} in {{ rows.length }} procedure{{ rows.length === 1 ? '' : 's' }}
+              {{ hits }} match{{ hits === 1 ? '' : 'es' }} in {{ rows.length }} procedure{{
+                rows.length === 1 ? '' : 's'
+              }}
             </span>
-            <Button
-              variant="ghost"
-              size="sm"
-              :label="allPicked ? 'Clear all' : 'Select all'"
-              @click="toggleAll"
-            />
           </div>
 
-          <div
-            class="max-h-72 divide-y divide-outline-gray-1 overflow-y-auto rounded-lg border border-outline-gray-2 bg-surface-gray-1"
-          >
+          <div class="flex max-h-72 flex-col gap-1.5 overflow-y-auto p-0.5">
             <label
               v-for="row in rows"
               :key="row.name"
-              class="flex cursor-pointer items-start gap-3 px-3 py-2.5"
+              class="flex cursor-pointer items-start gap-3 rounded-lg border px-3 py-2.5"
+              :class="
+                picked.includes(row.name)
+                  ? 'border-outline-gray-3 bg-surface-gray-2'
+                  : 'border-outline-gray-2 bg-surface-gray-1 hover:border-outline-gray-3'
+              "
             >
               <FormControl
                 type="checkbox"
+                class="mt-0.5"
                 :modelValue="picked.includes(row.name)"
                 @update:modelValue="() => toggle(row.name)"
               />
@@ -66,8 +66,29 @@
                     {{ row.status }}
                   </Badge>
                 </div>
-                <p v-if="row.snippet" class="mt-0.5 truncate text-sm text-ink-gray-5">
-                  {{ row.snippet }}
+                <p v-if="row.snippet" class="mt-1 truncate text-sm text-ink-gray-5">
+                  <template v-for="(part, index) in parts(row.snippet)" :key="index">
+                    <mark
+                      v-if="part.hit"
+                      class="rounded-md bg-surface-amber-2 px-0.5 text-ink-gray-8"
+                    >
+                      {{ part.text }}
+                    </mark>
+                    <template v-else>{{ part.text }}</template>
+                  </template>
+                </p>
+
+                <p v-if="row.snippet && replace" class="mt-1 truncate text-sm text-ink-gray-5">
+                  <span class="lucide-corner-down-right mr-1 inline-block size-3" aria-hidden="true" />
+                  <template v-for="(part, index) in parts(row.snippet, true)" :key="index">
+                    <mark
+                      v-if="part.hit"
+                      class="rounded-md bg-surface-green-2 px-0.5 text-ink-gray-8"
+                    >
+                      {{ part.text }}
+                    </mark>
+                    <template v-else>{{ part.text }}</template>
+                  </template>
                 </p>
               </div>
 
@@ -76,23 +97,29 @@
           </div>
 
           <div
-            v-if="locked.length"
-            class="flex items-start gap-2 rounded-lg border border-outline-amber-1 bg-surface-amber-1 px-3 py-2.5 text-sm text-ink-amber-6"
+            v-if="revisable.length"
+            class="flex items-start gap-2.5 rounded-lg border border-outline-amber-1 bg-surface-amber-1 px-3 py-2.5 text-sm text-ink-amber-6"
           >
             <span class="lucide-triangle-alert mt-0.5 size-4 shrink-0" aria-hidden="true" />
             <div class="min-w-0">
               <p>
-                {{ locked.length }} of these are in force. Editing one has to go through a revision
-                and be approved again.
+                {{ revisable.length }} of these {{ revisable.length === 1 ? 'is' : 'are' }} in force.
+                Editing one has to go through a revision and be approved again.
               </p>
-              <FormControl
-                class="mt-1.5"
-                type="checkbox"
-                label="Start a revision for those too"
-                v-model="startRevision"
-              />
+              <label class="mt-1.5 flex cursor-pointer items-center gap-2">
+                <FormControl type="checkbox" v-model="startRevision" />
+                Start a revision for {{ revisable.length === 1 ? 'it' : 'them' }}
+              </label>
             </div>
           </div>
+
+          <p
+            v-if="blocked.length"
+            class="rounded-lg border border-outline-gray-2 bg-surface-gray-1 px-3 py-2.5 text-sm text-ink-gray-6"
+          >
+            {{ blocked.length }} cannot be changed yet — {{ blockedReason }}. They will be left
+            alone.
+          </p>
         </div>
 
         <p
@@ -108,9 +135,9 @@
       <div class="flex justify-end gap-2">
         <Button
           variant="solid"
-          :label="`Replace in ${picked.length} procedure${picked.length === 1 ? '' : 's'}`"
+          :label="actionLabel"
           :loading="apply.loading"
-          :disabled="!picked.length || !replace"
+          :disabled="!picked.length"
           @click="run"
         />
       </div>
@@ -120,7 +147,16 @@
 
 <script setup>
 import { computed, ref, watch } from 'vue'
-import { Badge, Button, Dialog, ErrorMessage, FormControl, createResource, toast } from 'frappe-ui'
+import {
+  Badge,
+  Button,
+  Dialog,
+  ErrorMessage,
+  FormControl,
+  createResource,
+  debounce,
+  toast,
+} from 'frappe-ui'
 import { activeSpace } from '@/data/navigation'
 import { reloadProcedures } from '@/data/procedures'
 import { STATUS_THEME } from '@/utils/format'
@@ -151,7 +187,8 @@ const apply = createResource({
     toast.success(count ? `Updated ${count} procedure${count === 1 ? '' : 's'}` : 'Nothing changed')
 
     if (data.skipped.length) {
-      toast.warning(`${data.skipped.length} left alone — in force`)
+      const reasons = [...new Set(data.skipped.map((row) => row.status.toLowerCase()))].join(', ')
+      toast.warning(`${data.skipped.length} left alone — ${reasons}`)
     }
 
     open.value = false
@@ -160,12 +197,60 @@ const apply = createResource({
 })
 
 const rows = computed(() => preview.data || [])
+
+const matcher = computed(() => {
+  if (!find.value) return null
+
+  const escaped = find.value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const body = wholeWord.value ? `\\b${escaped}\\b` : escaped
+
+  return new RegExp(`(${body})`, matchCase.value ? 'g' : 'gi')
+})
+
+function parts(text, replaced = false) {
+  if (!matcher.value) return [{ text, hit: false }]
+
+  return text
+    .split(matcher.value)
+    .filter((piece) => piece !== '')
+    .map((piece, index) => {
+      const hit = matcher.value.test(piece)
+      matcher.value.lastIndex = 0
+
+      return { text: hit && replaced ? replace.value : piece, hit }
+    })
+    .filter((piece) => piece.text !== '')
+}
+
+const actionLabel = computed(() => {
+  const total = chosen.value.reduce((sum, row) => sum + row.hits, 0)
+  if (!picked.value.length) return 'Replace'
+
+  const what = replace.value ? 'Replace' : 'Remove'
+  return `${what} ${total} match${total === 1 ? '' : 'es'} in ${picked.value.length} procedure${
+    picked.value.length === 1 ? '' : 's'
+  }`
+})
 const hits = computed(() => rows.value.reduce((total, row) => total + row.hits, 0))
-const locked = computed(() => rows.value.filter((row) => !row.editable && picked.value.includes(row.name)))
+const chosen = computed(() => rows.value.filter((row) => picked.value.includes(row.name)))
+
+const revisable = computed(() => chosen.value.filter((row) => row.status === 'Effective'))
+
+const blocked = computed(() =>
+  chosen.value.filter((row) => !row.editable && row.status !== 'Effective'),
+)
+
+const blockedReason = computed(() =>
+  [...new Set(blocked.value.map((row) => row.status.toLowerCase()))].join(' or '),
+)
 const allPicked = computed(() => rows.value.length && picked.value.length === rows.value.length)
 
-function look() {
-  if (!find.value) return
+const look = debounce(() => {
+  if (!find.value) {
+    preview.reset?.()
+    searched.value = false
+    return
+  }
 
   preview.submit({
     find: find.value,
@@ -173,7 +258,9 @@ function look() {
     match_case: matchCase.value ? 1 : 0,
     whole_word: wholeWord.value ? 1 : 0,
   })
-}
+}, 300)
+
+watch([find, matchCase, wholeWord, thisSpace], look)
 
 function toggle(name) {
   picked.value = picked.value.includes(name)

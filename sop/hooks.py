@@ -16,6 +16,8 @@ website_redirects = [{"source": "/procedures", "target": "/sop"}]
 after_install = "sop.install.after_install"
 after_migrate = "sop.install.after_migrate"
 
+sqlite_search = ["sop.sop.doctype.sop.sop_sqlite_search.SOPSQLiteSearch"]
+
 scheduler_events = {
 	"daily": [
 		"sop.training.mark_overdue",

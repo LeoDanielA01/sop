@@ -1,6 +1,6 @@
 <template>
   <nav class="space-y-0.5">
-    <SidebarItem :active="isAll" @click="openView('all')">
+    <SidebarItem :active="isAll" @click="showEverything">
       <template #prefix>
         <span class="lucide-library size-4" aria-hidden="true" />
       </template>
@@ -175,8 +175,18 @@ const ui = useUI()
 const { activeView } = useSection()
 
 const isAll = computed(
-  () => route.name === 'Procedures' && activeView.value === 'all' && !activeProcess.value,
+  () =>
+    route.name === 'Procedures' &&
+    activeView.value === 'all' &&
+    !activeProcess.value &&
+    !activeSpace.value,
 )
+
+function showEverything() {
+  setProcess(null)
+  setSpace(null)
+  router.push({ path: '/' })
+}
 
 function openView(value) {
   setProcess(null)

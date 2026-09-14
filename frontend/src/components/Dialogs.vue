@@ -4,6 +4,7 @@
   <ProcessDialog />
   <TemplateDialog />
   <FindReplaceDialog v-model:open="ui.replaceDialog" />
+  <ProfileDialog v-model:open="ui.profileDialog" />
   <Settings v-model:open="ui.settingsDialog" />
 </template>
 
@@ -11,6 +12,7 @@
 import CommandPalette from '@/components/CommandPalette.vue'
 import FindReplaceDialog from '@/components/FindReplaceDialog.vue'
 import ProcessDialog from '@/components/ProcessDialog.vue'
+import ProfileDialog from '@/components/ProfileDialog.vue'
 import Settings from '@/components/Settings.vue'
 import TemplateDialog from '@/components/TemplateDialog.vue'
 import SpaceDialog from '@/components/SpaceDialog.vue'

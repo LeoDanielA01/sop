@@ -1,6 +1,6 @@
 <template>
   <div
-    class="flex flex-col gap-3 border-t border-outline-gray-1 px-2 py-2.5 sm:flex-row sm:items-center sm:justify-between"
+    class="sticky bottom-0 z-10 flex flex-col gap-3 border-t border-outline-gray-1 bg-surface-base px-2 py-2.5 sm:flex-row sm:items-center sm:justify-between"
   >
     <div class="flex items-center gap-3">
       <span class="whitespace-nowrap text-sm text-ink-gray-5">

@@ -67,10 +67,9 @@
 </template>
 
 <script setup>
-import { computed, markRaw } from 'vue'
+import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { Avatar, Dropdown, SidebarRail, SidebarRailItem, useColorScheme } from 'frappe-ui'
-import UserCard from './UserCard.vue'
 import { useSection } from '@/composables/useSection'
 import { SECTIONS, attention } from '@/data/navigation'
 import { session } from '@/data/session'
@@ -95,7 +94,11 @@ function railLabel(item) {
 }
 
 const userMenu = computed(() => [
-  { component: markRaw(UserCard) },
+  {
+    icon: 'lucide-circle-user',
+    label: 'My profile',
+    onClick: () => (ui.profileDialog = true),
+  },
   {
     icon: 'lucide-settings',
     label: 'Settings',

@@ -49,60 +49,51 @@
     <div
       v-if="doc.status && !isEffective"
       role="status"
-      class="mb-5 flex items-start gap-3 rounded-lg border px-4 py-3.5 text-base"
+      class="mb-5 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border px-3 py-2"
       :class="
         doc.status === 'Retired'
-          ? 'border-outline-red-2 bg-surface-red-1 text-ink-red-6'
-          : 'border-outline-amber-1 bg-surface-amber-1 text-ink-amber-6'
+          ? 'border-outline-red-2 bg-surface-red-1'
+          : 'border-outline-amber-1 bg-surface-amber-1'
       "
     >
       <span
-        class="lucide-triangle-alert mt-0.5 size-4 shrink-0"
+        class="lucide-triangle-alert size-4 shrink-0"
+        :class="doc.status === 'Retired' ? 'text-ink-red-6' : 'text-ink-amber-6'"
         aria-hidden="true"
       />
-      <div class="min-w-0">
-        <p class="font-medium">Not the version in force</p>
-        <p class="mt-0.5 text-ink-gray-7">
-          You are reading the <b>{{ doc.status?.toLowerCase() }}</b> version.
-          <template v-if="doc.effective_revision">
-            Rev {{ doc.effective_revision }} is what applies on the floor.
-          </template>
-        </p>
-        <Button
-          v-if="doc.effective_revision"
-          class="mt-2"
-          variant="subtle"
-          size="sm"
-          icon-left="lucide-badge-check"
-          :label="`Read Rev ${doc.effective_revision}`"
-          @click="revision = doc.effective_revision"
-        />
-      </div>
-    </div>
 
-    <div
-      v-if="doc.approvals?.length && !isEffective"
-      class="mb-5 rounded-lg border border-outline-gray-2 bg-surface-gray-1"
-    >
-      <div class="flex items-center justify-between px-4 pb-2 pt-3">
-        <span class="text-sm text-ink-gray-5">Sign-off</span>
-        <span class="text-sm text-ink-gray-5">{{ signedOff }} of {{ doc.approvals.length }}</span>
-      </div>
+      <span class="text-sm" :class="doc.status === 'Retired' ? 'text-ink-red-6' : 'text-ink-amber-6'">
+        {{ doc.status }} — not in force
+      </span>
 
-      <div
-        v-for="row in doc.approvals"
-        :key="row.approver"
-        class="flex items-center gap-2.5 border-t border-outline-gray-1 px-4 py-2.5"
-      >
-        <Avatar :image="row.approver_image" :label="row.approver_name" size="sm" />
-        <span class="min-w-0 flex-1 truncate text-base text-ink-gray-8">
-          {{ row.approver_name }}
-          <span class="text-ink-gray-5">· {{ row.approval_role }}</span>
+      <Button
+        v-if="doc.effective_revision"
+        variant="ghost"
+        size="sm"
+        :label="`Read Rev ${doc.effective_revision}`"
+        @click="revision = doc.effective_revision"
+      />
+
+      <div v-if="doc.approvals?.length" class="ml-auto flex items-center gap-2">
+        <span class="text-sm text-ink-gray-6">
+          Signed off {{ signedOff }} of {{ doc.approvals.length }}
         </span>
-        <span v-if="row.comment" class="truncate text-sm text-ink-gray-5">{{ row.comment }}</span>
-        <Badge :theme="DECISION_THEME[row.decision]" variant="subtle" size="sm">
-          {{ row.decision }}
-        </Badge>
+
+        <div class="flex -space-x-1.5">
+          <Tooltip
+            v-for="row in doc.approvals"
+            :key="row.approver"
+            :text="`${row.approver_name} · ${row.approval_role} · ${row.decision}${row.comment ? ' — ' + row.comment : ''}`"
+          >
+            <Avatar
+              :image="row.approver_image"
+              :label="row.approver_name"
+              size="sm"
+              class="ring-2"
+              :class="RING[row.decision] || 'ring-outline-gray-3'"
+            />
+          </Tooltip>
+        </div>
       </div>
     </div>
 
@@ -241,6 +232,14 @@
       :root="body"
     />
 
+    <ReviewComments
+      v-if="doc.name"
+      :sop="doc.name"
+      :version="doc.version"
+      :body="body"
+      @count="(value) => (openComments = value)"
+    />
+
     <section v-if="doc.steps?.length" class="mt-10">
       <h2 class="text-lg-semibold text-ink-gray-8">Steps</h2>
       <ol class="mt-3 space-y-3">
@@ -272,7 +271,11 @@
     <div :class="readingWidth" class="mx-auto flex items-center justify-between gap-4">
       <p class="text-sm text-ink-gray-6">Your approval is what this one is waiting on.</p>
       <div class="flex items-center gap-2">
-        <Button variant="subtle" label="Request changes" @click="changes.open = true" />
+        <Button
+          variant="subtle"
+          :label="openComments ? `Request changes (${openComments})` : 'Request changes'"
+          @click="changes.open = true"
+        />
         <Button
           variant="solid"
           label="Approve"
@@ -352,6 +355,10 @@
     <template #default>
       <div class="flex flex-col gap-3">
         <ErrorMessage :message="decide.error?.messages?.[0]" />
+        <p v-if="openComments" class="text-sm text-ink-gray-6">
+          {{ openComments }} comment{{ openComments === 1 ? '' : 's' }} on the text
+          {{ openComments === 1 ? 'is' : 'are' }} already on this revision. This note goes with them.
+        </p>
         <FormControl type="textarea" label="What has to change" v-model="changes.comment" />
       </div>
     </template>
@@ -388,6 +395,7 @@ import {
 } from 'frappe-ui'
 import AppBreadcrumbs from '@/components/Layouts/AppBreadcrumbs.vue'
 import ApproversDialog from '@/components/ApproversDialog.vue'
+import ReviewComments from '@/components/ReviewComments.vue'
 import MentionChip from '@/components/MentionChip.vue'
 import { acknowledge, procedure } from '@/data/procedures'
 import { fullWidth, readingWidth, toggleWidth } from '@/data/preferences'
@@ -399,7 +407,13 @@ const router = useRouter()
 
 const RISK_THEME = { High: 'red', Medium: 'orange', Low: 'green' }
 
-const DECISION_THEME = { Approved: 'green', Rejected: 'red', Pending: 'gray' }
+const openComments = ref(0)
+const RING = {
+  Approved: 'ring-outline-green-3',
+  Rejected: 'ring-outline-red-3',
+  Pending: 'ring-outline-gray-3',
+}
+
 
 const revision = ref(null)
 const body = ref(null)

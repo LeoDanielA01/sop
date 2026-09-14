@@ -32,6 +32,51 @@ def query(text, space=None, limit=LIMIT):
 
 
 def find_procedures(text, space=None, limit=LIMIT):
+	rows = full_text(text, space, limit)
+	if rows is not None:
+		return rows
+
+	return by_like(text, space, limit)
+
+
+def full_text(text, space=None, limit=LIMIT):
+	from sop.sop.doctype.sop.sop_sqlite_search import SOPSQLiteSearch, readable
+
+	search = SOPSQLiteSearch()
+	if not (search.is_search_enabled() and search.index_exists()):
+		return None
+
+	try:
+		hits = search.search(text, filters={"space": space} if space else None)
+	except Exception:
+		frappe.log_error(title="SOP search index unavailable")
+		return None
+
+	rows = readable(hits.get("results", []))[:limit]
+
+	return [
+		procedure_item(
+			frappe._dict(
+				name=row.get("name"),
+				sop_no=row.get("sop_no"),
+				title=row.get("title"),
+				summary=snippet(row.get("content")),
+				status=row.get("status"),
+				version=row.get("version"),
+				space=row.get("space"),
+			)
+		)
+		for row in rows
+	]
+
+
+def snippet(content, length=120):
+	text = (content or "").strip()
+
+	return text[:length] + ("…" if len(text) > length else "")
+
+
+def by_like(text, space=None, limit=LIMIT):
 	like = f"%{text}%"
 	filters = {"space": space} if space else {}
 

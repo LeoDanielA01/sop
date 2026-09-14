@@ -85,7 +85,7 @@
     </List>
 
     <Pagination
-      v-if="total > pageLength"
+      v-if="paged"
       v-model:page="page"
       v-model:page-length="pageLength"
       :total="total"
@@ -138,6 +138,7 @@ import AppBreadcrumbs from '@/components/Layouts/AppBreadcrumbs.vue'
 import Pagination from '@/components/Pagination.vue'
 import { procedures, page, pageLength, reloadProcedures, view } from '@/data/procedures'
 import { activeSpace, setSpace, spaces } from '@/data/navigation'
+import { preferences } from '@/data/preferences'
 import { activeProcess, setProcess } from '@/data/processes'
 import { useUI } from '@/stores/ui'
 import { STATUS_THEME, reviewTone, shortDate } from '@/utils/format'
@@ -159,8 +160,13 @@ watch(
 
 watch(
   () => route.query.space,
-  (value) => {
-    if (value && value !== activeSpace.value) setSpace(value)
+  (value, previous) => {
+    if (value) {
+      if (value !== activeSpace.value) setSpace(value)
+      return
+    }
+
+    if (previous !== undefined) setSpace(null)
   },
   { immediate: true },
 )
@@ -179,6 +185,8 @@ const rows = computed(() => {
 })
 
 const total = computed(() => procedures.data?.total || 0)
+
+const paged = computed(() => total.value > Math.min(pageLength.value, preferences.rows_per_page))
 
 onMounted(() => reloadProcedures())
 

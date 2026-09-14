@@ -9,11 +9,13 @@ export const SECTIONS = [
 
 export const activeSpace = ref(null)
 
+let chosen = false
+
 export const spacesResource = createRetryingResource({
   url: 'sop.api.procedures.spaces',
   auto: true,
   onSuccess(data) {
-    if (!activeSpace.value && data.length) activeSpace.value = data[0].name
+    if (!chosen && !activeSpace.value && data.length) activeSpace.value = data[0].name
   },
 })
 
@@ -57,7 +59,8 @@ export const createSpace = createResource({
 })
 
 export function setSpace(name) {
-  activeSpace.value = name
+  chosen = true
+  activeSpace.value = name || null
 }
 
 watch(activeSpace, () => viewsResource.reload())

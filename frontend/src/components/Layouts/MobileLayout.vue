@@ -98,10 +98,9 @@
 </template>
 
 <script setup>
-import { computed, markRaw, ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Avatar, Button, Dialog, Dropdown, useColorScheme } from 'frappe-ui'
-import UserCard from './UserCard.vue'
 import { useSection } from '@/composables/useSection'
 import { activeSpace, setSpace, spaces, views } from '@/data/navigation'
 import { activeProcess, flatten, processes, setProcess } from '@/data/processes'
@@ -120,7 +119,11 @@ const onList = computed(() => route.name === 'Procedures')
 const tree = computed(() => flatten(processes.value))
 
 const userMenu = computed(() => [
-  { component: markRaw(UserCard) },
+  {
+    icon: 'lucide-circle-user',
+    label: 'My profile',
+    onClick: () => (ui.profileDialog = true),
+  },
   { label: 'Settings', icon: 'lucide-settings', onClick: () => ui.openSettings('preferences') },
   {
     icon: colorScheme.value === 'dark' ? 'lucide-sun' : 'lucide-moon',
