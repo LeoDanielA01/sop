@@ -29,12 +29,6 @@
           </template>
           {{ __('Spaces') }}
         </SettingsNavItem>
-        <SettingsNavItem value="mentions">
-          <template #prefix>
-            <span class="lucide-at-sign size-4 shrink-0 text-ink-gray-6" />
-          </template>
-          {{ __('Mention chips') }}
-        </SettingsNavItem>
       </SettingsNavGroup>
     </SettingsSidebar>
 
@@ -233,58 +227,12 @@
           </p>
         </SettingsBody>
       </SettingsPanel>
-
-      <SettingsPanel value="mentions">
-        <SettingsHeader
-          :title="__('Mention chips')"
-          :description="__('What a mentioned record shows to whoever reads the procedure')"
-        >
-          <template #actions>
-            <Button icon-left="lucide-plus" :label="__('Add doctype')" @click="addMentionConfig" />
-          </template>
-        </SettingsHeader>
-        <SettingsBody>
-          <List
-            v-if="configs.length"
-            class="-mx-3 pt-4"
-            :columns="['minmax(0,1fr)', '10rem', '6rem']"
-            :row-height="52"
-          >
-            <ListHeader>
-              <ListHeaderCell>{{ __('Doctype') }}</ListHeaderCell>
-              <ListHeaderCell>{{ __('Status field') }}</ListHeaderCell>
-              <ListHeaderCell>{{ __('State') }}</ListHeaderCell>
-            </ListHeader>
-            <ListRows :items="configs" v-slot="{ item: config }">
-              <ListRow @click="editMentionConfig(config)">
-                <ListCell>
-                  <span class="truncate text-base text-ink-gray-8">{{ config.document_type }}</span>
-                </ListCell>
-                <ListCell>
-                  <span class="truncate text-base text-ink-gray-6">
-                    {{ config.status_field || 'None' }}
-                  </span>
-                </ListCell>
-                <ListCell>
-                  <Badge :theme="config.enabled ? 'green' : 'gray'" variant="subtle" size="sm">
-                    {{ config.enabled ? 'On' : 'Off' }}
-                  </Badge>
-                </ListCell>
-              </ListRow>
-            </ListRows>
-          </List>
-
-          <p v-else class="px-3 py-10 text-center text-base text-ink-gray-5">
-            {{ __('Nothing configured. Until a doctype is set up here, a mention reads as plain text.') }}
-          </p>
-        </SettingsBody>
-      </SettingsPanel>
     </SettingsContent>
   </SettingsDialog>
 </template>
 
 <script setup>
-import { computed, watch } from 'vue'
+import { computed } from 'vue'
 import {
   Avatar,
   Badge,
@@ -302,7 +250,6 @@ import {
   SettingsSidebar,
   Switch,
   TabButtons,
-  createResource,
   useColorScheme,
 } from 'frappe-ui'
 
@@ -335,31 +282,9 @@ const groups = computed(() => {
 
 const { colorScheme, setColorScheme } = useColorScheme()
 
-const mentionConfigs = createResource({
-  url: 'frappe.client.get_list',
-  makeParams: () => ({
-    doctype: 'SOP Mention Config',
-    fields: ['name', 'document_type', 'status_field', 'enabled'],
-    limit_page_length: 50,
-  }),
-})
-
-const configs = computed(() => mentionConfigs.data || [])
-
 function newSpace() {
   open.value = false
   ui.spaceDialog = true
 }
 
-function addMentionConfig() {
-  window.open('/app/sop-mention-config/new', '_blank')
-}
-
-function editMentionConfig(config) {
-  window.open(`/app/sop-mention-config/${encodeURIComponent(config.name)}`, '_blank')
-}
-
-watch(open, (value) => {
-  if (value) mentionConfigs.reload()
-})
 </script>

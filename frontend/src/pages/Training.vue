@@ -55,8 +55,14 @@
 
     <ListSkeleton v-if="assignments.loading && !rows.length" :avatar="false" />
 
+    <ErrorMessage
+      v-if="assignments.error"
+      class="mt-6"
+      :message="assignments.error?.messages?.[0] || __('Your training could not be loaded.')"
+    />
+
     <p
-      v-if="!assignments.loading && !rows.length"
+      v-else-if="!assignments.loading && !rows.length"
       class="mt-16 text-center text-base text-ink-gray-5"
     >
       {{ __('Nothing outstanding. Training lands here when a procedure you follow is published or expires.') }}

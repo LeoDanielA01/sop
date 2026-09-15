@@ -30,9 +30,12 @@ def my_training(status=None, limit=50):
 			"outcome",
 			"is_refresher",
 		],
-		order_by="field(status, 'Overdue', 'In Progress', 'Assigned'), due_on asc",
+		order_by="due_on asc",
 		limit_page_length=limit,
 	)
+
+	urgency = {state: index for index, state in enumerate(("Overdue", "In Progress", "Assigned"))}
+	rows.sort(key=lambda row: urgency.get(row.status, len(urgency)))
 
 	titles = procedure_titles([row.sop for row in rows])
 	for row in rows:
@@ -126,11 +129,9 @@ def matrix(space=None):
 @frappe.whitelist()
 def training_counts():
 	user = frappe.session.user
-	open_states = ("Assigned", "In Progress", "Overdue")
-
 	return {
 		"open": frappe.db.count(
-			"SOP Training Assignment", {"trainee": user, "status": ("in", open_states)}
+			"SOP Training Assignment", {"trainee": user, "status": ("in", training.OPEN_STATES)}
 		),
 		"overdue": frappe.db.count("SOP Training Assignment", {"trainee": user, "status": "Overdue"}),
 		"to_assess": frappe.db.count(

@@ -28,6 +28,11 @@ after_migrate = "sop.install.after_migrate"
 
 sqlite_search = ["sop.sop.doctype.sop.sop_sqlite_search.SOPSQLiteSearch"]
 
+sop_mention_facts = {
+	"Item": ["sop.mention_facts.item"],
+	"Warehouse": ["sop.mention_facts.warehouse"],
+}
+
 scheduler_events = {
 	"daily": [
 		"sop.training.mark_overdue",
