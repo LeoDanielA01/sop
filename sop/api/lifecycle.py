@@ -11,12 +11,13 @@ from frappe.utils import cint, getdate, now_datetime, nowdate
 
 from sop import training
 from sop.api.removal import removal_actions
+from sop.api.review import open_count
 
 DRAFT_STATES = ("Draft", "Under Revision")
 
 
 @frappe.whitelist()
-def send_for_approval(sop, approvers):
+def send_for_approval(sop):
 	doc = frappe.get_doc("SOP", sop)
 	doc.check_permission("write")
 
@@ -25,37 +26,101 @@ def send_for_approval(sop, approvers):
 			_("{0} is {1}. Only a draft can be sent for approval.").format(doc.sop_no, doc.status)
 		)
 
-	rows = frappe.parse_json(approvers) or []
+	rows = approval_route(doc)
 	if not rows:
-		frappe.throw(_("Pick who has to approve this."))
+		space = frappe.db.get_value("SOP Space", doc.space, "title") or doc.space
+		frappe.throw(
+			_(
+				"Nobody can review {0} yet. Add a Reviewer or Approver to the team of {1}, or give someone the SOP Approver role."
+			).format(doc.sop_no, frappe.bold(space))
+		)
 
 	if doc.approvals:
 		doc.add_comment("Comment", previous_cycle(doc))
 
 	doc.approvals = []
 	for row in rows:
-		approver = row.get("approver") if isinstance(row, dict) else row
-		if not approver:
-			continue
-
-		doc.append(
-			"approvals",
-			{
-				"approver": approver,
-				"approval_role": (row.get("approval_role") if isinstance(row, dict) else None)
-				or "Approver",
-				"decision": "Pending",
-			},
-		)
-
-	if not doc.approvals:
-		frappe.throw(_("Pick who has to approve this."))
+		doc.append("approvals", {**row, "decision": "Pending"})
 
 	doc.status = "In Review"
 	doc.save()
 	tell_approvers(doc)
 
-	return {"status": doc.status}
+	return {"status": doc.status, "approvers": [row["approver"] for row in rows]}
+
+
+@frappe.whitelist()
+def route(sop):
+	from sop.api.procedures import user_names
+
+	doc = frappe.get_doc("SOP", sop)
+	doc.check_permission("read")
+
+	rows = approval_route(doc)
+	names = user_names({row["approver"] for row in rows})
+
+	return [
+		{
+			**row,
+			"approver_name": names.get(row["approver"], {}).get("full_name") or row["approver"],
+			"approver_image": names.get(row["approver"], {}).get("user_image"),
+		}
+		for row in rows
+	]
+
+
+def approval_route(doc):
+	excluded = {doc.owner, frappe.session.user}
+	rows = []
+
+	team = frappe.db.get_value("SOP Space", doc.space, "team")
+	if team:
+		for member in frappe.get_all(
+			"SOP Team Member",
+			filters={
+				"parent": team,
+				"parenttype": "SOP Team",
+				"team_role": ("in", ["Reviewer", "Approver"]),
+			},
+			fields=["user", "team_role"],
+			order_by="idx asc",
+			limit_page_length=0,
+		):
+			rows.append({"approver": member.user, "approval_role": member.team_role})
+
+	if not rows:
+		rows = [{"approver": user, "approval_role": "Approver"} for user in holders_of("SOP Approver")]
+
+	active = set(
+		frappe.get_all(
+			"User",
+			filters={"name": ("in", [row["approver"] for row in rows] or [""]), "enabled": 1},
+			pluck="name",
+			limit_page_length=0,
+		)
+	)
+
+	chosen = []
+	seen = set()
+	for row in rows:
+		user = row["approver"]
+		if user in excluded or user not in active or user in seen:
+			continue
+
+		seen.add(user)
+		chosen.append(row)
+
+	return chosen
+
+
+def holders_of(role):
+	return frappe.get_all(
+		"Has Role",
+		filters={"role": role, "parenttype": "User"},
+		pluck="parent",
+		order_by="parent asc",
+		limit_page_length=0,
+	)
 
 
 @frappe.whitelist()
@@ -79,6 +144,9 @@ def decide(sop, decision, comment=None):
 
 	if decision == "Rejected" and not comment:
 		frappe.throw(_("Say what has to change before this can be approved."))
+
+	if decision == "Approved" and open_count(doc.name, doc.version):
+		frappe.throw(_("Resolve the open review comments before approving."))
 
 	for row in mine:
 		row.decision = decision

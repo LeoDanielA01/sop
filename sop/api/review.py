@@ -81,6 +81,21 @@ def comments(sop, version=None, status=None):
 	return threads
 
 
+def review_rights(doc):
+	user = frappe.session.user
+	manager = "SOP Manager" in frappe.get_roles()
+	reviewer = any(row.approver == user for row in doc.approvals)
+	author = user in (doc.owner, doc.process_owner)
+	in_review = doc.status == "In Review"
+	changing = doc.status in ("Draft", "Under Revision") and bool(doc.approvals)
+
+	return {
+		"visible": in_review or changing,
+		"comment": in_review and (reviewer or manager),
+		"respond": (in_review or changing) and (reviewer or manager or author),
+	}
+
+
 @frappe.whitelist()
 def add_comment(sop, comment, quote=None, version=None, parent=None, before=None, after=None):
 	doc = frappe.get_doc("SOP", sop)
@@ -89,6 +104,19 @@ def add_comment(sop, comment, quote=None, version=None, parent=None, before=None
 	comment = (comment or "").strip()
 	if not comment:
 		frappe.throw(_("Write what has to change."))
+
+	rights = review_rights(doc)
+
+	if parent and not rights["respond"]:
+		frappe.throw(
+			_("Replies on {0} are open only during its review.").format(doc.sop_no), frappe.PermissionError
+		)
+
+	if not parent and not rights["comment"]:
+		frappe.throw(
+			_("Only the reviewers of {0} can comment, and only while it is in review.").format(doc.sop_no),
+			frappe.PermissionError,
+		)
 
 	row = frappe.get_doc(
 		{
@@ -110,7 +138,14 @@ def add_comment(sop, comment, quote=None, version=None, parent=None, before=None
 @frappe.whitelist()
 def resolve_comment(name, status="Resolved"):
 	row = frappe.get_doc("SOP Review Comment", name)
-	frappe.get_doc("SOP", row.sop).check_permission("read")
+	doc = frappe.get_doc("SOP", row.sop)
+	doc.check_permission("read")
+
+	if not review_rights(doc)["respond"]:
+		frappe.throw(
+			_("Comments on {0} can only be resolved during its review.").format(doc.sop_no),
+			frappe.PermissionError,
+		)
 
 	row.status = "Resolved" if status == "Resolved" else "Open"
 	row.save(ignore_permissions=True)
@@ -129,6 +164,9 @@ def delete_comment(name):
 
 	if row.owner != frappe.session.user and not frappe.has_permission("SOP", "write", doc=row.sop):
 		frappe.throw(_("You can only delete your own comments."), frappe.PermissionError)
+
+	if not review_rights(frappe.get_doc("SOP", row.sop))["respond"]:
+		frappe.throw(_("Comments can only be deleted during the review."), frappe.PermissionError)
 
 	frappe.delete_doc("SOP Review Comment", name, ignore_permissions=True)
 

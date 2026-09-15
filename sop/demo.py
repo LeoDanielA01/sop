@@ -234,22 +234,35 @@ def ensure_people():
 
 
 def ensure_team(people):
-	if frappe.db.exists("SOP Team", TEAM):
-		return TEAM
+	wanted = [
+		(people[0], "Approver"),
+		(frappe.session.user, "Approver"),
+		(people[2], "Reviewer"),
+		(people[1], "Author"),
+		(people[3], "Reader"),
+	]
 
-	doc = frappe.get_doc(
-		{
-			"doctype": "SOP Team",
-			"team_name": TEAM,
-			"description": "Everyone who works a line, plus the supervisors who sign for them.",
-			"members": [
-				{"user": people[1], "team_role": "Author"},
-				{"user": people[2], "team_role": "Approver"},
-				{"user": people[3], "team_role": "Reader"},
-			],
-		}
-	)
-	doc.insert(ignore_permissions=True)
+	if frappe.db.exists("SOP Team", TEAM):
+		doc = frappe.get_doc("SOP Team", TEAM)
+	else:
+		doc = frappe.get_doc(
+			{
+				"doctype": "SOP Team",
+				"team_name": TEAM,
+				"description": "Everyone who works a line, plus the supervisors who sign for them.",
+			}
+		)
+
+	present = {row.user for row in doc.members}
+	for user, role in wanted:
+		if user not in present:
+			doc.append("members", {"user": user, "team_role": role})
+			present.add(user)
+
+	if doc.is_new():
+		doc.insert(ignore_permissions=True)
+	else:
+		doc.save(ignore_permissions=True)
 
 	return doc.name
 
@@ -266,6 +279,7 @@ def ensure_space(manager, title, code, description, template=None):
 		space_code=code,
 		description=description,
 		template=template,
+		team=TEAM,
 	)
 
 	return space["name"]
@@ -334,24 +348,25 @@ def advance(sop, state, people, since=-40):
 	if state == "draft":
 		return
 
-	approvers = [
-		{"approver": people[0], "approval_role": "Quality"},
-		{"approver": frappe.session.user, "approval_role": "Approver"},
-	]
-
-	as_user(people[1], lifecycle.send_for_approval, sop, approvers)
+	as_user(people[1], lifecycle.send_for_approval, sop)
 
 	if state == "in_review":
 		as_user(
-			people[0],
+			people[2],
 			review_api.add_comment,
 			sop,
 			"Name the form this produces — an operator should not have to guess.",
 		)
 		return
 
-	as_user(people[0], lifecycle.decide, sop, "Approved", "Reads correctly.")
-	as_user(frappe.session.user, lifecycle.decide, sop, "Approved")
+	for approver in frappe.get_all(
+		"SOP Approval",
+		filters={"parent": sop, "parenttype": "SOP"},
+		pluck="approver",
+		order_by="idx asc",
+		limit_page_length=0,
+	):
+		as_user(approver, lifecycle.decide, sop, "Approved", "Reads correctly.")
 
 	if state == "approved":
 		return

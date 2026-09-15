@@ -9,6 +9,7 @@ from frappe.utils import add_days, nowdate
 
 from sop.api.lifecycle import actions_for, approvals_of
 from sop.api.mentions import resolve
+from sop.api.review import review_rights
 
 
 @frappe.whitelist()
@@ -273,6 +274,7 @@ def get_procedure(name, revision=None):
 		"can_edit": doc.is_editable() and doc.has_permission("write"),
 		"approvals": approvals_of(doc),
 		"actions": actions_for(doc),
+		"review": review_rights(doc),
 	}
 
 
@@ -400,6 +402,7 @@ def create_space(
 	template=None,
 	with_drafts=0,
 	description=None,
+	team=None,
 ):
 	if not frappe.has_permission("SOP Space", "create"):
 		frappe.throw(_("You are not allowed to create a space."), frappe.PermissionError)
@@ -419,6 +422,7 @@ def create_space(
 			"visibility": visibility or "Public",
 			"review_interval_months": frappe.utils.cint(review_interval_months) or 12,
 			"description": description,
+			"team": team,
 		}
 	).insert()
 

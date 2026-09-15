@@ -71,7 +71,10 @@
           </Badge>
 
           <div class="ml-auto flex items-center">
-            <Tooltip :text="thread.status === 'Resolved' ? 'Reopen' : 'Mark resolved'">
+            <Tooltip
+              v-if="rights.respond"
+              :text="thread.status === 'Resolved' ? 'Reopen' : 'Mark resolved'"
+            >
               <Button
                 variant="ghost"
                 size="sm"
@@ -81,7 +84,7 @@
                 @click="flip(thread)"
               />
             </Tooltip>
-            <Tooltip v-if="thread.is_mine" :text="__('Delete')">
+            <Tooltip v-if="thread.is_mine && rights.respond" :text="__('Delete')">
               <Button
                 variant="ghost"
                 size="sm"
@@ -104,7 +107,7 @@
                 <span class="min-w-0 truncate text-base text-ink-gray-8">{{ row.author }}</span>
                 <span class="shrink-0 text-sm text-ink-gray-5">{{ row.when }}</span>
   
-                <Tooltip v-if="row.is_mine && row.name !== thread.name" :text="__('Delete')">
+                <Tooltip v-if="row.is_mine && row.name !== thread.name && rights.respond" :text="__('Delete')">
                   <Button
                     class="ml-auto"
                     variant="ghost"
@@ -121,7 +124,10 @@
           </div>
         </ScrollArea>
 
-        <div v-if="thread.status !== 'Resolved'" class="border-t border-outline-gray-1 px-3 py-2">
+        <div
+          v-if="thread.status !== 'Resolved' && rights.respond"
+          class="border-t border-outline-gray-1 px-3 py-2"
+        >
           <FormControl
             type="text"
             :placeholder="`Reply to ${thread.author.split(' ')[0]}`"
@@ -184,6 +190,7 @@ const props = defineProps({
   sop: { type: String, default: '' },
   version: { type: Number, default: null },
   body: { type: [Object, null], default: null },
+  rights: { type: Object, default: () => ({}) },
 })
 
 const emit = defineEmits(['count'])
@@ -465,6 +472,11 @@ function close() {
 }
 
 function onSelection() {
+  if (!props.rights.comment) {
+    spot.value = null
+    return
+  }
+
   const selection = window.getSelection()
   const text = selection?.toString().trim()
 

@@ -118,7 +118,11 @@
             <span :class="row.icon" class="size-4 shrink-0 text-ink-gray-5" aria-hidden="true" />
             <span class="min-w-0 flex-1 truncate text-base text-ink-gray-7">{{ row.label }}</span>
             <Badge v-if="row.count" variant="subtle" size="sm">{{ row.count }}</Badge>
-            <span class="lucide-plus size-4 shrink-0 text-ink-gray-5" aria-hidden="true" />
+            <span
+              :class="row.trailing || 'lucide-plus'"
+              class="size-4 shrink-0 text-ink-gray-5"
+              aria-hidden="true"
+            />
           </button>
         </div>
 
@@ -215,11 +219,12 @@
     </nav>
 
     <ReviewComments
-      v-if="doc.name"
+      v-if="doc.name && doc.review?.visible"
       ref="comments"
       :sop="doc.name"
       :version="doc.version"
       :body="body"
+      :rights="doc.review || {}"
       @count="(value) => (openComments = value)"
     />
     </ScrollArea>
@@ -230,7 +235,13 @@
     class="sticky bottom-0 shrink-0 border-t border-outline-gray-1 bg-surface-base px-4 py-3 sm:px-6"
   >
     <div class="flex w-full items-center justify-between gap-4">
-      <p class="text-sm text-ink-gray-6">{{ __('Your approval is what this one is waiting on.') }}</p>
+      <p class="text-sm text-ink-gray-6">
+        {{
+          openComments
+            ? __('Resolve the {0} open comments before approving.').format(openComments)
+            : __('Your approval is what this one is waiting on.')
+        }}
+      </p>
       <div class="flex items-center gap-2">
         <Button
           variant="subtle"
@@ -241,6 +252,8 @@
           variant="solid"
           :label="__('Approve')"
           :loading="decide.loading"
+          :disabled="openComments > 0"
+          :tooltip="openComments ? __('Every comment has to be resolved first') : undefined"
           @click="decide.submit({ sop: doc.name, decision: 'Approved' })"
         />
       </div>
@@ -272,12 +285,14 @@
     next revision will ask again.
   </div>
 
-  <ApproversDialog
-    v-model:open="showApprovers"
+  <ReviewRouteDialog
+    v-model:open="showRoute"
+    :mode="routeMode"
+    :sop="doc.name"
     :current="doc.approvals || []"
     :loading="send.loading"
     :error="send.error?.messages?.[0] || ''"
-    @submit="(rows) => send.submit({ sop: doc.name, approvers: rows })"
+    @send="send.submit({ sop: doc.name })"
   />
 
   <Dialog v-model:open="showPublish" :title="__('Bring into force')" size="sm">
@@ -354,9 +369,9 @@ import {
   createResource,
 } from 'frappe-ui'
 import AppBreadcrumbs from '@/components/Layouts/AppBreadcrumbs.vue'
-import ApproversDialog from '@/components/Procedure/ApproversDialog.vue'
 import ClarityFeedback from '@/components/Procedure/ClarityFeedback.vue'
 import ReviewComments from '@/components/Procedure/ReviewComments.vue'
+import ReviewRouteDialog from '@/components/Procedure/ReviewRouteDialog.vue'
 import MentionChip from '@/components/Procedure/MentionChip.vue'
 import { acknowledge, procedure } from '@/data/procedures'
 import { useBreakpoint } from '@/composables/useBreakpoint'
@@ -373,6 +388,13 @@ const ui = useUI()
 const RISK_THEME = { High: 'red', Medium: 'orange', Low: 'green' }
 
 const openComments = ref(0)
+
+watch(
+  () => doc.value.review?.visible,
+  (visible) => {
+    if (!visible) openComments.value = 0
+  },
+)
 const clarity = ref(null)
 
 const nearby = createResource({ url: 'sop.api.procedures.neighbours' })
@@ -398,7 +420,13 @@ const RING = {
 
 const revision = ref(null)
 const body = ref(null)
-const showApprovers = ref(false)
+const showRoute = ref(false)
+const routeMode = ref('view')
+
+function openRoute(mode) {
+  routeMode.value = mode
+  showRoute.value = true
+}
 const comments = ref(null)
 const showPublish = ref(false)
 const publishOn = ref(today())
@@ -410,25 +438,33 @@ const doc = computed(() => procedure.data || {})
 const isEffective = computed(() => doc.value.status === 'Effective')
 const ownerName = computed(() => doc.value.process_owner_name || doc.value.process_owner)
 const overdue = computed(() => reviewTone(doc.value.review_due) === 'red')
-const quick = computed(() => [
-  {
-    label: __('Approvers'),
-    icon: 'lucide-user-check',
-    count: doc.value.approvals?.length,
-    onClick: () => (showApprovers.value = true),
-  },
-  {
-    label: __('Review comments'),
-    icon: 'lucide-message-square',
-    count: openComments.value,
-    onClick: () => comments.value?.$el?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
-  },
-  {
-    label: __('Training'),
-    icon: 'lucide-graduation-cap',
-    onClick: () => router.push('/training/matrix'),
-  },
-])
+const quick = computed(() =>
+  [
+    {
+      label: __('Reviewers'),
+      icon: 'lucide-user-check',
+      count: doc.value.approvals?.length,
+      trailing: 'lucide-chevron-right',
+      onClick: () => openRoute('view'),
+    },
+    {
+      label: __('Review comments'),
+      icon: 'lucide-message-square',
+      count: openComments.value,
+      trailing: 'lucide-chevron-right',
+      hidden: !doc.value.review?.visible,
+      onClick: () =>
+        body.value
+          ?.querySelector('mark[data-review]')
+          ?.scrollIntoView({ behavior: 'smooth', block: 'center' }),
+    },
+    {
+      label: __('Training'),
+      icon: 'lucide-graduation-cap',
+      onClick: () => router.push('/training/matrix'),
+    },
+  ].filter((row) => !row.hidden),
+)
 
 const facts = computed(() => {
   const rows = [
@@ -493,7 +529,7 @@ function load() {
 }
 
 function afterAction() {
-  showApprovers.value = false
+  showRoute.value = false
   showPublish.value = false
   changes.open = false
   changes.comment = ''
@@ -543,10 +579,10 @@ const primary = computed(() => {
 
   if (allowed.send_for_approval) {
     return {
-      label: __('Send for approval'),
+      label: __('Send for review'),
       icon: 'lucide-send',
       loading: send.loading,
-      onClick: () => (showApprovers.value = true),
+      onClick: () => openRoute('send'),
     }
   }
 
