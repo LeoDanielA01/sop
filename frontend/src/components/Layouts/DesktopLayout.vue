@@ -1,5 +1,5 @@
 <template>
-  <DesktopShell :scroll="ui.pageScroll">
+  <DesktopShell :scroll="!route.meta.fixed">
     <template #rail>
       <AppRail v-if="!ui.fullScreen" />
     </template>
@@ -13,10 +13,12 @@
 </template>
 
 <script setup>
+import { useRoute } from 'vue-router'
 import { DesktopShell } from 'frappe-ui'
 import AppRail from './AppRail.vue'
 import AppSidebar from './AppSidebar.vue'
 import { useUI } from '@/stores/ui'
 
+const route = useRoute()
 const ui = useUI()
 </script>

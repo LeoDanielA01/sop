@@ -110,7 +110,7 @@ const ROLES = ['Approver', 'Reviewer', 'Quality', 'Department Head']
 
 const chosen = ref([])
 
-const people = createResource({ url: 'sop.api.procedures.people', auto: true })
+const people = createResource({ url: 'sop.api.procedures.people' })
 
 const candidates = computed(() => {
   const taken = new Set(chosen.value.map((row) => row.approver))

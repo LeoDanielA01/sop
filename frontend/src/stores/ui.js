@@ -13,7 +13,6 @@ export const useUI = defineStore('ui', () => {
   const settingsTab = ref('preferences')
   const processDialog = ref({ open: false, space: null, parent: null, parentTitle: null })
 
-  const pageScroll = ref(true)
   const sidebarCollapsed = ref(false)
   const fullScreen = ref(false)
   const editorToolsPinned = ref(true)
@@ -52,7 +51,6 @@ export const useUI = defineStore('ui', () => {
     spaceDialog,
     templateDialog,
     processDialog,
-    pageScroll,
     sidebarCollapsed,
     fullScreen,
     toggleFullScreen,

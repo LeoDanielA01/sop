@@ -76,7 +76,7 @@ const procedureOptions = computed(() =>
   props.procedures.map((row) => ({ label: `${row.sop_no} · ${row.title}`, value: row.name })),
 )
 
-const people = createResource({ url: 'sop.api.procedures.people', auto: true })
+const people = createResource({ url: 'sop.api.procedures.people' })
 
 const candidates = computed(() => {
   const taken = new Set(chosen.value.map((row) => row.name))

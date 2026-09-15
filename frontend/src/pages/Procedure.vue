@@ -368,14 +368,10 @@ function onKeydown(event) {
   if (event.key === 'Escape' && ui.fullScreen) ui.toggleFullScreen()
 }
 
-onMounted(() => {
-  document.addEventListener('keydown', onKeydown)
-  ui.pageScroll = false
-})
+onMounted(() => document.addEventListener('keydown', onKeydown))
 
 onBeforeUnmount(() => {
   document.removeEventListener('keydown', onKeydown)
-  ui.pageScroll = true
   if (ui.fullScreen) ui.toggleFullScreen()
 })
 const RING = {

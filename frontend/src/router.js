@@ -7,7 +7,12 @@ const routes = [
   { path: '/training/matrix', name: 'TrainingMatrix', component: () => import('@/pages/TrainingMatrix.vue') },
   { path: '/training/sessions', name: 'TrainingSessions', component: () => import('@/pages/TrainingSessions.vue') },
   { path: '/training/rules', name: 'TrainingRules', component: () => import('@/pages/TrainingRules.vue') },
-  { path: '/:name', name: 'Procedure', component: () => import('@/pages/Procedure.vue') },
+  {
+    path: '/:name',
+    name: 'Procedure',
+    component: () => import('@/pages/Procedure.vue'),
+    meta: { fixed: true },
+  },
   { path: '/:name/edit', name: 'EditProcedure', component: () => import('@/pages/Editor.vue') },
   { path: '/:name/history', name: 'History', component: () => import('@/pages/History.vue') },
 ]
