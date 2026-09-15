@@ -28,9 +28,10 @@ def seed_demo():
 
 	try:
 		demo.after_migrate()
-	except Exception:
+	except Exception as error:
 		frappe.db.rollback(save_point="sop_demo")
 		frappe.log_error(title="SOP demo data could not be created", message=frappe.get_traceback())
+		print(f"SOP demo data: failed — {error}. Details in Error Log, or run sop.demo.status.")
 
 
 def create_roles():

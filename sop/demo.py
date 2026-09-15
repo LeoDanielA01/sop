@@ -150,12 +150,18 @@ SHAPES = {
 
 def after_migrate():
 	if not wanted():
+		print("SOP demo data: off. Run `bench --site <site> set-config sop_demo_data 1` to seed it.")
 		return
 
-	if frappe.db.count("SOP"):
+	if seeded():
 		return
 
-	install()
+	result = install(force=1)
+	print(f"SOP demo data: created {len(result.get('procedures', []))} procedures in MFG and QA.")
+
+
+def seeded():
+	return bool(frappe.db.exists("SOP Space", {"space_code": ("in", ["MFG", "QA"])}))
 
 
 def wanted():
