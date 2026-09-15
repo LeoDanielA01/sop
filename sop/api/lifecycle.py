@@ -10,6 +10,7 @@ from sop.notifications import tell
 from frappe.utils import cint, getdate, now_datetime, nowdate
 
 from sop import training
+from sop.api.removal import removal_actions
 
 DRAFT_STATES = ("Draft", "Under Revision")
 
@@ -171,6 +172,7 @@ def actions_for(doc):
 		"publish": can_write and doc.status == "Approved",
 		"start_revision": can_write and doc.status == "Effective",
 		"retire": can_write and doc.status in ("Approved", "Effective"),
+		**removal_actions(doc),
 	}
 
 

@@ -528,6 +528,15 @@ def last_error():
 
 
 def clear():
+	frappe.flags.sop_removal = True
+
+	try:
+		return wipe_demo()
+	finally:
+		frappe.flags.sop_removal = False
+
+
+def wipe_demo():
 	spaces = frappe.get_all(
 		"SOP Space", filters={"space_code": ("in", ["MFG", "QA"])}, pluck="name",
 		limit_page_length=0,

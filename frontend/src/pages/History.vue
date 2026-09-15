@@ -56,7 +56,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { Badge, Button, PageHeader, createResource } from 'frappe-ui'
 import { List, ListCell, ListRow } from 'frappe-ui/list'
 import AppBreadcrumbs from '@/components/Layouts/AppBreadcrumbs.vue'
-import ListSkeleton from '@/components/ListSkeleton.vue'
+import ListSkeleton from '@/components/Common/ListSkeleton.vue'
 import { procedure } from '@/data/procedures'
 import { shortDate } from '@/utils/format'
 

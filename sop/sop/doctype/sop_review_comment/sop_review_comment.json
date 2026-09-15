@@ -12,6 +12,8 @@
   "column_break_body",
   "parent_comment",
   "quote",
+  "quote_before",
+  "quote_after",
   "comment"
  ],
  "fields": [
@@ -53,6 +55,18 @@
    "fieldname": "quote",
    "fieldtype": "Small Text",
    "label": "Quoted Text"
+  },
+  {
+   "fieldname": "quote_before",
+   "fieldtype": "Data",
+   "label": "Text Before",
+   "read_only": 1
+  },
+  {
+   "fieldname": "quote_after",
+   "fieldtype": "Data",
+   "label": "Text After",
+   "read_only": 1
   },
   {
    "fieldname": "comment",

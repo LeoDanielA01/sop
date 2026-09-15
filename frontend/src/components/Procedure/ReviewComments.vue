@@ -96,28 +96,30 @@
           </div>
         </div>
 
-        <div class="max-h-72 divide-y divide-outline-gray-1 overflow-y-auto">
-          <div v-for="row in [thread, ...thread.replies]" :key="row.name" class="px-3 py-2.5">
-            <div class="flex items-center gap-2">
-              <Avatar :image="row.image" :label="row.author" size="sm" />
-              <span class="min-w-0 truncate text-base text-ink-gray-8">{{ row.author }}</span>
-              <span class="shrink-0 text-sm text-ink-gray-5">{{ row.when }}</span>
-
-              <Tooltip v-if="row.is_mine && row.name !== thread.name" :text="__('Delete')">
-                <Button
-                  class="ml-auto"
-                  variant="ghost"
-                  size="sm"
-                  icon="lucide-trash-2"
-                  :label="__('Delete')"
-                  @click="remove.submit({ name: row.name })"
-                />
-              </Tooltip>
+        <ScrollArea viewport-class="max-h-72">
+          <div class="divide-y divide-outline-gray-1">
+            <div v-for="row in [thread, ...thread.replies]" :key="row.name" class="px-3 py-2.5">
+              <div class="flex items-center gap-2">
+                <Avatar :image="row.image" :label="row.author" size="sm" />
+                <span class="min-w-0 truncate text-base text-ink-gray-8">{{ row.author }}</span>
+                <span class="shrink-0 text-sm text-ink-gray-5">{{ row.when }}</span>
+  
+                <Tooltip v-if="row.is_mine && row.name !== thread.name" :text="__('Delete')">
+                  <Button
+                    class="ml-auto"
+                    variant="ghost"
+                    size="sm"
+                    icon="lucide-trash-2"
+                    :label="__('Delete')"
+                    @click="remove.submit({ name: row.name })"
+                  />
+                </Tooltip>
+              </div>
+  
+              <p class="mt-1.5 whitespace-pre-line text-base text-ink-gray-8">{{ row.comment }}</p>
             </div>
-
-            <p class="mt-1.5 whitespace-pre-line text-base text-ink-gray-8">{{ row.comment }}</p>
           </div>
-        </div>
+        </ScrollArea>
 
         <div v-if="thread.status !== 'Resolved'" class="border-t border-outline-gray-1 px-3 py-2">
           <FormControl
@@ -173,6 +175,7 @@ import {
   Button,
   ErrorMessage,
   FormControl,
+  ScrollArea,
   Tooltip,
   createResource,
 } from 'frappe-ui'
@@ -270,7 +273,7 @@ function measure(root) {
 
   while (walker.nextNode()) {
     const node = walker.currentNode
-    if (node.parentElement?.closest('mark[data-review]')) continue
+    if (node.parentElement?.closest('[data-review-pin]')) continue
 
     const value = node.nodeValue || ''
 
@@ -289,14 +292,90 @@ function measure(root) {
   return { text, map }
 }
 
-function rangeFor(root, quote) {
-  const needle = (quote || '').replace(/\s+/g, ' ').trim()
+function occurrences(text, needle) {
+  const found = []
+  let at = text.indexOf(needle)
+
+  while (at >= 0) {
+    found.push(at)
+    at = text.indexOf(needle, at + 1)
+  }
+
+  return found
+}
+
+function sharedEnd(left, right) {
+  let count = 0
+
+  while (
+    count < left.length &&
+    count < right.length &&
+    left[left.length - 1 - count] === right[right.length - 1 - count]
+  ) {
+    count += 1
+  }
+
+  return count
+}
+
+function sharedStart(left, right) {
+  let count = 0
+
+  while (count < left.length && count < right.length && left[count] === right[count]) count += 1
+
+  return count
+}
+
+function bestMatch(text, needle, before, after) {
+  let hits = occurrences(text, needle)
+  if (!hits.length) hits = occurrences(text.toLowerCase(), needle.toLowerCase())
+  if (!hits.length) return -1
+
+  let best = hits[0]
+  let top = -1
+
+  for (const at of hits) {
+    const score =
+      sharedEnd(text.slice(0, at), before || '') +
+      sharedStart(text.slice(at + needle.length), after || '')
+
+    if (score > top) {
+      top = score
+      best = at
+    }
+  }
+
+  return best
+}
+
+function contextOf(range) {
+  const quote = range.toString().replace(/\s+/g, ' ').trim().slice(0, 300)
+  const empty = { quote, before: '', after: '' }
+  if (!props.body || !quote) return empty
+
+  const { text, map } = measure(props.body)
+  const start = map.findIndex(({ node, offset }) => range.isPointInRange(node, offset))
+  const hits = occurrences(text, quote)
+  if (start < 0 || !hits.length) return empty
+
+  const at = hits.reduce(
+    (best, index) => (Math.abs(index - start) < Math.abs(best - start) ? index : best),
+    hits[0],
+  )
+
+  return {
+    quote,
+    before: text.slice(Math.max(0, at - 40), at),
+    after: text.slice(at + quote.length, at + quote.length + 40),
+  }
+}
+
+function rangeFor(root, row) {
+  const needle = (row.quote || '').replace(/\s+/g, ' ').trim()
   if (!needle) return null
 
   const { text, map } = measure(root)
-  let at = text.indexOf(needle)
-
-  if (at < 0) at = text.toLowerCase().indexOf(needle.toLowerCase())
+  const at = bestMatch(text, needle, row.quote_before, row.quote_after)
   if (at < 0) return null
 
   const first = map[at]
@@ -320,7 +399,7 @@ function decorate() {
   const made = []
 
   for (const row of threads.value) {
-    const range = rangeFor(root, row.quote)
+    const range = rangeFor(root, row)
     if (!range) continue
 
     const mark = document.createElement('mark')
@@ -407,13 +486,15 @@ function onSelection() {
 
 function startComment() {
   const selection = window.getSelection()
-  const box = selection?.rangeCount ? selection.getRangeAt(0).getBoundingClientRect() : null
+  const range = selection?.rangeCount ? selection.getRangeAt(0) : null
+  const box = range ? range.getBoundingClientRect() : null
   const width = Math.min(352, window.innerWidth - 32)
+  const context = range ? contextOf(range) : { quote: picked.slice(0, 300), before: '', after: '' }
 
   active.value = null
   anchor = null
   spot.value = null
-  draft.value = { quote: picked.slice(0, 300), comment: '' }
+  draft.value = { ...context, comment: '' }
   card.value = box
     ? {
         left: Math.max(16, Math.min(box.left, window.innerWidth - width - 16)),
@@ -434,6 +515,8 @@ function save(row) {
     sop: props.sop,
     version: props.version,
     quote: row ? null : draft.value.quote,
+    before: row ? null : draft.value.before,
+    after: row ? null : draft.value.after,
     parent: row?.name || null,
     comment,
   })

@@ -36,7 +36,7 @@ class SOPProcess(Document):
 		if frappe.db.exists("SOP Process", {"parent_process": self.name}):
 			frappe.throw(_("Move or delete the steps inside {0} first.").format(self.title))
 
-		if frappe.db.exists("SOP", {"process": self.name}):
+		if frappe.db.exists("SOP", {"sop_process": self.name}):
 			frappe.throw(_("Procedures still sit in {0}.").format(self.title))
 
 

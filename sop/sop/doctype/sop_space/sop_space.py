@@ -14,6 +14,17 @@ class SOPSpace(Document):
 	def validate(self):
 		self.validate_code()
 
+	def on_trash(self):
+		if frappe.flags.sop_removal:
+			return
+
+		if frappe.db.exists("SOP", {"space": self.name}):
+			frappe.throw(
+				_("{0} still holds procedures. Delete it from the SOP app, which clears what is inside.").format(
+					frappe.bold(self.title)
+				)
+			)
+
 	def validate_code(self):
 		code = (self.space_code or "").strip().upper()
 

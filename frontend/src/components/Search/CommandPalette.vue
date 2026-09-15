@@ -20,7 +20,7 @@
           <Badge v-if="search.loading" variant="subtle" theme="gray" size="sm" :label="__('Searching')" />
         </div>
 
-        <div ref="scroller" class="max-h-96 overflow-auto px-2 py-2">
+        <ScrollArea viewport-class="max-h-96 px-2 py-2">
           <div v-for="group in groups" :key="group.title" class="mt-3 first:mt-0">
             <div class="px-2 pb-1 text-sm text-ink-gray-5">{{ group.title }}</div>
 
@@ -54,7 +54,7 @@
           <p v-if="empty" class="px-3 py-10 text-center text-base text-ink-gray-5">
             {{ __('Nothing matches that. Search by title, by procedure number, or by the code of anything a procedure mentions.') }}
           </p>
-        </div>
+        </ScrollArea>
 
         <div
           class="flex items-center gap-5 border-t border-outline-gray-1 px-4 py-2 text-sm text-ink-gray-6"
@@ -90,15 +90,16 @@
 <script setup>
 import { computed, nextTick, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { Badge, Dialog, TextInput, createResource, debounce } from 'frappe-ui'
+import { Badge, Dialog, ScrollArea, TextInput, createResource, debounce } from 'frappe-ui'
 import { SECTIONS, activeSpace, spaces, views } from '@/data/navigation'
+import { useUI } from '@/stores/ui'
 import { translate as __ } from '@/translation'
 
 const show = defineModel('open', { type: Boolean, default: false })
 
 const router = useRouter()
+const ui = useUI()
 const field = ref(null)
-const scroller = ref(null)
 const rows = ref({})
 const query = ref('')
 const cursor = ref(0)
@@ -207,6 +208,12 @@ watch(show, async (open) => {
   }
 
   cursor.value = 0
+
+  if (ui.searchQuery) {
+    query.value = ui.searchQuery
+    ui.searchQuery = ''
+  }
+
   await nextTick()
   field.value?.$el?.querySelector('input')?.focus()
 })

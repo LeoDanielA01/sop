@@ -3,12 +3,9 @@
     v-if="pinned"
     class="sticky top-0 z-10 flex items-center gap-1 border-b border-outline-gray-1 bg-surface-base px-1.5 py-1"
   >
-    <EditorFixedMenu
-      v-if="editor"
-      class="min-w-0 flex-1 overflow-x-auto"
-      :editor="editor"
-      :items="fixedItems(api)"
-    />
+    <ScrollArea v-if="editor" orientation="horizontal" class="min-w-0 flex-1">
+      <EditorFixedMenu :editor="editor" :items="fixedItems(api)" />
+    </ScrollArea>
     <Tooltip :text="__('Unpin — the tools follow your right-click instead')">
       <Button variant="ghost" icon="lucide-pin-off" :label="__('Unpin tools')" @click="pinned = false" />
     </Tooltip>
@@ -40,7 +37,7 @@
         </Tooltip>
       </div>
 
-      <div ref="list" class="max-h-80 overflow-y-auto py-1">
+      <ScrollArea ref="list" viewport-class="max-h-80 py-1">
         <div v-for="group in groups" :key="group.name">
           <p class="px-3 pb-0.5 pt-1.5 text-sm text-ink-gray-5">{{ group.name }}</p>
 
@@ -87,14 +84,14 @@
         <p v-if="!flat.length" class="px-3 py-6 text-center text-sm text-ink-gray-5">
           Nothing matches “{{ query }}”.
         </p>
-      </div>
+      </ScrollArea>
     </div>
   </Teleport>
 </template>
 
 <script setup>
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { Button, Tooltip } from 'frappe-ui'
+import { Button, ScrollArea, Tooltip } from 'frappe-ui'
 import { EditorFixedMenu } from 'frappe-ui/editor'
 import { contextAt, fixedItems, paletteGroups } from './tools'
 
@@ -148,7 +145,7 @@ function move(step) {
   cursor.value = (cursor.value + step + flat.value.length) % flat.value.length
 
   nextTick(() => {
-    list.value
+    list.value?.viewportElement
       ?.querySelector(`[data-index="${cursor.value}"]`)
       ?.scrollIntoView({ block: 'nearest' })
   })
@@ -187,6 +184,7 @@ function close() {
 }
 
 function onContextMenu(event) {
+  event.stopPropagation()
   if (pinned.value) return
 
   event.preventDefault()

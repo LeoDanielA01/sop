@@ -29,6 +29,7 @@
         v-for="procedure in rows"
         :key="procedure.name"
         class="h-15"
+        :data-context-link="`/${procedure.name}`"
         @click="open(procedure)"
       >
         <ListCell class="hidden sm:flex">
@@ -137,8 +138,8 @@ import {
 } from 'frappe-ui'
 import { List, ListCell, ListRow } from 'frappe-ui/list'
 import AppBreadcrumbs from '@/components/Layouts/AppBreadcrumbs.vue'
-import ListSkeleton from '@/components/ListSkeleton.vue'
-import Pagination from '@/components/Pagination.vue'
+import ListSkeleton from '@/components/Common/ListSkeleton.vue'
+import Pagination from '@/components/Common/Pagination.vue'
 import { procedures, page, pageLength, reloadProcedures, view } from '@/data/procedures'
 import { activeSpace, setSpace, spaces } from '@/data/navigation'
 import { preferences } from '@/data/preferences'

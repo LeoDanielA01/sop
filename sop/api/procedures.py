@@ -184,20 +184,21 @@ def unacknowledged_names(user, space=None):
 
 @frappe.whitelist()
 def neighbours(name):
+	from sop.api.processes import tree
+
 	doc = frappe.get_doc("SOP", name)
 	doc.check_permission("read")
 
-	filters = {"space": doc.space, "status": ("!=", "Retired")}
-	if doc.sop_process:
-		filters["sop_process"] = doc.sop_process
-
 	rows = frappe.get_list(
 		"SOP",
-		filters=filters,
-		fields=["name", "sop_no", "title"],
+		filters={"space": doc.space, "status": ("!=", "Retired")},
+		fields=["name", "sop_no", "title", "sop_process"],
 		order_by="sop_no asc",
 		limit_page_length=0,
 	)
+
+	rank = reading_rank(tree(doc.space))
+	rows.sort(key=lambda row: (rank.get(row.sop_process, -1), row.sop_no or ""))
 
 	names = [row.name for row in rows]
 	if name not in names:
@@ -209,6 +210,19 @@ def neighbours(name):
 		"previous": rows[index - 1] if index else None,
 		"next": rows[index + 1] if index + 1 < len(rows) else None,
 	}
+
+
+def reading_rank(roots):
+	rank = {}
+
+	def walk(nodes):
+		for node in nodes:
+			rank[node["name"]] = len(rank)
+			walk(node["children"])
+
+	walk(roots)
+
+	return rank
 
 
 @frappe.whitelist()

@@ -4,13 +4,13 @@
       <router-view :compact="!isDesktop" />
     </component>
 
-    <Dialogs />
+    <AppDialogs />
   </div>
 </template>
 
 <script setup>
 import { computed } from 'vue'
-import Dialogs from '@/components/Dialogs.vue'
+import AppDialogs from '@/components/Layouts/AppDialogs.vue'
 import DesktopLayout from '@/components/Layouts/DesktopLayout.vue'
 import MobileLayout from '@/components/Layouts/MobileLayout.vue'
 import { useBreakpoint } from '@/composables/useBreakpoint'

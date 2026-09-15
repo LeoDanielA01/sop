@@ -10,7 +10,7 @@
         {{ heading }}
       </div>
 
-      <div class="max-h-64 overflow-y-auto p-1">
+      <ScrollArea viewport-class="max-h-64 p-1">
         <div
           v-for="(row, index) in rows"
           :key="row.value"
@@ -38,7 +38,7 @@
         <p v-if="!rows.length" class="px-2 py-3 text-center text-sm text-ink-gray-5">
           {{ resource.loading ? 'Looking…' : 'Nothing matches' }}
         </p>
-      </div>
+      </ScrollArea>
 
       <div class="border-t border-outline-gray-1 px-3 py-1.5 text-xs text-ink-gray-5">
         <template v-if="stage === 'doctype'">{{ __('Pick a type, then search its records') }}</template>
@@ -50,7 +50,7 @@
 
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { Avatar, createResource } from 'frappe-ui'
+import { Avatar, ScrollArea, createResource } from 'frappe-ui'
 
 const props = defineProps({
   editor: { type: Object, default: null },

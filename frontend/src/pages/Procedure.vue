@@ -49,6 +49,7 @@
 
   <div class="flex flex-col lg:min-h-0 lg:flex-1 lg:flex-row lg:overflow-hidden">
     <aside
+      v-if="!ui.fullScreen"
       class="order-first w-full shrink-0 border-b border-outline-gray-1 lg:order-last lg:w-[17rem] lg:overflow-hidden lg:border-b-0 lg:border-l"
     >
       <div class="flex h-full flex-col">
@@ -121,32 +122,34 @@
           </button>
         </div>
 
-        <dl class="min-h-0 flex-1 divide-y divide-outline-gray-1 overflow-y-auto">
-          <div v-for="row in facts" :key="row.label" class="px-4 py-2.5">
-            <dt class="text-sm text-ink-gray-5">{{ row.label }}</dt>
-            <dd class="mt-0.5 flex min-w-0 items-center gap-1.5 text-base" :class="row.tone || 'text-ink-gray-8'">
-              <Avatar
-                v-if="row.avatar !== undefined"
-                :image="row.avatar"
-                :label="row.value"
-                size="sm"
-              />
-              <Badge v-else-if="row.badge" :theme="row.badge" variant="subtle" size="sm">
-                {{ row.value }}
-              </Badge>
-              <span v-else class="truncate">{{ row.value }}</span>
-            </dd>
-          </div>
+        <ScrollArea class="min-h-0 flex-1">
+          <dl class="divide-y divide-outline-gray-1">
+            <div v-for="row in facts" :key="row.label" class="px-4 py-2.5">
+              <dt class="text-sm text-ink-gray-5">{{ row.label }}</dt>
+              <dd class="mt-0.5 flex min-w-0 items-center gap-1.5 text-base" :class="row.tone || 'text-ink-gray-8'">
+                <Avatar
+                  v-if="row.avatar !== undefined"
+                  :image="row.avatar"
+                  :label="row.value"
+                  size="sm"
+                />
+                <Badge v-else-if="row.badge" :theme="row.badge" variant="subtle" size="sm">
+                  {{ row.value }}
+                </Badge>
+                <span v-else class="truncate">{{ row.value }}</span>
+              </dd>
+            </div>
 
-          <div v-if="doc.tags?.length" class="flex flex-wrap items-center gap-1.5 px-4 py-2.5">
-            <span class="lucide-tags size-4 shrink-0 text-ink-gray-5" aria-hidden="true" />
-            <Badge v-for="tag in doc.tags" :key="tag" variant="subtle" size="sm">{{ tag }}</Badge>
-          </div>
-        </dl>
+            <div v-if="doc.tags?.length" class="flex flex-wrap items-center gap-1.5 px-4 py-2.5">
+              <span class="lucide-tags size-4 shrink-0 text-ink-gray-5" aria-hidden="true" />
+              <Badge v-for="tag in doc.tags" :key="tag" variant="subtle" size="sm">{{ tag }}</Badge>
+            </div>
+          </dl>
+        </ScrollArea>
       </div>
     </aside>
 
-    <div class="min-w-0 px-4 pb-24 pt-5 sm:px-6 lg:flex-1 lg:overflow-y-auto">
+    <ScrollArea class="min-w-0 lg:min-h-0 lg:flex-1" viewport-class="px-4 pb-24 pt-5 sm:px-6">
     <ErrorMessage :message="lastError" class="mb-4" />
 
     <h1 class="text-2xl font-semibold tracking-tight text-ink-gray-9">{{ doc.title }}</h1>
@@ -176,6 +179,7 @@
         v-if="around.previous"
         type="button"
         class="flex items-center gap-3 rounded-4 border border-outline-gray-2 px-3 py-2.5 text-left hover:border-outline-gray-3"
+        :data-context-link="`/${around.previous.name}`"
         @click="router.push(`/${around.previous.name}`)"
       >
         <span class="lucide-chevron-left size-4 shrink-0 text-ink-gray-5" aria-hidden="true" />
@@ -192,6 +196,7 @@
         v-if="around.next"
         type="button"
         class="flex items-center justify-end gap-3 rounded-4 border border-outline-gray-2 px-3 py-2.5 text-right hover:border-outline-gray-3"
+        :data-context-link="`/${around.next.name}`"
         @click="router.push(`/${around.next.name}`)"
       >
         <span class="min-w-0">
@@ -210,7 +215,7 @@
       :body="body"
       @count="(value) => (openComments = value)"
     />
-    </div>
+    </ScrollArea>
   </div>
 
   <div
@@ -336,14 +341,15 @@ import {
   ErrorMessage,
   FormControl,
   PageHeader,
+  ScrollArea,
   Select,
   Tooltip,
   createResource,
 } from 'frappe-ui'
 import AppBreadcrumbs from '@/components/Layouts/AppBreadcrumbs.vue'
-import ApproversDialog from '@/components/ApproversDialog.vue'
-import ReviewComments from '@/components/ReviewComments.vue'
-import MentionChip from '@/components/MentionChip.vue'
+import ApproversDialog from '@/components/Procedure/ApproversDialog.vue'
+import ReviewComments from '@/components/Procedure/ReviewComments.vue'
+import MentionChip from '@/components/Procedure/MentionChip.vue'
 import { acknowledge, procedure } from '@/data/procedures'
 import { useBreakpoint } from '@/composables/useBreakpoint'
 import { useUI } from '@/stores/ui'
@@ -564,6 +570,20 @@ const actions = computed(() =>
       label: __('Retire'),
       icon: 'lucide-archive',
       onClick: () => withdraw.submit({ sop: doc.value.name }),
+    },
+    doc.value.actions?.delete && {
+      label: __('Delete draft'),
+      icon: 'lucide-trash-2',
+      theme: 'red',
+      onClick: () =>
+        (ui.removeProcedure = { name: doc.value.name, sop_no: doc.value.sop_no, mode: 'draft' }),
+    },
+    doc.value.actions?.purge && {
+      label: __('Delete permanently'),
+      icon: 'lucide-trash-2',
+      theme: 'red',
+      onClick: () =>
+        (ui.removeProcedure = { name: doc.value.name, sop_no: doc.value.sop_no, mode: 'purge' }),
     },
   ].filter(Boolean),
 )

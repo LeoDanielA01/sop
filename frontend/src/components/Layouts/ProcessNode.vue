@@ -1,5 +1,11 @@
 <template>
-  <SidebarItem class="group" :active="activeProcess === node.name" @click="open">
+  <SidebarItem
+    class="group"
+    :active="activeProcess === node.name"
+    :data-context-process="node.name"
+    :data-context-space="node.space"
+    @click="open"
+  >
     <template v-if="node.children.length" #prefix>
       <Button
         variant="ghost"

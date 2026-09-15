@@ -76,8 +76,9 @@ import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { Avatar, Dropdown, SidebarRail, SidebarRailItem } from 'frappe-ui'
 import mark from '@/assets/sop-mark.svg'
+import { useCreateOptions } from '@/composables/useCreateOptions'
 import { useSection } from '@/composables/useSection'
-import { SECTIONS, activeSpace, attention } from '@/data/navigation'
+import { SECTIONS, attention } from '@/data/navigation'
 import { unreadCount } from '@/data/notifications'
 import { session } from '@/data/session'
 import { trainingCounts } from '@/data/training'
@@ -93,43 +94,7 @@ const badges = computed(() => ({
   training: trainingCounts.data?.open || undefined,
 }))
 
-const createOptions = computed(() => [
-  {
-    label: __('Procedure'),
-    icon: 'lucide-file-plus-2',
-    onClick: () => router.push('/new'),
-  },
-  {
-    label: __('Procedure from a template'),
-    icon: 'lucide-sparkles',
-    onClick: () => (ui.templateDialog = true),
-    condition: () => !!activeSpace.value,
-  },
-  {
-    label: __('Process'),
-    icon: 'lucide-workflow',
-    onClick: () => ui.askForProcess({ space: activeSpace.value }),
-    condition: () => !!activeSpace.value,
-  },
-  {
-    label: __('Space'),
-    icon: 'lucide-folder-plus',
-    onClick: () => (ui.spaceDialog = true),
-  },
-  {
-    label: __('Training session'),
-    icon: 'lucide-calendar-plus',
-    onClick: () => {
-      router.push('/training/sessions')
-      ui.sessionDialog = true
-    },
-  },
-  {
-    label: __('Training rule'),
-    icon: 'lucide-scroll-text',
-    onClick: () => router.push('/training/rules'),
-  },
-])
+const createOptions = useCreateOptions()
 
 function railLabel(item) {
   const count = badges.value[item.key]

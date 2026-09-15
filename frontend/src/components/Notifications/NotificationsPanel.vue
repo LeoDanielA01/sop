@@ -53,7 +53,7 @@
 
           <TabButtons v-model="tab" :options="tabs" class="notify-tabs px-3 pb-1" @update:modelValue="load" />
 
-          <div class="min-h-0 flex-1 overflow-y-auto">
+          <ScrollArea class="min-h-0 flex-1">
             <ListSkeleton v-if="feed.loading && !rows.length" class="px-4 pt-3" :rows="5" />
 
             <template v-else-if="rows.length">
@@ -69,6 +69,7 @@
                   :key="row.name"
                   class="flex cursor-pointer items-start gap-2.5 px-4 py-2.5 hover:bg-surface-gray-2"
                   :class="row.read ? '' : 'bg-surface-gray-1'"
+                  :data-context-link="row.route"
                   @click="visit(row)"
                 >
                   <span
@@ -126,7 +127,7 @@
               <p class="mt-3 text-base font-medium text-ink-gray-7">{{ __(empty.title) }}</p>
               <p class="mt-1 text-sm text-ink-gray-5">{{ __(empty.line) }}</p>
             </div>
-          </div>
+          </ScrollArea>
         </aside>
       </Transition>
     </div>
@@ -136,8 +137,8 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Avatar, Badge, Button, TabButtons, Tooltip } from 'frappe-ui'
-import ListSkeleton from '@/components/ListSkeleton.vue'
+import { Avatar, Badge, Button, ScrollArea, TabButtons, Tooltip } from 'frappe-ui'
+import ListSkeleton from '@/components/Common/ListSkeleton.vue'
 import { feed, counts, read, unreadResource } from '@/data/notifications'
 import { translate as __ } from '@/translation'
 import { STATUS_THEME, dayLabel, shortDate } from '@/utils/format'

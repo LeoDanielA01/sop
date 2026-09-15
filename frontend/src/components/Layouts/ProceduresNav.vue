@@ -38,6 +38,7 @@
       <SidebarItem
         class="group"
         :active="activeSpace === space.name && !activeProcess"
+        :data-context-space="space.name"
         @click="pick(space)"
       >
         <template #prefix>

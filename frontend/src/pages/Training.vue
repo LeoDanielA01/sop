@@ -184,7 +184,7 @@ import {
 } from 'frappe-ui'
 import { List, ListCell, ListRow } from 'frappe-ui/list'
 import AppBreadcrumbs from '@/components/Layouts/AppBreadcrumbs.vue'
-import ListSkeleton from '@/components/ListSkeleton.vue'
+import ListSkeleton from '@/components/Common/ListSkeleton.vue'
 import { trainingCounts } from '@/data/training'
 import { shortDate } from '@/utils/format'
 

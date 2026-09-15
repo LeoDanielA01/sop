@@ -186,13 +186,14 @@
           <List
             v-if="spaces.length"
             class="-mx-3 pt-4"
-            :columns="['minmax(0,1fr)', '8rem', '8rem']"
+            :columns="['minmax(0,1fr)', '8rem', '8rem', '3rem']"
             :row-height="56"
           >
             <ListHeader>
               <ListHeaderCell>{{ __('Space') }}</ListHeaderCell>
               <ListHeaderCell>{{ __('Visibility') }}</ListHeaderCell>
               <ListHeaderCell>{{ __('Needs review') }}</ListHeaderCell>
+              <ListHeaderCell />
             </ListHeader>
             <ListRows :items="spaces" v-slot="{ item: space }">
               <ListRow>
@@ -213,6 +214,15 @@
                     {{ space.overdue }} overdue
                   </Badge>
                   <span v-else class="text-base text-ink-gray-5">{{ __('Up to date') }}</span>
+                </ListCell>
+                <ListCell>
+                  <Button
+                    v-if="session.user.is_manager"
+                    variant="ghost"
+                    icon="lucide-trash-2"
+                    :label="__('Delete space')"
+                    @click="ui.removeSpace = { name: space.name }"
+                  />
                 </ListCell>
               </ListRow>
             </ListRows>
@@ -298,6 +308,7 @@ import {
 
 import { List, ListCell, ListHeader, ListHeaderCell, ListRow, ListRows } from 'frappe-ui/list'
 import { spaces } from '@/data/navigation'
+import { session } from '@/data/session'
 import { useUI } from '@/stores/ui'
 import { preferences, preferencesError, setPreference } from '@/data/preferences'
 import { SHORTCUTS } from '@/composables/useShortcuts'

@@ -73,91 +73,93 @@
             </span>
           </div>
 
-          <div class="flex max-h-80 flex-col gap-1.5 overflow-y-auto p-0.5">
-            <div
-              v-for="row in rows"
-              :key="row.name"
-              class="rounded-4 border"
-              :class="
-                picked.includes(row.name)
-                  ? 'border-outline-gray-3 bg-surface-gray-2'
-                  : 'border-outline-gray-2 bg-surface-gray-1'
-              "
-            >
-              <div class="flex items-start gap-3 px-3 py-2.5">
-                <FormControl
-                  type="checkbox"
-                  class="mt-0.5"
-                  :modelValue="picked.includes(row.name)"
-                  @update:modelValue="() => toggle(row.name)"
-                />
-
-                <div class="min-w-0 flex-1 cursor-pointer" @click="expand(row.name)">
-                  <div class="flex min-w-0 items-center gap-2">
-                    <span class="shrink-0 font-mono text-sm text-ink-gray-5">{{ row.sop_no }}</span>
-                    <span class="truncate text-base text-ink-gray-8">{{ row.title }}</span>
-                    <Badge :theme="STATUS_THEME[row.status]" variant="subtle" size="sm">
-                      {{ row.status }}
-                    </Badge>
-                  </div>
-                  <p class="mt-0.5 text-sm text-ink-gray-5">
-                    {{ chosenIn(row) }} of {{ row.hits }} will change
-                  </p>
-                </div>
-
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  :icon="opened === row.name ? 'lucide-chevron-up' : 'lucide-chevron-down'"
-                  :label="opened === row.name ? 'Hide matches' : 'Show matches'"
-                  @click="expand(row.name)"
-                />
-                <Badge variant="subtle" size="sm">{{ row.hits }}</Badge>
-              </div>
-
+          <ScrollArea viewport-class="max-h-80 p-0.5">
+            <div class="flex flex-col gap-1.5">
               <div
-                v-if="opened === row.name"
-                class="divide-y divide-outline-gray-1 border-t border-outline-gray-1"
+                v-for="row in rows"
+                :key="row.name"
+                class="rounded-4 border"
+                :class="
+                  picked.includes(row.name)
+                    ? 'border-outline-gray-3 bg-surface-gray-2'
+                    : 'border-outline-gray-2 bg-surface-gray-1'
+                "
               >
-                <label
-                  v-for="match in row.matches"
-                  :key="match.index"
-                  class="flex cursor-pointer items-start gap-3 px-3 py-2"
-                >
+                <div class="flex items-start gap-3 px-3 py-2.5">
                   <FormControl
                     type="checkbox"
                     class="mt-0.5"
-                    :modelValue="isChosen(row, match.index)"
-                    @update:modelValue="() => flipMatch(row, match.index)"
+                    :modelValue="picked.includes(row.name)"
+                    @update:modelValue="() => toggle(row.name)"
                   />
-
-                  <span class="min-w-0 flex-1 text-sm text-ink-gray-6">
-                    <span>{{ match.before }}</span>
-                    <mark class="rounded-3 bg-surface-amber-2 px-0.5 text-ink-gray-8">
-                      {{ match.hit }}
-                    </mark>
-                    <span>{{ match.after }}</span>
-
-                    <span v-if="replace" class="mt-1 block text-ink-gray-5">
-                      <span class="lucide-corner-down-right mr-1 inline-block size-3" aria-hidden="true" />
+  
+                  <div class="min-w-0 flex-1 cursor-pointer" @click="expand(row.name)">
+                    <div class="flex min-w-0 items-center gap-2">
+                      <span class="shrink-0 font-mono text-sm text-ink-gray-5">{{ row.sop_no }}</span>
+                      <span class="truncate text-base text-ink-gray-8">{{ row.title }}</span>
+                      <Badge :theme="STATUS_THEME[row.status]" variant="subtle" size="sm">
+                        {{ row.status }}
+                      </Badge>
+                    </div>
+                    <p class="mt-0.5 text-sm text-ink-gray-5">
+                      {{ chosenIn(row) }} of {{ row.hits }} will change
+                    </p>
+                  </div>
+  
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    :icon="opened === row.name ? 'lucide-chevron-up' : 'lucide-chevron-down'"
+                    :label="opened === row.name ? 'Hide matches' : 'Show matches'"
+                    @click="expand(row.name)"
+                  />
+                  <Badge variant="subtle" size="sm">{{ row.hits }}</Badge>
+                </div>
+  
+                <div
+                  v-if="opened === row.name"
+                  class="divide-y divide-outline-gray-1 border-t border-outline-gray-1"
+                >
+                  <label
+                    v-for="match in row.matches"
+                    :key="match.index"
+                    class="flex cursor-pointer items-start gap-3 px-3 py-2"
+                  >
+                    <FormControl
+                      type="checkbox"
+                      class="mt-0.5"
+                      :modelValue="isChosen(row, match.index)"
+                      @update:modelValue="() => flipMatch(row, match.index)"
+                    />
+  
+                    <span class="min-w-0 flex-1 text-sm text-ink-gray-6">
                       <span>{{ match.before }}</span>
-                      <mark class="rounded-3 bg-surface-green-2 px-0.5 text-ink-gray-8">
-                        {{ replace }}
+                      <mark class="rounded-3 bg-surface-amber-2 px-0.5 text-ink-gray-8">
+                        {{ match.hit }}
                       </mark>
                       <span>{{ match.after }}</span>
+  
+                      <span v-if="replace" class="mt-1 block text-ink-gray-5">
+                        <span class="lucide-corner-down-right mr-1 inline-block size-3" aria-hidden="true" />
+                        <span>{{ match.before }}</span>
+                        <mark class="rounded-3 bg-surface-green-2 px-0.5 text-ink-gray-8">
+                          {{ replace }}
+                        </mark>
+                        <span>{{ match.after }}</span>
+                      </span>
                     </span>
-                  </span>
-                </label>
-
-                <p
-                  v-if="row.hits > row.matches.length"
-                  class="px-3 py-2 text-sm text-ink-gray-5"
-                >
-                  {{ row.hits - row.matches.length }} more not listed — they change with the rest.
-                </p>
+                  </label>
+  
+                  <p
+                    v-if="row.hits > row.matches.length"
+                    class="px-3 py-2 text-sm text-ink-gray-5"
+                  >
+                    {{ row.hits - row.matches.length }} more not listed — they change with the rest.
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
+          </ScrollArea>
 
           <div
             v-if="revisable.length"
@@ -217,6 +219,7 @@ import {
   ErrorMessage,
   FormControl,
   Progress,
+  ScrollArea,
   createResource,
   debounce,
   toast,

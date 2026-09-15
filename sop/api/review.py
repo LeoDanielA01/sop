@@ -24,6 +24,8 @@ def comments(sop, version=None, status=None):
 			"name",
 			"parent_comment",
 			"quote",
+			"quote_before",
+			"quote_after",
 			"comment",
 			"status",
 			"version",
@@ -51,6 +53,8 @@ def comments(sop, version=None, status=None):
 			"name": row.name,
 			"parent": row.parent_comment,
 			"quote": row.quote,
+			"quote_before": row.quote_before,
+			"quote_after": row.quote_after,
 			"comment": row.comment,
 			"status": row.status,
 			"version": row.version,
@@ -78,7 +82,7 @@ def comments(sop, version=None, status=None):
 
 
 @frappe.whitelist()
-def add_comment(sop, comment, quote=None, version=None, parent=None):
+def add_comment(sop, comment, quote=None, version=None, parent=None, before=None, after=None):
 	doc = frappe.get_doc("SOP", sop)
 	doc.check_permission("read")
 
@@ -93,6 +97,8 @@ def add_comment(sop, comment, quote=None, version=None, parent=None):
 			"parent_comment": parent,
 			"version": frappe.utils.cint(version) or doc.version,
 			"quote": (quote or "").strip()[:500],
+			"quote_before": (before or "")[-140:],
+			"quote_after": (after or "")[:140],
 			"comment": comment,
 			"status": "Open",
 		}

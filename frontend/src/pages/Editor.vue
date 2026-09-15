@@ -94,8 +94,8 @@ import {
   createResource,
 } from 'frappe-ui'
 import AppBreadcrumbs from '@/components/Layouts/AppBreadcrumbs.vue'
-import SaveIndicator from '@/components/SaveIndicator.vue'
-import ProcedureEditor from '@/components/editor/ProcedureEditor.vue'
+import SaveIndicator from '@/components/Editor/SaveIndicator.vue'
+import ProcedureEditor from '@/components/Editor/ProcedureEditor.vue'
 import { activeSpace, spaces } from '@/data/navigation'
 import { preferences } from '@/data/preferences'
 import { activeProcess, flatten } from '@/data/processes'

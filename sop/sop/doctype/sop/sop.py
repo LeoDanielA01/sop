@@ -84,6 +84,13 @@ class SOP(Document):
 		text = " ".join(part for part in parts if part)
 		self.search_text = re.sub(r"\s+", " ", text).strip()[:100000]
 
+	def on_trash(self):
+		if frappe.flags.sop_removal:
+			return
+
+		if self.status not in ("Draft", "In Review") or frappe.db.exists("SOP Revision", {"sop": self.name}):
+			frappe.throw(_("{0} was in force, so it cannot be deleted. Retire it instead.").format(self.sop_no))
+
 	def is_editable(self):
 		return self.status in EDITABLE_STATES
 

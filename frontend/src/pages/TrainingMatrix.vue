@@ -48,7 +48,7 @@
       <ListSkeleton :rows="4" />
     </div>
 
-    <div v-else-if="rows.length" class="overflow-x-auto rounded-4 border border-outline-gray-2">
+    <ScrollArea v-else-if="rows.length" orientation="horizontal" class="rounded-4 border border-outline-gray-2">
       <table class="w-full border-collapse text-sm">
         <thead>
           <tr class="bg-surface-gray-1">
@@ -114,7 +114,7 @@
           </tr>
         </tbody>
       </table>
-    </div>
+    </ScrollArea>
 
     <div v-if="people.length" class="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5">
       <span
@@ -155,10 +155,10 @@
 
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
-import { Avatar, Badge, Button, PageHeader, Progress, TabButtons, Tooltip } from 'frappe-ui'
+import { Avatar, Badge, Button, PageHeader, Progress, ScrollArea, TabButtons, Tooltip } from 'frappe-ui'
 import AppBreadcrumbs from '@/components/Layouts/AppBreadcrumbs.vue'
-import ListSkeleton from '@/components/ListSkeleton.vue'
-import AssignTrainingDialog from '@/components/AssignTrainingDialog.vue'
+import ListSkeleton from '@/components/Common/ListSkeleton.vue'
+import AssignTrainingDialog from '@/components/Training/AssignTrainingDialog.vue'
 import { activeSpace } from '@/data/navigation'
 import { matrix, trainingCounts } from '@/data/training'
 import { translate as __ } from '@/translation'

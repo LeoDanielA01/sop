@@ -10,6 +10,9 @@ export const useUI = defineStore('ui', () => {
   const replaceDialog = ref(false)
   const profileDialog = ref(false)
   const notificationsPanel = ref(false)
+  const searchQuery = ref('')
+  const removeProcedure = ref(null)
+  const removeSpace = ref(null)
   const settingsTab = ref('preferences')
   const processDialog = ref({ open: false, space: null, parent: null, parentTitle: null })
 
@@ -47,6 +50,9 @@ export const useUI = defineStore('ui', () => {
     replaceDialog,
     profileDialog,
     notificationsPanel,
+    searchQuery,
+    removeProcedure,
+    removeSpace,
     openSettings,
     spaceDialog,
     templateDialog,
