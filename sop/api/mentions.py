@@ -27,6 +27,21 @@ LONG_TEXT = {
 	"Attach Image",
 }
 
+SEARCHABLE = {
+	"Data",
+	"Link",
+	"Dynamic Link",
+	"Select",
+	"Small Text",
+	"Text",
+	"Long Text",
+	"Text Editor",
+	"Phone",
+	"Read Only",
+	"Autocomplete",
+	"Barcode",
+}
+
 DEADLINE_WORDS = (
 	"expir",
 	"valid_upto",
@@ -113,27 +128,147 @@ def find(doctype, text=None, limit=10):
 	if not frappe.has_permission(doctype, "read"):
 		frappe.throw(_("You are not allowed to read {0}.").format(doctype), frappe.PermissionError)
 
-	title_field = frappe.get_meta(doctype).get_title_field()
+	meta = frappe.get_meta(doctype)
+	limit = cint(limit) or 10
+	text = (text or "").strip()
 
-	fields = ["name"]
-	if title_field != "name":
-		fields.append(title_field)
+	if not text:
+		rows = recent(meta, limit)
+	else:
+		rows = with_titles(meta, desk_matches(doctype, text, limit))
 
-	or_filters = {}
-	if text:
-		like = f"%{text}%"
-		or_filters["name"] = ("like", like)
-		if title_field != "name":
-			or_filters[title_field] = ("like", like)
+		if len(rows) < limit:
+			seen = {row["name"] for row in rows}
+			extra = [row for row in field_matches(meta, text, limit) if row["name"] not in seen]
+			rows += extra[: limit - len(rows)]
 
-	rows = frappe.get_list(
-		doctype,
-		or_filters=or_filters or None,
-		fields=fields,
-		limit_page_length=cint(limit) or 10,
+	for row in rows:
+		row["doctype"] = doctype
+
+	return rows
+
+
+def recent(meta, limit):
+	title_field = meta.get_title_field()
+	fields = ["name"] if title_field == "name" else ["name", title_field]
+
+	rows = frappe.get_list(meta.name, fields=fields, order_by="modified desc", limit_page_length=limit)
+
+	return [
+		{
+			"name": row.name,
+			"label": row.get(title_field) or row.name,
+			"hint": None if title_field == "name" else row.name,
+		}
+		for row in rows
+	]
+
+
+def desk_matches(doctype, text, limit):
+	from frappe.desk.search import search_link
+
+	try:
+		rows = search_link(doctype, text, page_length=limit) or []
+	except Exception:
+		frappe.log_error(title=f"SOP mention search failed for {doctype}")
+		return []
+
+	return [
+		{"name": row["value"], "label": row.get("label") or row["value"], "hint": row.get("description") or None}
+		for row in rows
+		if row.get("value")
+	]
+
+
+def with_titles(meta, rows):
+	title_field = meta.get_title_field()
+	if title_field == "name" or not rows:
+		return rows
+
+	titles = dict(
+		frappe.get_all(
+			meta.name,
+			filters={"name": ("in", [row["name"] for row in rows])},
+			fields=["name", title_field],
+			as_list=True,
+		)
 	)
 
-	return [{"name": row.name, "label": row.get(title_field) or row.name} for row in rows]
+	for row in rows:
+		title = titles.get(row["name"])
+		if not title or title == row["name"]:
+			continue
+
+		parts = [row["name"]] + [
+			part.strip()
+			for part in (row.get("hint") or "").split(",")
+			if part.strip() and part.strip() not in (title, row["name"])
+		]
+		row["label"] = title
+		row["hint"] = ", ".join(parts)[:120]
+
+	return rows
+
+
+def searchable_fields(meta, limit=25):
+	title_field = meta.get_title_field()
+	preferred = [field.strip() for field in (meta.search_fields or "").split(",") if field.strip()]
+	names = [title_field, *preferred]
+
+	for df in meta.fields:
+		if df.fieldtype in SEARCHABLE and not df.hidden and df.fieldname not in names:
+			names.append(df.fieldname)
+
+	return [name for name in names if name and name != "name" and meta.has_field(name)][:limit]
+
+
+def field_matches(meta, text, limit):
+	fields = searchable_fields(meta)
+	like = f"%{text}%"
+	title_field = meta.get_title_field()
+
+	try:
+		frappe.db.set_execution_timeout(2)
+		rows = frappe.get_list(
+			meta.name,
+			or_filters=[[meta.name, "name", "like", like]] + [[meta.name, field, "like", like] for field in fields],
+			fields=["name", *fields],
+			order_by="modified desc",
+			limit_page_length=limit,
+		)
+	except Exception:
+		return []
+
+	return [
+		{
+			"name": row.name,
+			"label": row.get(title_field) or row.name,
+			"hint": matched_hint(meta, row, fields, text),
+		}
+		for row in rows
+	]
+
+
+def matched_hint(meta, row, fields, text):
+	needle = text.lower()
+	title_field = meta.get_title_field()
+
+	for field in fields:
+		if field == title_field:
+			continue
+
+		value = frappe.utils.strip_html(str(row.get(field) or ""))
+		at = value.lower().find(needle)
+		if at < 0:
+			continue
+
+		start = max(0, at - 20)
+		snippet = ("…" if start else "") + value[start : at + len(text) + 40].strip()
+		label = meta.get_label(field) or frappe.unscrub(field)
+
+		return f"{_(label)}: {snippet}"
+
+	return None if row.get(title_field) in (None, row.name) else row.name
 
 
 @frappe.whitelist()
@@ -173,6 +308,74 @@ def card(doctype, name):
 	frappe.cache().set_value(key, result, expires_in_sec=CACHE_TTL)
 
 	return result
+
+
+@frappe.whitelist()
+def health(references):
+	if isinstance(references, str):
+		references = frappe.parse_json(references)
+
+	out = []
+	seen = set()
+
+	for row in (references or [])[:60]:
+		doctype = type_named(row.get("doctype")) or row.get("doctype")
+		name = row.get("name")
+		if not doctype or not name or (doctype, name) in seen:
+			continue
+
+		seen.add((doctype, name))
+
+		try:
+			problem = mention_problem(doctype, name)
+		except Exception:
+			frappe.log_error(title=f"SOP mention health failed for {doctype}")
+			continue
+
+		if problem:
+			out.append({"doctype": doctype, "name": name, **problem})
+
+	return out
+
+
+def mention_problem(doctype, name):
+	if not frappe.db.exists("DocType", doctype):
+		return {"tone": "red", "message": _("{0} is not a record type on this site.").format(doctype)}
+
+	if not frappe.db.exists(doctype, name):
+		return {"tone": "red", "message": _("{0} {1} no longer exists.").format(doctype, name)}
+
+	if doctype == "User":
+		if not cint(frappe.db.get_value("User", name, "enabled")):
+			return {"tone": "red", "message": _("{0} can no longer sign in.").format(name)}
+
+		return None
+
+	if not frappe.has_permission(doctype, "read", doc=name):
+		return {
+			"tone": "amber",
+			"message": _("You cannot open {0}, so some readers may not be able to either.").format(name),
+		}
+
+	meta = frappe.get_meta(doctype)
+	found = read(meta, name)
+	row, deadlines = found[0], found[2]
+	title = title_of(meta, row)
+	status = status_of(meta, row)
+
+	if tone_of(status) == "red":
+		return {"tone": "red", "message": _("{0} is {1}.").format(title, status)}
+
+	for df in deadlines:
+		fact = deadline_fact(df, row.get(df.fieldname))
+		if fact and fact["tone"] == "red":
+			return {"tone": "red", "message": f"{title}: {fact['short']}."}
+
+	for fact in extras_for(doctype, name):
+		if fact.get("tone") == "red":
+			return {"tone": "red", "message": f"{title}: {fact.get('short') or fact['value']}."}
+
+	return None
 
 
 def type_named(text):

@@ -13,6 +13,7 @@ LINKED = (
 	("SOP Training Assignment", "sop"),
 	("SOP Training Requirement", "sop"),
 	("SOP Review Comment", "sop"),
+	("SOP Clarity Vote", "sop"),
 )
 
 
@@ -26,12 +27,18 @@ def was_in_force(name, status=None):
 	return status not in NEVER_PUBLISHED or bool(frappe.db.exists("SOP Revision", {"sop": name}))
 
 
+def permanent_allowed():
+	from sop.api.settings import settings
+
+	return bool(settings().allow_permanent_delete)
+
+
 def removal_actions(doc):
 	fresh = not was_in_force(doc.name, doc.status)
 
 	return {
 		"delete": fresh and (is_manager() or doc.owner == frappe.session.user),
-		"purge": is_manager() and doc.status == "Retired",
+		"purge": is_manager() and doc.status == "Retired" and permanent_allowed(),
 	}
 
 
@@ -81,6 +88,12 @@ def delete_draft(sop):
 def purge_procedure(sop, confirm=None):
 	doc = frappe.get_doc("SOP", sop)
 
+	if not permanent_allowed():
+		frappe.throw(
+			_("Permanent deletion is switched off for this organisation. Retired procedures stay on record."),
+			frappe.PermissionError,
+		)
+
 	if not removal_actions(doc)["purge"]:
 		frappe.throw(
 			_("Only an SOP manager can delete a procedure permanently, and only once it is retired."),
@@ -119,8 +132,9 @@ def space_removal(space):
 		"drafts": drafts,
 		"processes": frappe.db.count("SOP Process", {"space": space}),
 		"rules": frappe.db.count("SOP Training Requirement", {"space": space}),
-		"can_delete": is_manager() and not in_force,
+		"can_delete": is_manager() and not in_force and (not history or permanent_allowed()),
 		"needs_confirm": bool(history),
+		"blocked_by_policy": bool(history) and not permanent_allowed(),
 	}
 
 
@@ -137,6 +151,13 @@ def delete_space(space, confirm=None):
 		frappe.throw(
 			_("{0} procedures in {1} are still in force. Retire them first.").format(
 				summary["in_force"], frappe.bold(summary["title"])
+			)
+		)
+
+	if summary["blocked_by_policy"]:
+		frappe.throw(
+			_("{0} holds retired procedures, and this organisation keeps every record, so it cannot be deleted.").format(
+				frappe.bold(summary["title"])
 			)
 		)
 

@@ -6,6 +6,8 @@ import frappe
 
 @frappe.whitelist()
 def me():
+	from sop.api.settings import resolved
+
 	user = frappe.get_cached_doc("User", frappe.session.user)
 	roles = frappe.get_roles()
 
@@ -16,6 +18,7 @@ def me():
 		"is_manager": "SOP Manager" in roles,
 		"is_author": bool({"SOP Author", "SOP Manager"} & set(roles)),
 		"csrf_token": frappe.sessions.get_csrf_token(),
+		**resolved(),
 	}
 
 def can_use_app(user=None):

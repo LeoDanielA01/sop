@@ -29,6 +29,12 @@
           </template>
           {{ __('Spaces') }}
         </SettingsNavItem>
+        <SettingsNavItem v-if="session.user.is_manager" value="organisation">
+          <template #prefix>
+            <span class="lucide-building-2 size-4 shrink-0 text-ink-gray-6" />
+          </template>
+          {{ __('Organisation') }}
+        </SettingsNavItem>
       </SettingsNavGroup>
     </SettingsSidebar>
 
@@ -227,12 +233,65 @@
           </p>
         </SettingsBody>
       </SettingsPanel>
+
+      <SettingsPanel value="organisation">
+        <SettingsHeader
+          :title="__('Organisation')"
+          :description="__('Rules that fit how your organisation must work. Start from a profile, then adjust.')"
+        />
+        <SettingsBody>
+          <ErrorMessage class="mt-4" :message="organisationError" />
+
+          <div class="divide-y divide-outline-gray-1 pt-6">
+            <SettingsRow
+              :title="__('Profile')"
+              :description="__('A starting point. Picking one fills in the settings below.')"
+            >
+              <Select
+                class="w-56"
+                :options="profileOptions"
+                :modelValue="org.profile"
+                @update:modelValue="applyProfile"
+              />
+            </SettingsRow>
+            <SettingsRow
+              :title="__('Writing language')"
+              :description="__('Which rules the clarity check uses. Automatic follows each person’s language.')"
+            >
+              <Select
+                class="w-56"
+                :options="languageOptions"
+                :modelValue="org.writing_language || ''"
+                @update:modelValue="(value) => saveOrganisation({ writing_language: value })"
+              />
+            </SettingsRow>
+            <SettingsRow
+              :title="__('Allow permanent deletion')"
+              :description="__('Switch off if every record must be kept, for example by a public body with archiving duties.')"
+            >
+              <Switch
+                :model-value="!!org.allow_permanent_delete"
+                @update:model-value="(value) => saveOrganisation({ allow_permanent_delete: value ? 1 : 0 })"
+              />
+            </SettingsRow>
+            <SettingsRow
+              :title="__('Show week numbers')"
+              :description="__('Adds the week to dates, for example 16 Sep 2026 · wk 38.')"
+            >
+              <Switch
+                :model-value="!!org.show_week_numbers"
+                @update:model-value="(value) => saveOrganisation({ show_week_numbers: value ? 1 : 0 })"
+              />
+            </SettingsRow>
+          </div>
+        </SettingsBody>
+      </SettingsPanel>
     </SettingsContent>
   </SettingsDialog>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import {
   Avatar,
   Badge,
@@ -250,6 +309,7 @@ import {
   SettingsSidebar,
   Switch,
   TabButtons,
+  createResource,
   useColorScheme,
 } from 'frappe-ui'
 
@@ -262,6 +322,45 @@ import { SHORTCUTS } from '@/composables/useShortcuts'
 
 const open = defineModel('open', { type: Boolean, default: false })
 const ui = useUI()
+
+const org = ref({})
+
+function adopt(data) {
+  org.value = data || {}
+  Object.assign(session.user, data?.resolved || {})
+}
+
+const organisation = createResource({ url: 'sop.api.settings.get', onSuccess: adopt })
+const saving = createResource({ url: 'sop.api.settings.save', onSuccess: adopt })
+const applying = createResource({ url: 'sop.api.settings.apply_profile', onSuccess: adopt })
+
+const organisationError = computed(
+  () =>
+    saving.error?.messages?.[0] ||
+    applying.error?.messages?.[0] ||
+    organisation.error?.messages?.[0],
+)
+
+const profileOptions = computed(() =>
+  (org.value.profiles || []).map((name) => ({ label: __(name), value: name })),
+)
+
+const languageOptions = computed(() => [
+  { label: __('Automatic'), value: '' },
+  ...(org.value.languages || []),
+])
+
+function saveOrganisation(values) {
+  saving.submit({ values })
+}
+
+function applyProfile(profile) {
+  if (profile && profile !== org.value.profile) applying.submit({ profile })
+}
+
+watch(open, (value) => {
+  if (value && session.user.is_manager) organisation.reload()
+})
 
 const onMac = navigator.platform.toLowerCase().includes('mac')
 

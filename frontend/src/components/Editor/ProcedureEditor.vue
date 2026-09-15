@@ -17,6 +17,8 @@
       class="prose-sop min-h-[60vh] px-4 py-4 text-base text-ink-gray-8 focus:outline-none"
     />
 
+    <ClarityCheck v-if="editable" :editor="editor" />
+
     <div
       v-if="!ui.editorToolsPinned"
       class="flex items-center gap-1.5 border-t border-outline-gray-1 px-3 py-1.5 text-sm text-ink-gray-5"
@@ -37,6 +39,7 @@ import {
   RichTextKit,
   useEditor,
 } from 'frappe-ui/editor'
+import ClarityCheck from './ClarityCheck.vue'
 import MentionSuggest from './MentionSuggest.vue'
 import ToolPalette from './ToolPalette.vue'
 import { useUI } from '@/stores/ui'

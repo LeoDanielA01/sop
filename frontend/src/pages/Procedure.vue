@@ -171,6 +171,13 @@
       :root="body"
     />
 
+    <ClarityFeedback
+      v-if="doc.name"
+      :sop="doc.name"
+      :version="doc.version"
+      @summary="(value) => (clarity = value)"
+    />
+
     <nav
       v-if="around.previous || around.next"
       class="mt-10 grid gap-3 border-t border-outline-gray-1 pt-5 sm:grid-cols-2"
@@ -348,6 +355,7 @@ import {
 } from 'frappe-ui'
 import AppBreadcrumbs from '@/components/Layouts/AppBreadcrumbs.vue'
 import ApproversDialog from '@/components/Procedure/ApproversDialog.vue'
+import ClarityFeedback from '@/components/Procedure/ClarityFeedback.vue'
 import ReviewComments from '@/components/Procedure/ReviewComments.vue'
 import MentionChip from '@/components/Procedure/MentionChip.vue'
 import { acknowledge, procedure } from '@/data/procedures'
@@ -365,6 +373,7 @@ const ui = useUI()
 const RISK_THEME = { High: 'red', Medium: 'orange', Low: 'green' }
 
 const openComments = ref(0)
+const clarity = ref(null)
 
 const nearby = createResource({ url: 'sop.api.procedures.neighbours' })
 
@@ -443,6 +452,16 @@ const facts = computed(() => {
           : '—',
     },
   ]
+
+  if (clarity.value?.can_see_notes && clarity.value.total) {
+    const percent = clarity.value.percent
+
+    rows.push({
+      label: __('Clarity'),
+      value: __('{0}% clear · {1} votes').format(percent, clarity.value.total),
+      badge: percent >= 80 ? 'green' : percent >= 50 ? 'amber' : 'red',
+    })
+  }
 
   if (doc.value.risk_level) {
     rows.push({

@@ -1,3 +1,4 @@
+import { session } from '@/data/session'
 import { translate as __ } from '@/translation'
 
 export const STATUS_THEME = {
@@ -9,10 +10,22 @@ export const STATUS_THEME = {
   Retired: 'red',
 }
 
+export function weekOf(value) {
+  const date = new Date(Date.UTC(value.getFullYear(), value.getMonth(), value.getDate()))
+  const day = date.getUTCDay() || 7
+  date.setUTCDate(date.getUTCDate() + 4 - day)
+
+  const start = new Date(Date.UTC(date.getUTCFullYear(), 0, 1))
+
+  return Math.ceil(((date - start) / 86400000 + 1) / 7)
+}
+
 export function shortDate(value) {
   if (!value) return ''
   const d = new Date(value)
-  return d.toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' })
+  const text = d.toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' })
+
+  return session.user?.week_numbers ? `${text} · ${__('wk')} ${weekOf(d)}` : text
 }
 
 export function dayLabel(value) {

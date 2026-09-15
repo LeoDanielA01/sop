@@ -15,6 +15,14 @@
           }}
         </p>
 
+        <p v-else-if="info.blocked_by_policy" class="text-base text-ink-gray-7">
+          {{
+            __(
+              '{0} holds retired procedures, and your organisation keeps every record, so it cannot be deleted.',
+            ).format(info.title)
+          }}
+        </p>
+
         <p v-else-if="!info.can_delete" class="text-base text-ink-gray-7">
           {{ __('Only an SOP manager can delete a space.') }}
         </p>

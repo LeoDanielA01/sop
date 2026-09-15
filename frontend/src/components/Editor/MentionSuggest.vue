@@ -50,7 +50,7 @@
 
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { Avatar, ScrollArea, createResource } from 'frappe-ui'
+import { Avatar, ScrollArea, createResource, debounce } from 'frappe-ui'
 
 const props = defineProps({
   editor: { type: Object, default: null },
@@ -83,6 +83,8 @@ const people = createResource({ url: 'sop.api.procedures.people' })
 const types = createResource({ url: 'sop.api.mentions.doctypes' })
 const records = createResource({ url: 'sop.api.mentions.find' })
 
+const findRecords = debounce((params) => records.submit(params), 180)
+
 const resource = computed(() => {
   if (stage.value === 'person') return people
   if (stage.value === 'doctype') return types
@@ -113,8 +115,8 @@ const rows = computed(() => {
   return (records.data || []).map((row) => ({
     value: row.name,
     label: row.label,
-    hint: row.name === row.label ? null : row.name,
-    doctype: doctype.value,
+    hint: row.hint || (row.name === row.label ? null : row.name),
+    doctype: row.doctype || doctype.value,
   }))
 })
 
@@ -124,7 +126,7 @@ function search() {
   if (stage.value === 'person') return people.submit({ search: query.value })
   if (stage.value === 'doctype') return types.submit({ search: query.value })
 
-  return records.submit({ doctype: doctype.value, text: query.value })
+  return findRecords({ doctype: doctype.value, text: query.value })
 }
 
 function close() {

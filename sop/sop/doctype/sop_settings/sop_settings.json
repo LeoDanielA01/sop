@@ -1,0 +1,86 @@
+{
+ "actions": [],
+ "creation": "2026-09-16 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "profile",
+  "column_break_profile",
+  "writing_language",
+  "records_section",
+  "allow_permanent_delete",
+  "column_break_records",
+  "show_week_numbers"
+ ],
+ "fields": [
+  {
+   "default": "General",
+   "description": "A starting point. Picking one fills in the settings below.",
+   "fieldname": "profile",
+   "fieldtype": "Select",
+   "label": "Profile",
+   "options": "General\nPublic sector"
+  },
+  {
+   "fieldname": "column_break_profile",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Which language the clarity check reads. Leave empty to follow each person's own language.",
+   "fieldname": "writing_language",
+   "fieldtype": "Link",
+   "label": "Writing Language",
+   "options": "Language"
+  },
+  {
+   "fieldname": "records_section",
+   "fieldtype": "Section Break",
+   "label": "Records"
+  },
+  {
+   "default": "1",
+   "description": "Switch off if every record must be kept, for example by a public body with archiving duties.",
+   "fieldname": "allow_permanent_delete",
+   "fieldtype": "Check",
+   "label": "Allow Permanent Deletion"
+  },
+  {
+   "fieldname": "column_break_records",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "description": "Adds the week to dates, for example 16 Sep 2026 · wk 38.",
+   "fieldname": "show_week_numbers",
+   "fieldtype": "Check",
+   "label": "Show Week Numbers"
+  }
+ ],
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-09-16 12:30:00.000000",
+ "modified_by": "Administrator",
+ "module": "SOP",
+ "name": "SOP Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "print": 1,
+   "read": 1,
+   "role": "SOP Manager",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}
