@@ -100,6 +100,6 @@ function railLabel(item) {
   const count = badges.value[item.key]
   if (!count) return __(item.label)
 
-  return `${__(item.label)} — ${count}`
+  return `${__(item.label)} (${count})`
 }
 </script>

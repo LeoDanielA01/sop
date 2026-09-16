@@ -1,64 +1,63 @@
 <template>
-  <section class="mt-10 rounded-4 border border-outline-gray-2 px-4 py-3">
-    <div class="flex flex-wrap items-center gap-3">
-      <p class="text-base font-medium text-ink-gray-8">{{ __('Was this procedure clear?') }}</p>
+  <section class="mt-6 rounded-3 border border-outline-gray-2 px-3 py-2">
+    <div class="flex flex-wrap items-center gap-2">
+      <p class="text-sm text-ink-gray-6 mr-1">{{ __('Was this clear?') }}</p>
 
-      <div class="flex items-center gap-1.5">
-        <Button
-          :variant="mine && mine.clear ? 'solid' : 'subtle'"
-          icon-left="lucide-thumbs-up"
-          :label="__('Clear')"
-          :disabled="send.loading"
-          @click="choose(1)"
-        />
-        <Button
-          :variant="mine && !mine.clear ? 'solid' : 'subtle'"
-          icon-left="lucide-thumbs-down"
-          :label="__('Not really')"
-          :disabled="send.loading"
-          @click="choose(0)"
-        />
-      </div>
+      <button
+        type="button"
+        class="vote-btn"
+        :class="mine && mine.clear ? 'vote-btn--yes' : ''"
+        :disabled="send.loading"
+        @click="choose(1)"
+      >
+        <span class="lucide-thumbs-up" aria-hidden="true" />
+        {{ __('Yes') }}
+      </button>
 
-      <span v-if="mine && !asking" class="text-sm text-ink-gray-5">
-        {{ mine.clear ? __('Thanks, noted.') : __('Thanks. The author will see your note.') }}
+      <button
+        type="button"
+        class="vote-btn"
+        :class="mine && !mine.clear ? 'vote-btn--no' : ''"
+        :disabled="send.loading"
+        @click="choose(0)"
+      >
+        <span class="lucide-thumbs-down" aria-hidden="true" />
+        {{ __('No') }}
+      </button>
+
+      <span v-if="mine && !asking" class="text-xs text-ink-gray-4">
+        {{ mine.clear ? __('Noted ✓') : __('Thanks, author notified.') }}
       </span>
 
-      <span v-if="info?.can_see_notes && info.total" class="ml-auto text-sm text-ink-gray-5">
-        {{ __('{0}% clear · {1} votes').format(info.percent, info.total) }}
+      <span v-if="info?.can_see_notes && info.total" class="ml-auto text-xs text-ink-gray-4 tabular-nums">
+        {{ info.percent }}% clear · {{ info.total }} votes
       </span>
     </div>
 
-    <div v-if="asking" class="mt-3 flex flex-col gap-2">
+    <div v-if="asking" class="mt-2 flex items-end gap-2">
       <FormControl
         type="textarea"
-        :placeholder="__('What was unclear? A step, a word, a missing detail…')"
+        :placeholder="__('What was unclear?')"
         v-model="note"
+        class="flex-1 text-sm"
+        :rows="2"
       />
-      <div class="flex justify-end gap-2">
-        <Button variant="ghost" :label="__('Skip')" @click="asking = false" />
-        <Button
-          variant="solid"
-          :label="__('Send')"
-          :loading="send.loading"
-          :disabled="!note.trim()"
-          @click="submit"
-        />
+      <div class="flex flex-col gap-1.5 shrink-0">
+        <Button variant="solid" size="sm" :label="__('Send')" :loading="send.loading" :disabled="!note.trim()" @click="submit" />
+        <Button variant="ghost" size="sm" :label="__('Skip')" @click="asking = false" />
       </div>
     </div>
 
-    <div v-if="info?.notes?.length" class="mt-4 border-t border-outline-gray-1 pt-3">
-      <p class="mb-2 text-sm text-ink-gray-5">{{ __('What readers found unclear') }}</p>
-      <ul class="flex flex-col gap-2">
-        <li
-          v-for="(row, index) in info.notes"
-          :key="index"
-          class="rounded-4 bg-surface-gray-1 px-3 py-2"
-        >
-          <p class="whitespace-pre-line text-base text-ink-gray-8">{{ row.note }}</p>
-          <p class="mt-0.5 text-sm text-ink-gray-5">{{ row.who }} · {{ row.when }}</p>
-        </li>
-      </ul>
+    <div v-if="info?.notes?.length" class="mt-2 border-t border-outline-gray-1 pt-2 space-y-1.5">
+      <p class="text-xs text-ink-gray-4 mb-1">{{ __('Reader notes') }}</p>
+      <div
+        v-for="(row, i) in info.notes"
+        :key="i"
+        class="rounded-3 bg-surface-gray-1 px-2.5 py-1.5"
+      >
+        <p class="text-sm text-ink-gray-8 whitespace-pre-line">{{ row.note }}</p>
+        <p class="mt-0.5 text-xs text-ink-gray-4">{{ row.who }} · {{ row.when }}</p>
+      </div>
     </div>
   </section>
 </template>
@@ -66,16 +65,17 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
 import { Button, FormControl, createResource } from 'frappe-ui'
+import { translate as __ } from '@/translation'
 
 const props = defineProps({
-  sop: { type: String, required: true },
+  sop:     { type: String, required: true },
   version: { type: Number, default: null },
 })
 
 const emit = defineEmits(['summary'])
 
-const info = ref(null)
-const note = ref('')
+const info   = ref(null)
+const note   = ref('')
 const asking = ref(false)
 
 const mine = computed(() => info.value?.mine || null)
@@ -113,3 +113,38 @@ watch(
   { immediate: true },
 )
 </script>
+
+<style scoped>
+.vote-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid var(--outline-gray-2, #e5e7eb);
+  background: transparent;
+  color: var(--ink-gray-6, #4b5563);
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+.vote-btn:hover:not(:disabled) {
+  background: var(--surface-gray-1, #f9fafb);
+  border-color: var(--outline-gray-3, #d1d5db);
+}
+.vote-btn--yes {
+  background: var(--surface-green-1, #f0fdf4);
+  border-color: var(--outline-green-2, #86efac);
+  color: var(--ink-green-3, #166534);
+}
+.vote-btn--no {
+  background: var(--surface-red-1, #fff1f2);
+  border-color: var(--outline-red-2, #fca5a5);
+  color: var(--ink-red-3, #991b1b);
+}
+.vote-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+</style>

@@ -6,6 +6,7 @@ import { translate as __ } from '@/translation'
 export const SECTIONS = [
   { key: 'procedures', label: 'Procedures', icon: 'lucide-book-text', route: '/' },
   { key: 'training', label: 'Training', icon: 'lucide-graduation-cap', route: '/training' },
+  { key: 'insights', label: 'Insights', icon: 'lucide-bar-chart-3', route: '/insights' },
 ]
 
 export const activeSpace = ref(null)
