@@ -1,12 +1,12 @@
 <template>
   <SidebarRail class="border-r">
-    <SidebarRailItem :label="__('Procedures')" @click="router.push('/')">
+    <SidebarRailItem :label="__('Procedures')" @click="router.push('/procedures')">
       <Avatar :image="mark" label="SOP" size="lg" shape="square" class="size-7" />
     </SidebarRailItem>
 
     <div class="flex w-full flex-1 flex-col items-center gap-3 pt-3">
       <SidebarRailItem
-        v-for="item in SECTIONS"
+        v-for="item in sections"
         :key="item.route"
         :label="railLabel(item)"
         :icon="item.icon"
@@ -105,6 +105,8 @@ const badges = computed(() => ({
 }))
 
 const createOptions = useCreateOptions()
+
+const sections = computed(() => SECTIONS.filter((item) => !item.authors || session.user.is_author))
 
 function railLabel(item) {
   const count = badges.value[item.key]

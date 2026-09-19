@@ -167,3 +167,15 @@
     display: none !important;
   }
 }
+
+.viz {
+  --viz-1: #2a78d6;
+  --viz-2: #eb6834;
+  --viz-surface: var(--surface-base, var(--surface-white, #ffffff));
+  --viz-grid: var(--outline-gray-1);
+  --viz-axis: var(--outline-gray-2);
+}
+:root[data-theme='dark'] .viz {
+  --viz-1: #3987e5;
+  --viz-2: #d95926;
+}

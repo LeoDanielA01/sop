@@ -3,9 +3,10 @@ import { createPinia } from 'pinia'
 import { FrappeUI, frappeRequest, setConfig } from 'frappe-ui'
 import router from './router'
 import translationPlugin from './translation'
+import { withFeedback } from './utils/feedback'
 import './index.css'
 
-setConfig('resourceFetcher', frappeRequest)
+setConfig('resourceFetcher', withFeedback(frappeRequest))
 
 async function hydrate() {
   if (window.csrf_token && window.site_name) return

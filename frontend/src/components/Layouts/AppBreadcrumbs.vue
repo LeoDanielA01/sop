@@ -27,6 +27,10 @@ const doc = computed(() => {
 })
 
 const items = computed(() => {
+  if (section.value === 'insights') {
+    return [{ label: __('Insights'), route: '/insights' }, ...props.tail]
+  }
+
   if (section.value === 'training') {
     return [{ label: __('Training'), route: '/training' }, ...props.tail]
   }

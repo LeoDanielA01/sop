@@ -62,7 +62,7 @@ def summary(sop):
 	mine = next((row for row in rows if row.user == frappe.session.user), None)
 	result = {
 		"version": version,
-		"mine": {"clear": cint(mine.clear), "note": mine.note} if mine else None,
+		"mine": {"clear": cint(mine.get("clear")), "note": mine.note} if mine else None,
 		"can_see_notes": False,
 	}
 
@@ -70,8 +70,8 @@ def summary(sop):
 		return result
 
 	total = len(rows)
-	clear_count = len([row for row in rows if cint(row.clear)])
-	unclear = [row for row in rows if not cint(row.clear) and row.note]
+	clear_count = len([row for row in rows if cint(row.get("clear"))])
+	unclear = [row for row in rows if not cint(row.get("clear")) and row.note]
 	names = user_names({row.user for row in unclear})
 
 	result.update(

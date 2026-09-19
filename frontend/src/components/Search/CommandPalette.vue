@@ -92,6 +92,7 @@ import { computed, nextTick, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { Badge, Dialog, ScrollArea, TextInput, createResource, debounce } from 'frappe-ui'
 import { SECTIONS, activeSpace, spaces, views } from '@/data/navigation'
+import { session } from '@/data/session'
 import { useUI } from '@/stores/ui'
 import { translate as __ } from '@/translation'
 
@@ -124,7 +125,7 @@ const jumpTo = computed(() => [
   {
     title: __('Jump to'),
     items: [
-      ...SECTIONS.map((section) => ({
+      ...SECTIONS.filter((section) => !section.authors || session.user.is_author).map((section) => ({
         label: section.label,
         icon: section.icon,
         route: section.route,

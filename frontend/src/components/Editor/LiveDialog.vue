@@ -186,7 +186,7 @@
 
 <script setup>
 import { computed, nextTick, ref, watch } from 'vue'
-import { Button, Dialog, ErrorMessage, FormControl, Skeleton, call, createResource, debounce } from 'frappe-ui'
+import { Button, Dialog, ErrorMessage, FormControl, Skeleton, call, createResource, debounce, toast } from 'frappe-ui'
 import { CHECK_WORDS, checkHref, checkPhrase, liveHref } from '@/data/live'
 import { translate as __ } from '@/translation'
 
@@ -354,5 +354,6 @@ function insert() {
     .run()
 
   open.value = false
+  toast.success(props.mode === 'check' ? __('Check added') : __('Live value added'))
 }
 </script>

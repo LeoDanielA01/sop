@@ -82,7 +82,7 @@
           <span class="relative shrink-0">
             <Avatar :image="phone.person?.image" :label="phone.person?.full_name" size="xl" shape="circle" />
             <span
-              class="absolute -bottom-0.5 -right-0.5 size-3 rounded-full border-2 border-[color:var(--surface-base)]"
+              class="absolute -bottom-0.5 -right-0.5 size-3 rounded-full border-2 border-[color:var(--surface-base,var(--surface-white))]"
               :class="phone.state === 'live' ? 'bg-[color:var(--ink-green-3)]' : 'bg-surface-gray-4'"
               aria-hidden="true"
             />
