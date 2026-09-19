@@ -40,4 +40,4 @@ def log(to, outcome, duration=0, sop=None):
 
 	reachable(to)
 
-	return post(frappe.session.user, to, outcome, kind="Call", sop=sop, duration=cint(duration))
+	return post(frappe.session.user, outcome, recipient=to, kind="Call", sop=sop, duration=cint(duration))

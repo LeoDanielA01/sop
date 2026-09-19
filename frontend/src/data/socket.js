@@ -1,7 +1,7 @@
 import { io } from 'socket.io-client'
 import { reactive } from 'vue'
 
-export const realtime = reactive({ connected: false, error: null })
+export const realtime = reactive({ connected: false, error: null, address: '' })
 
 let socket = null
 
@@ -17,7 +17,9 @@ function address() {
 export function useSocket() {
   if (socket) return socket
 
-  socket = io(address(), {
+  realtime.address = address()
+
+  socket = io(realtime.address, {
     withCredentials: true,
     reconnection: true,
     reconnectionDelayMax: 10000,

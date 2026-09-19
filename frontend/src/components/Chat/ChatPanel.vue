@@ -19,9 +19,38 @@
         <aside
           v-if="chat.open"
           class="pointer-events-auto absolute inset-y-0 right-0 flex w-full flex-col border-l border-outline-gray-2 bg-surface-base shadow-2xl sm:w-[26rem]"
+          @dragover.prevent="dragging = inThread"
+          @dragleave.self="dragging = false"
+          @drop.prevent="drop"
         >
           <div class="flex items-center gap-2 border-b border-outline-gray-1 px-3 py-2.5">
-            <template v-if="chat.person">
+            <template v-if="chat.room">
+              <Button variant="ghost" icon="lucide-arrow-left" :label="__('All messages')" @click="showInbox" />
+              <span class="grid size-8 shrink-0 place-content-center rounded-2 bg-surface-gray-2" aria-hidden="true">
+                <span class="lucide-file-text size-4 text-ink-gray-6" />
+              </span>
+              <div class="min-w-0 flex-1">
+                <p class="truncate text-base font-semibold text-ink-gray-9">{{ chat.room.sop_no }}</p>
+                <button
+                  type="button"
+                  class="block max-w-full truncate text-xs text-ink-gray-5 hover:text-ink-gray-8"
+                  @click="showMembers = !showMembers"
+                >
+                  {{ chat.room.title }} · {{ __('{0} members').format(chat.room.members.length) }}
+                </button>
+              </div>
+
+              <Tooltip :text="__('Open the procedure')">
+                <Button
+                  variant="ghost"
+                  icon="lucide-arrow-up-right"
+                  :label="__('Open the procedure')"
+                  @click="visit(chat.room.sop)"
+                />
+              </Tooltip>
+            </template>
+
+            <template v-else-if="chat.person">
               <Button variant="ghost" icon="lucide-arrow-left" :label="__('All messages')" @click="showInbox" />
               <Avatar :image="chat.person.image" :label="chat.person.full_name" size="lg" shape="circle" />
               <p class="min-w-0 flex-1 truncate text-base font-semibold text-ink-gray-9">
@@ -37,12 +66,7 @@
                 />
               </Tooltip>
               <Tooltip :text="__('Email')">
-                <Button
-                  variant="ghost"
-                  icon="lucide-mail"
-                  :label="__('Email')"
-                  @click="openMail(chat.person, chat.sop)"
-                />
+                <Button variant="ghost" icon="lucide-mail" :label="__('Email')" @click="openMail(chat.person, chat.sop)" />
               </Tooltip>
             </template>
 
@@ -77,10 +101,40 @@
             class="flex items-start gap-2 border-b border-outline-gray-1 bg-surface-gray-1 px-4 py-2 text-sm text-ink-gray-6"
           >
             <span class="lucide-wifi-off mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
-            {{ __('Live updates are offline, so new messages and calls will not arrive until the connection is back.') }}
+            <span class="min-w-0">
+              {{ __('Live updates are offline, so new messages and calls will not arrive until the connection is back.') }}
+              <span class="mt-1 block break-all font-mono text-xs text-ink-gray-5">
+                {{ realtime.error }} · {{ realtime.address }}
+              </span>
+            </span>
           </div>
 
-          <template v-if="!chat.person">
+          <div
+            v-if="chat.room && showMembers"
+            class="max-h-56 overflow-y-auto border-b border-outline-gray-1 bg-surface-gray-1 py-1.5"
+          >
+            <button
+              v-for="member in chat.room.members"
+              :key="member.name"
+              type="button"
+              class="flex w-full items-center gap-2.5 px-4 py-1.5 text-left hover:bg-surface-gray-2 disabled:cursor-default disabled:hover:bg-transparent"
+              :disabled="member.name === session.user.name"
+              @click="openChat(member, chat.room.sop)"
+            >
+              <Avatar :image="member.image" :label="member.full_name" size="md" shape="circle" />
+              <span class="min-w-0 flex-1 truncate text-sm text-ink-gray-8">
+                {{ member.full_name }}
+                <span v-if="member.name === session.user.name" class="text-ink-gray-5">({{ __('you') }})</span>
+              </span>
+              <span
+                v-if="member.name !== session.user.name"
+                class="lucide-message-square size-3.5 text-ink-gray-5"
+                aria-hidden="true"
+              />
+            </button>
+          </div>
+
+          <template v-if="!inThread">
             <div class="px-3 pt-3">
               <TextInput v-model="query" type="text" :placeholder="__('Find someone')" autocomplete="off">
                 <template #prefix>
@@ -116,19 +170,31 @@
               <template v-else-if="(threads.data || []).length">
                 <button
                   v-for="row in threads.data"
-                  :key="row.person.name"
+                  :key="row.room ? `sop:${row.room.sop}` : row.person.name"
                   type="button"
                   class="flex w-full items-center gap-2.5 px-4 py-2.5 text-left hover:bg-surface-gray-2"
-                  @click="pick(row.person)"
+                  @click="row.room ? openRoom(row.room.sop) : pick(row.person)"
                 >
-                  <Avatar :image="row.person.image" :label="row.person.full_name" size="lg" shape="circle" />
+                  <span
+                    v-if="row.room"
+                    class="grid size-8 shrink-0 place-content-center rounded-2 bg-surface-gray-2"
+                    aria-hidden="true"
+                  >
+                    <span class="lucide-file-text size-4 text-ink-gray-6" />
+                  </span>
+                  <Avatar v-else :image="row.person.image" :label="row.person.full_name" size="lg" shape="circle" />
+
                   <span class="min-w-0 flex-1">
                     <span class="flex items-center gap-2">
                       <span
                         class="min-w-0 flex-1 truncate text-base"
                         :class="row.unread ? 'font-semibold text-ink-gray-9' : 'text-ink-gray-8'"
                       >
-                        {{ row.person.full_name }}
+                        <template v-if="row.room">
+                          {{ row.room.sop_no }}
+                          <span class="font-normal text-ink-gray-5">· {{ row.room.title }}</span>
+                        </template>
+                        <template v-else>{{ row.person.full_name }}</template>
                       </span>
                       <span class="shrink-0 text-xs text-ink-gray-5">{{ when(row.last.creation) }}</span>
                     </span>
@@ -137,7 +203,7 @@
                         class="min-w-0 flex-1 truncate text-sm"
                         :class="row.unread ? 'text-ink-gray-8' : 'text-ink-gray-5'"
                       >
-                        {{ preview(row.last) }}
+                        {{ preview(row) }}
                       </span>
                       <Badge v-if="row.unread" theme="red" variant="subtle" size="sm">{{ row.unread }}</Badge>
                     </span>
@@ -150,13 +216,15 @@
                   <span class="lucide-message-square size-5 text-ink-gray-5" />
                 </span>
                 <p class="mt-3 text-base font-medium text-ink-gray-7">{{ __('No conversations yet') }}</p>
-                <p class="mt-1 text-sm text-ink-gray-5">{{ __('Find someone above to start one.') }}</p>
+                <p class="mt-1 text-sm text-ink-gray-5">
+                  {{ __('Find someone above, or open Discussion on a procedure.') }}
+                </p>
               </div>
             </div>
           </template>
 
           <template v-else>
-            <div ref="scroller" class="min-h-0 flex-1 overflow-y-auto px-4 py-3">
+            <div ref="scroller" class="relative min-h-0 flex-1 overflow-y-auto px-4 py-3">
               <div v-if="chat.loading" class="flex flex-col gap-3">
                 <Skeleton class="h-8 w-2/3 rounded-3" />
                 <Skeleton class="ml-auto h-8 w-1/2 rounded-3" />
@@ -168,67 +236,58 @@
                   <Button variant="ghost" size="sm" :label="__('Show earlier')" :loading="earlier" @click="showEarlier" />
                 </div>
 
-                <p
-                  v-if="!chat.messages.length"
-                  class="px-6 pt-16 text-center text-sm text-ink-gray-5"
-                >
-                  {{ __('Say hello to {0}.').format(chat.person.full_name) }}
+                <p v-if="!chat.messages.length" class="px-6 pt-16 text-center text-sm text-ink-gray-5">
+                  {{
+                    chat.room
+                      ? __('Start the discussion about {0}. Everyone involved in it will see this.').format(
+                          chat.room.sop_no,
+                        )
+                      : __('Say hello to {0}.').format(chat.person.full_name)
+                  }}
                 </p>
 
                 <section v-for="group in groups" :key="group.label">
                   <p class="my-3 text-center text-xs font-medium text-ink-gray-5">{{ group.label }}</p>
 
-                  <div v-for="row in group.rows" :key="row.name" class="mb-1.5">
-                    <div
-                      v-if="row.kind === 'Call'"
-                      class="flex items-center justify-center gap-1.5 py-1 text-xs text-ink-gray-5"
-                    >
-                      <span
-                        :class="row.content === 'Completed' ? 'lucide-phone' : 'lucide-phone-missed'"
-                        class="size-3.5"
-                        aria-hidden="true"
-                      />
-                      {{ callLine(row) }} · {{ time(row.creation) }}
-                    </div>
-
-                    <div v-else class="flex" :class="mine(row) ? 'justify-end' : 'justify-start'">
-                      <div
-                        class="max-w-[80%] rounded-3 px-3 py-1.5"
-                        :class="
-                          mine(row)
-                            ? 'bg-surface-gray-3 text-ink-gray-9'
-                            : 'border border-outline-gray-2 bg-surface-base text-ink-gray-9'
-                        "
-                      >
-                        <p class="whitespace-pre-wrap break-words text-base">{{ row.content }}</p>
-                        <p class="mt-0.5 flex items-center justify-end gap-1.5 text-xs text-ink-gray-5">
-                          <button
-                            v-if="row.sop"
-                            type="button"
-                            class="truncate underline-offset-2 hover:underline"
-                            @click="visit(row.sop)"
-                          >
-                            {{ row.sop }}
-                          </button>
-                          <span>{{ time(row.creation) }}</span>
-                          <span
-                            v-if="mine(row)"
-                            :class="row.read ? 'lucide-check-check text-ink-green-3' : 'lucide-check'"
-                            class="size-3.5"
-                            :aria-label="row.read ? __('Seen') : __('Sent')"
-                          />
-                        </p>
-                      </div>
-                    </div>
-                  </div>
+                  <MessageItem
+                    v-for="row in group.rows"
+                    :key="row.message.name"
+                    class="mb-1.5"
+                    :message="row.message"
+                    :mine="row.message.sender === session.user.name"
+                    :group="!!chat.room"
+                    :first="row.first"
+                    :sender="senderOf(row.message)"
+                    @visit="visit"
+                    @loaded="settle"
+                  />
                 </section>
               </template>
+
+              <div
+                v-if="dragging"
+                class="pointer-events-none absolute inset-2 grid place-content-center rounded-3 border-2 border-dashed border-outline-gray-3 bg-surface-base text-center"
+              >
+                <span class="lucide-upload mx-auto size-6 text-ink-gray-5" aria-hidden="true" />
+                <p class="mt-2 text-sm text-ink-gray-7">{{ __('Drop files to share them') }}</p>
+              </div>
             </div>
 
-            <div class="border-t border-outline-gray-1 p-3">
+            <div class="border-t border-outline-gray-1 px-3 pb-3 pt-2">
+              <p class="mb-1 flex h-4 items-center gap-1.5 text-xs text-ink-gray-5" aria-live="polite">
+                <template v-if="typers">
+                  <span class="flex gap-0.5" aria-hidden="true">
+                    <span class="size-1 animate-bounce rounded-full bg-surface-gray-4 [animation-delay:-0.3s]" />
+                    <span class="size-1 animate-bounce rounded-full bg-surface-gray-4 [animation-delay:-0.15s]" />
+                    <span class="size-1 animate-bounce rounded-full bg-surface-gray-4" />
+                  </span>
+                  {{ typers }}
+                </template>
+              </p>
+
               <ErrorMessage :message="chat.error" class="mb-2" />
 
-              <p v-if="chat.sop" class="mb-1.5 flex items-center gap-1.5 text-xs text-ink-gray-5">
+              <p v-if="chat.person && chat.sop" class="mb-1.5 flex items-center gap-1.5 text-xs text-ink-gray-5">
                 <span class="lucide-file-text size-3.5" aria-hidden="true" />
                 {{ __('About {0}').format(chat.sop) }}
                 <button type="button" class="hover:text-ink-gray-8" :aria-label="__('Remove')" @click="chat.sop = null">
@@ -236,16 +295,38 @@
                 </button>
               </p>
 
+              <div v-if="uploads.length" class="mb-2 flex flex-wrap gap-1.5">
+                <span
+                  v-for="name in uploads"
+                  :key="name"
+                  class="inline-flex max-w-full items-center gap-1.5 rounded-2 bg-surface-gray-2 px-2 py-1 text-xs text-ink-gray-7"
+                >
+                  <span class="lucide-loader-circle size-3.5 shrink-0 animate-spin" aria-hidden="true" />
+                  <span class="truncate">{{ name }}</span>
+                </span>
+              </div>
+
               <div class="flex items-end gap-2">
+                <Tooltip :text="__('Share a file or image')">
+                  <Button
+                    variant="ghost"
+                    icon="lucide-paperclip"
+                    :label="__('Share a file or image')"
+                    @click="picker?.click()"
+                  />
+                </Tooltip>
+
                 <textarea
                   ref="box"
                   v-model="draft"
                   rows="1"
-                  :placeholder="__('Write a message')"
+                  :placeholder="chat.room ? __('Message everyone on {0}').format(chat.room.sop_no) : __('Write a message')"
                   class="max-h-32 min-h-[2.25rem] flex-1 resize-none rounded-2 border border-outline-gray-2 bg-surface-gray-1 px-2.5 py-1.5 text-base text-ink-gray-9 placeholder:text-ink-gray-4 focus:border-outline-gray-4 focus:ring-0"
                   @keydown.enter.exact.prevent="send"
-                  @input="grow"
+                  @input="typed"
+                  @paste="paste"
                 />
+
                 <Button
                   variant="solid"
                   icon="lucide-send-horizontal"
@@ -255,6 +336,8 @@
                   @click="send"
                 />
               </div>
+
+              <input ref="picker" type="file" multiple class="hidden" @change="choose" />
             </div>
           </template>
         </aside>
@@ -276,9 +359,23 @@ import {
   Tooltip,
   createResource,
   debounce,
+  useFileUpload,
 } from 'frappe-ui'
+import MessageItem from '@/components/Chat/MessageItem.vue'
 import { startCall } from '@/data/call'
-import { chat, loadEarlier, openChat, openMail, sendMessage, showInbox, threads } from '@/data/chat'
+import {
+  announceTyping,
+  chat,
+  currentKey,
+  loadEarlier,
+  openChat,
+  openMail,
+  openRoom,
+  sendMessage,
+  showInbox,
+  threads,
+  typing,
+} from '@/data/chat'
 import { session } from '@/data/session'
 import { realtime } from '@/data/socket'
 import { sounds } from '@/data/sound'
@@ -287,17 +384,24 @@ import { dayLabel, shortDate } from '@/utils/format'
 
 const route = useRoute()
 const router = useRouter()
+const fileUpload = useFileUpload()
 
 const query = ref('')
 const draft = ref('')
 const scroller = ref(null)
 const box = ref(null)
+const picker = ref(null)
 const earlier = ref(false)
 const more = ref(false)
+const showMembers = ref(false)
+const dragging = ref(false)
+const uploads = ref([])
 
 const people = createResource({ url: 'sop.api.chat.people' })
 
 const search = debounce((value) => people.submit({ query: value }), 250)
+
+const inThread = computed(() => !!(chat.room || chat.person))
 
 watch(query, (value) => {
   if (value.trim()) search(value.trim())
@@ -311,18 +415,17 @@ watch(
 watch(
   () => chat.open,
   (open) => {
-    if (open && !chat.person) threads.reload()
+    if (open && !inThread.value) threads.reload()
     if (!open) query.value = ''
   },
 )
 
-watch(
-  () => chat.person?.name,
-  () => {
-    draft.value = ''
-    more.value = false
-  },
-)
+watch(currentKey, () => {
+  draft.value = ''
+  more.value = false
+  showMembers.value = false
+  dragging.value = false
+})
 
 watch(
   () => chat.loading,
@@ -338,22 +441,55 @@ watch(
   },
 )
 
+const members = computed(() => {
+  const out = {}
+  for (const member of chat.room?.members || []) out[member.name] = member
+  return out
+})
+
 const groups = computed(() => {
   const out = []
+  let previous = null
 
-  for (const row of chat.messages) {
-    const label = dayLabel(row.creation)
-    const last = out[out.length - 1]
+  for (const message of chat.messages) {
+    const label = dayLabel(message.creation)
+    let last = out[out.length - 1]
 
-    if (last && last.label === label) last.rows.push(row)
-    else out.push({ label, rows: [row] })
+    if (!last || last.label !== label) {
+      last = { label, rows: [] }
+      out.push(last)
+      previous = null
+    }
+
+    const first = !previous || previous.sender !== message.sender || previous.kind === 'Email' || previous.kind === 'Call'
+    last.rows.push({ message, first })
+    previous = message
   }
 
   return out
 })
 
+const typers = computed(() => {
+  const names = Object.values(typing[currentKey()] || {})
+  if (!names.length) return ''
+  if (names.length === 1) return __('{0} is typing…').format(names[0])
+  if (names.length === 2) return __('{0} and {1} are typing…').format(names[0], names[1])
+  return __('Several people are typing…')
+})
+
+function senderOf(message) {
+  if (message.sender === session.user.name) return session.user
+  if (chat.room) return members.value[message.sender] || { full_name: message.sender_name || message.sender }
+  return chat.person
+}
+
 function toBottom() {
   if (scroller.value) scroller.value.scrollTop = scroller.value.scrollHeight
+}
+
+function settle() {
+  const el = scroller.value
+  if (el && el.scrollHeight - el.scrollTop - el.clientHeight < 400) toBottom()
 }
 
 function grow() {
@@ -363,36 +499,31 @@ function grow() {
   el.style.height = `${el.scrollHeight}px`
 }
 
-function mine(row) {
-  return row.sender === session.user.name
-}
-
-function time(value) {
-  return new Date(value.replace(' ', 'T')).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+function typed() {
+  grow()
+  if (draft.value.trim()) announceTyping()
 }
 
 function when(value) {
-  return dayLabel(value) === __('Today') ? time(value) : shortDate(value)
+  const time = new Date(value.replace(' ', 'T')).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+  return dayLabel(value) === __('Today') ? time : shortDate(value)
 }
 
-function duration(seconds) {
-  const minutes = Math.floor(seconds / 60)
-  return `${minutes}:${String(seconds % 60).padStart(2, '0')}`
-}
-
-function callLine(row) {
-  const outgoing = mine(row)
-
-  if (row.content === 'Completed') {
-    return `${outgoing ? __('Outgoing call') : __('Incoming call')} · ${duration(row.duration)}`
-  }
-  if (row.content === 'Declined') return outgoing ? __('Call declined') : __('You declined a call')
-  return outgoing ? __('No answer') : __('Missed call')
+function describe(message) {
+  if (message.kind === 'Call') return message.content === 'Completed' ? __('Call') : __('Missed call')
+  if (message.kind === 'Email') return __('Email: {0}').format(message.content)
+  if (message.kind === 'File') return message.content || (message.is_image ? __('Photo') : message.file_name)
+  return message.content
 }
 
 function preview(row) {
-  if (row.kind === 'Call') return callLine(row)
-  return mine(row) ? `${__('You')}: ${row.content}` : row.content
+  const message = row.last
+  const mine = message.sender === session.user.name
+  const text = describe(message)
+
+  if (mine) return `${__('You')}: ${text}`
+  if (row.room) return `${message.sender_name || message.sender}: ${text}`
+  return text
 }
 
 function pick(person) {
@@ -408,6 +539,41 @@ async function send() {
   nextTick(grow)
 
   if (!(await sendMessage(text))) draft.value = text
+}
+
+async function share(files) {
+  for (const file of files) {
+    uploads.value = [...uploads.value, file.name]
+
+    try {
+      const saved = await fileUpload.upload(file, { private: true, folder: 'Home/Attachments' })
+      await sendMessage('', saved.name)
+    } catch (failure) {
+      chat.error = failure.messages?.[0] || failure.message || __('Could not share {0}').format(file.name)
+    } finally {
+      uploads.value = uploads.value.filter((name) => name !== file.name)
+    }
+  }
+}
+
+function choose(event) {
+  const files = Array.from(event.target.files || [])
+  event.target.value = ''
+  if (files.length) share(files)
+}
+
+function paste(event) {
+  const files = Array.from(event.clipboardData?.files || [])
+  if (!files.length) return
+  event.preventDefault()
+  share(files)
+}
+
+function drop(event) {
+  dragging.value = false
+  if (!inThread.value) return
+  const files = Array.from(event.dataTransfer?.files || [])
+  if (files.length) share(files)
 }
 
 async function showEarlier() {

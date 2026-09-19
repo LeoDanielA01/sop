@@ -379,6 +379,7 @@ import ReviewComments from '@/components/Procedure/ReviewComments.vue'
 import ReviewRouteDialog from '@/components/Procedure/ReviewRouteDialog.vue'
 import MentionChip from '@/components/Procedure/MentionChip.vue'
 import CompareRevisionsModal from '@/components/Procedure/CompareRevisionsModal.vue'
+import { openRoom, roomUnread } from '@/data/chat'
 import { acknowledge, procedure } from '@/data/procedures'
 import { useBreakpoint } from '@/composables/useBreakpoint'
 import { useUI } from '@/stores/ui'
@@ -465,6 +466,14 @@ const quick = computed(() =>
         body.value
           ?.querySelector('mark[data-review]')
           ?.scrollIntoView({ behavior: 'smooth', block: 'center' }),
+    },
+    {
+      label: __('Discussion'),
+      icon: 'lucide-messages-square',
+      count: roomUnread(doc.value.name),
+      trailing: 'lucide-chevron-right',
+      hidden: !doc.value.can_discuss,
+      onClick: () => openRoom(doc.value.name),
     },
     {
       label: __('Training'),

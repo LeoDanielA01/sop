@@ -6,6 +6,7 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "channel",
   "sender",
   "recipient",
   "kind",
@@ -14,9 +15,25 @@
   "duration",
   "read",
   "section_break_content",
-  "content"
+  "content",
+  "email_to",
+  "section_break_file",
+  "file",
+  "file_name",
+  "column_break_file",
+  "file_size",
+  "is_image"
  ],
  "fields": [
+  {
+   "default": "Direct",
+   "fieldname": "channel",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Channel",
+   "options": "Direct\nProcedure"
+  },
   {
    "fieldname": "sender",
    "fieldtype": "Link",
@@ -34,7 +51,6 @@
    "in_standard_filter": 1,
    "label": "To",
    "options": "User",
-   "reqd": 1,
    "search_index": 1
   },
   {
@@ -43,7 +59,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Kind",
-   "options": "Text\nCall"
+   "options": "Text\nCall\nFile\nEmail"
   },
   {
    "fieldname": "column_break_message",
@@ -53,7 +69,8 @@
    "fieldname": "sop",
    "fieldtype": "Link",
    "label": "Procedure",
-   "options": "SOP"
+   "options": "SOP",
+   "search_index": 1
   },
   {
    "default": "0",
@@ -76,11 +93,48 @@
    "fieldname": "content",
    "fieldtype": "Small Text",
    "label": "Message"
+  },
+  {
+   "description": "Who an email was sent to.",
+   "fieldname": "email_to",
+   "fieldtype": "Data",
+   "label": "Emailed"
+  },
+  {
+   "fieldname": "section_break_file",
+   "fieldtype": "Section Break",
+   "label": "File"
+  },
+  {
+   "fieldname": "file",
+   "fieldtype": "Link",
+   "label": "File",
+   "options": "File"
+  },
+  {
+   "fieldname": "file_name",
+   "fieldtype": "Data",
+   "label": "File Name"
+  },
+  {
+   "fieldname": "column_break_file",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "file_size",
+   "fieldtype": "Int",
+   "label": "File Size"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_image",
+   "fieldtype": "Check",
+   "label": "Is Image"
   }
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-09-19 10:00:00.000000",
+ "modified": "2026-09-19 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "SOP",
  "name": "SOP Message",

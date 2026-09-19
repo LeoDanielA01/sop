@@ -7,6 +7,7 @@ import frappe
 from frappe import _
 from frappe.utils import add_days, nowdate
 
+from sop.api.chat import joinable
 from sop.api.lifecycle import actions_for, approvals_of
 from sop.api.mentions import resolve
 from sop.api.review import review_rights
@@ -272,6 +273,7 @@ def get_procedure(name, revision=None):
 		"acknowledged_on": signed.acknowledged_at if signed else None,
 		"acknowledged_version": signed.version if signed else None,
 		"can_edit": doc.is_editable() and doc.has_permission("write"),
+		"can_discuss": joinable(doc.name),
 		"approvals": approvals_of(doc),
 		"actions": actions_for(doc),
 		"review": review_rights(doc),
