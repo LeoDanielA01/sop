@@ -332,7 +332,7 @@ def card(doctype, name):
 		"status_tone": tone_of(status),
 		"facts": extras_for(doctype, name) + times + values + table_facts(meta, name),
 		"counts": counts_for(doctype, name),
-		"url": frappe.utils.get_url_to_form(doctype, name),
+		"url": record_url(doctype, name),
 	}
 
 	frappe.cache().set_value(key, result, expires_in_sec=CACHE_TTL)
@@ -833,8 +833,18 @@ def chip(doctype, name, label, badges, url=...):
 		"short_type": frappe.unscrub(doctype).split(" ")[0][:12],
 		"label": label,
 		"badges": badges,
-		"url": frappe.utils.get_url_to_form(doctype, name) if url is ... else url,
+		"url": record_url(doctype, name) if url is ... else url,
 	}
+
+
+def record_url(doctype, name):
+	if doctype == "SOP":
+		return f"/sop/{quote(str(name))}"
+
+	if doctype == "User":
+		return None
+
+	return frappe.utils.get_url_to_form(doctype, name)
 
 
 def cache_key(kind, doctype, name):

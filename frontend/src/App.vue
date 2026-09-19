@@ -15,10 +15,18 @@ import DesktopLayout from '@/components/Layouts/DesktopLayout.vue'
 import MobileLayout from '@/components/Layouts/MobileLayout.vue'
 import { useBreakpoint } from '@/composables/useBreakpoint'
 import { useShortcuts } from '@/composables/useShortcuts'
+import { listenForCalls } from '@/data/call'
+import { listenForMessages } from '@/data/chat'
+import { session } from '@/data/session'
 
 const { isDesktop } = useBreakpoint()
 
 const Layout = computed(() => (isDesktop.value ? DesktopLayout : MobileLayout))
 
 useShortcuts()
+
+if (session.user.name !== 'Guest') {
+  listenForMessages()
+  listenForCalls()
+}
 </script>

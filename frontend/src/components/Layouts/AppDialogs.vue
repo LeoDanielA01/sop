@@ -9,9 +9,15 @@
   <Settings v-model:open="ui.settingsDialog" />
   <RemoveProcedureDialog />
   <RemoveSpaceDialog />
+  <ChatPanel />
+  <MailDialog />
+  <CallWindow />
 </template>
 
 <script setup>
+import CallWindow from '@/components/Chat/CallWindow.vue'
+import ChatPanel from '@/components/Chat/ChatPanel.vue'
+import MailDialog from '@/components/Chat/MailDialog.vue'
 import CommandPalette from '@/components/Search/CommandPalette.vue'
 import FindReplaceDialog from '@/components/Search/FindReplaceDialog.vue'
 import NotificationsPanel from '@/components/Notifications/NotificationsPanel.vue'

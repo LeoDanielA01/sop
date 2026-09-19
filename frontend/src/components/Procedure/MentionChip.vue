@@ -4,7 +4,10 @@
       <template #trigger>
         <a
           :href="reference.url || undefined"
-          target="_blank"
+          :target="internal ? undefined : '_blank'"
+          data-mention-chip
+          :class="{ 'cursor-pointer': isUser && !self }"
+          @click="follow"
           class="inline-flex items-center gap-1.5 rounded-3 border border-outline-gray-2 bg-surface-gray-1 px-1.5 py-px align-baseline text-ink-gray-8 no-underline hover:bg-surface-gray-2"
         >
           <span class="text-xs uppercase tracking-wide text-ink-gray-5">
@@ -54,30 +57,35 @@
           </div>
 
           <div class="mt-4 flex items-center justify-between gap-2 border-t border-outline-gray-1 pt-3">
-            <a
-              :href="`mailto:${info.email}`"
-              class="flex flex-1 items-center justify-center gap-1.5 rounded-md border border-outline-gray-2 bg-surface-white px-2 py-1.5 text-xs font-medium text-ink-gray-8 no-underline hover:bg-surface-gray-2 hover:text-ink-gray-9 transition-colors shadow-xs"
+            <button
+              type="button"
+              :disabled="self"
+              class="flex flex-1 items-center justify-center gap-1.5 rounded-2 border border-outline-gray-2 bg-surface-white px-2 py-1.5 text-xs font-medium text-ink-gray-8 hover:bg-surface-gray-2 hover:text-ink-gray-9 transition-colors shadow-xs disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-surface-white"
+              @click="openMail(person, sop)"
             >
               <span class="lucide-mail size-3.5 text-ink-gray-5" />
               {{ __('Mail') }}
-            </a>
+            </button>
 
-            <a
-              :href="`mailto:${info.email}?subject=Internal%20Message`"
-              class="flex flex-1 items-center justify-center gap-1.5 rounded-md border border-outline-gray-2 bg-surface-white px-2 py-1.5 text-xs font-medium text-ink-gray-8 no-underline hover:bg-surface-gray-2 hover:text-ink-gray-9 transition-colors shadow-xs"
+            <button
+              type="button"
+              :disabled="self"
+              class="flex flex-1 items-center justify-center gap-1.5 rounded-2 border border-outline-gray-2 bg-surface-white px-2 py-1.5 text-xs font-medium text-ink-gray-8 hover:bg-surface-gray-2 hover:text-ink-gray-9 transition-colors shadow-xs disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-surface-white"
+              @click="openChat(person, sop)"
             >
               <span class="lucide-message-square size-3.5 text-ink-gray-5" />
               {{ __('Message') }}
-            </a>
+            </button>
 
-            <a
-              :href="info.phone ? `tel:${info.phone}` : undefined"
-              :class="info.phone ? 'hover:bg-surface-gray-2 text-ink-gray-8' : 'opacity-50 cursor-not-allowed text-ink-gray-4'"
-              class="flex flex-1 items-center justify-center gap-1.5 rounded-md border border-outline-gray-2 bg-surface-white px-2 py-1.5 text-xs font-medium no-underline transition-colors shadow-xs"
+            <button
+              type="button"
+              :disabled="self"
+              class="flex flex-1 items-center justify-center gap-1.5 rounded-2 border border-outline-gray-2 bg-surface-white px-2 py-1.5 text-xs font-medium text-ink-gray-8 hover:bg-surface-gray-2 hover:text-ink-gray-9 transition-colors shadow-xs disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-surface-white"
+              @click="startCall(person, sop)"
             >
               <span class="lucide-phone size-3.5 text-ink-gray-5" />
               {{ __('Call') }}
-            </a>
+            </button>
           </div>
         </template>
 
@@ -133,15 +141,7 @@
             </div>
           </div>
 
-          <div class="mt-3 flex justify-end">
-            <Button
-              variant="ghost"
-              size="sm"
-              icon-right="lucide-arrow-up-right"
-              :label="__('Open')"
-              @click="openRecord"
-            />
-          </div>
+          
         </template>
       </div>
     </HoverCard>
@@ -149,27 +149,71 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, shallowRef, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { Avatar, Badge, Button, HoverCard, Skeleton, createResource } from 'frappe-ui'
+import { startCall } from '@/data/call'
+import { openChat, openMail } from '@/data/chat'
+import { session } from '@/data/session'
 
 const props = defineProps({
   reference: { type: Object, required: true },
   root: { type: [Object, null], default: null },
 })
 
-const target = computed(() => {
-  if (!props.root) return null
+const route = useRoute()
+const router = useRouter()
 
-  const { reference_doctype: doctype, reference_name: name } = props.reference
+const internal = computed(() => props.reference.url?.startsWith('/sop/'))
 
-  const escaped = CSS.escape ? CSS.escape(name) : name
+const isUser = computed(() => props.reference.reference_doctype === 'User')
 
-  return (
-    props.root.querySelector(`a[href="#mention:${doctype}:${name}"]`) ||
-    props.root.querySelector(`span[data-type="mention"][data-id="${escaped}"]`) ||
-    props.root.querySelector(`[data-mention][data-doctype="${doctype}"][data-name="${name}"]`)
-  )
-})
+const self = computed(() => props.reference.reference_name === session.user.name)
+
+const sop = computed(() => (route.name === 'Procedure' ? route.params.name : null))
+
+const person = computed(() => ({
+  name: props.reference.reference_name,
+  full_name: info.value?.title || props.reference.label || props.reference.reference_name,
+  image: info.value?.image || null,
+}))
+
+function follow(event) {
+  if (isUser.value) {
+    event.preventDefault()
+    if (!self.value) openChat(person.value, sop.value)
+    return
+  }
+
+  if (!internal.value || event.metaKey || event.ctrlKey || event.shiftKey || event.button) return
+  event.preventDefault()
+  router.push(props.reference.url.slice('/sop'.length))
+}
+
+const target = shallowRef(null)
+
+watch(
+  () => props.root,
+  (root) => {
+    if (!root) return
+
+    const { reference_doctype: doctype, reference_name: name } = props.reference
+
+    const escaped = CSS.escape ? CSS.escape(name) : name
+
+    const found =
+      root.querySelector(`a[href="#mention:${doctype}:${name}"]`) ||
+      root.querySelector(`span[data-type="mention"][data-id="${escaped}"]`) ||
+      root.querySelector(`[data-mention][data-doctype="${doctype}"][data-name="${name}"]`)
+
+    if (!found) return
+
+    const host = document.createElement('span')
+    found.replaceWith(host)
+    target.value = host
+  },
+  { immediate: true },
+)
 
 const card = createResource({
   url: 'sop.api.mentions.card',

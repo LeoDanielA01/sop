@@ -22,6 +22,16 @@
       <div class="flex-1" />
 
       <Button variant="ghost" icon="lucide-search" :label="__('Search')" @click="ui.searchDialog = true" />
+      <Button variant="ghost" :label="__('Messages')" @click="showInbox">
+        <span class="relative">
+          <span class="lucide-message-square size-5 text-ink-gray-7" aria-hidden="true" />
+          <span
+            v-if="chatUnreadCount"
+            class="absolute -right-1 -top-1 size-2 rounded-full bg-surface-red-5"
+            aria-hidden="true"
+          />
+        </span>
+      </Button>
       <Button variant="ghost" :label="__('Notifications')" @click="ui.notificationsPanel = true">
         <span class="relative">
           <span class="lucide-bell size-5 text-ink-gray-7" aria-hidden="true" />
@@ -127,6 +137,7 @@ import { Avatar, Button, Dialog } from 'frappe-ui'
 import { useSection } from '@/composables/useSection'
 import { activeSpace, setSpace, spaces, views } from '@/data/navigation'
 import { activeProcess, flatten, processes, setProcess } from '@/data/processes'
+import { chatUnreadCount, showInbox } from '@/data/chat'
 import { unreadCount } from '@/data/notifications'
 import { session } from '@/data/session'
 import { trainingCounts } from '@/data/training'

@@ -1,0 +1,102 @@
+{
+ "actions": [],
+ "autoname": "hash",
+ "creation": "2026-09-19 10:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "sender",
+  "recipient",
+  "kind",
+  "column_break_message",
+  "sop",
+  "duration",
+  "read",
+  "section_break_content",
+  "content"
+ ],
+ "fields": [
+  {
+   "fieldname": "sender",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "From",
+   "options": "User",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "recipient",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "To",
+   "options": "User",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "default": "Text",
+   "fieldname": "kind",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Kind",
+   "options": "Text\nCall"
+  },
+  {
+   "fieldname": "column_break_message",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "sop",
+   "fieldtype": "Link",
+   "label": "Procedure",
+   "options": "SOP"
+  },
+  {
+   "default": "0",
+   "description": "Call length in seconds.",
+   "fieldname": "duration",
+   "fieldtype": "Int",
+   "label": "Duration"
+  },
+  {
+   "default": "0",
+   "fieldname": "read",
+   "fieldtype": "Check",
+   "label": "Read"
+  },
+  {
+   "fieldname": "section_break_content",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "content",
+   "fieldtype": "Small Text",
+   "label": "Message"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-09-19 10:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "SOP",
+ "name": "SOP Message",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "delete": 1,
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager"
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}

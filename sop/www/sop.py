@@ -1,3 +1,5 @@
+import os
+
 import frappe
 
 from sop.api.session import me
@@ -24,4 +26,7 @@ def boot():
 		"site_name": frappe.local.site,
 		"sop_path": SPA_PATH,
 		"sop_user": me(),
+		"socketio_port": frappe.conf.socketio_port or 9000,
+		"dev_server": 1 if os.environ.get("DEV_SERVER") else 0,
+		"sop_ice_servers": frappe.conf.get("sop_ice_servers"),
 	}

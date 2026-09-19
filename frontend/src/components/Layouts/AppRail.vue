@@ -26,6 +26,15 @@
       />
 
       <SidebarRailItem
+        :label="chatUnreadCount ? `Messages — ${chatUnreadCount} new` : 'Messages'"
+        variant="ghost"
+        icon="lucide-message-square"
+        :badge="chatUnreadCount || undefined"
+        badge-style="count"
+        @click="chat.open ? (chat.open = false) : showInbox()"
+      />
+
+      <SidebarRailItem
         :label="__('Find and replace')"
         variant="ghost"
         icon="lucide-replace"
@@ -79,6 +88,7 @@ import mark from '@/assets/sop-mark.svg'
 import { useCreateOptions } from '@/composables/useCreateOptions'
 import { useSection } from '@/composables/useSection'
 import { SECTIONS, attention } from '@/data/navigation'
+import { chat, chatUnreadCount, showInbox } from '@/data/chat'
 import { unreadCount } from '@/data/notifications'
 import { session } from '@/data/session'
 import { trainingCounts } from '@/data/training'
