@@ -1,7 +1,9 @@
 import { call, createResource, toast } from 'frappe-ui'
 import { computed, reactive } from 'vue'
+import { refreshNotifications } from '@/data/notifications'
 import { session } from '@/data/session'
 import { useSocket } from '@/data/socket'
+import { alertTone, askToNotify, chime, notify } from '@/data/sound'
 import { translate as __ } from '@/translation'
 
 export const chat = reactive({
@@ -36,12 +38,14 @@ function viewing(user) {
 }
 
 export function showInbox() {
+  askToNotify()
   chat.person = null
   chat.open = true
   threads.reload()
 }
 
 export async function openChat(person, sop = null) {
+  askToNotify()
   chat.person = person
   chat.sop = sop
   chat.open = true
@@ -112,9 +116,12 @@ function accept(message) {
 
   chatUnread.reload()
 
-  if (message.kind === 'Text') {
-    toast.info(__('{0}: {1}').format(message.sender_name || person, message.content))
-  }
+  if (message.kind !== 'Text') return
+
+  const name = message.sender_name || person
+  chime()
+  toast.info(__('{0}: {1}').format(name, message.content))
+  notify(name, message.content, () => openChat({ name: person, full_name: name, image: null }))
 }
 
 export function openMail(person, sop = null, subject = '') {
@@ -149,6 +156,16 @@ export function listenForMessages() {
     for (const row of chat.messages) {
       if (row.sender === session.user.name) row.read = 1
     }
+  })
+
+  socket.on('notification', () => {
+    alertTone()
+    refreshNotifications()
+  })
+
+  socket.on('connect', () => {
+    chatUnread.reload()
+    refreshNotifications()
   })
 
   document.addEventListener('visibilitychange', () => {

@@ -1,8 +1,6 @@
-import os
-
 import frappe
 
-from sop.api.session import me
+from sop.api.session import realtime
 
 no_cache = 1
 
@@ -21,12 +19,4 @@ def get_context(context):
 
 
 def boot():
-	return {
-		"csrf_token": frappe.sessions.get_csrf_token(),
-		"site_name": frappe.local.site,
-		"sop_path": SPA_PATH,
-		"sop_user": me(),
-		"socketio_port": frappe.conf.socketio_port or 9000,
-		"dev_server": 1 if os.environ.get("DEV_SERVER") else 0,
-		"sop_ice_servers": frappe.conf.get("sop_ice_servers"),
-	}
+	return {"csrf_token": frappe.sessions.get_csrf_token(), "sop_path": SPA_PATH, **realtime()}

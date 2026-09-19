@@ -47,12 +47,37 @@
             </template>
 
             <template v-else>
-              <span class="flex-1 px-1 text-lg font-semibold text-ink-gray-9">{{ __('Messages') }}</span>
+              <span class="flex flex-1 items-center gap-2 px-1">
+                <span class="text-lg font-semibold text-ink-gray-9">{{ __('Messages') }}</span>
+                <Tooltip :text="realtime.connected ? __('Live') : __('Live updates are offline')">
+                  <span
+                    class="size-2 rounded-full"
+                    :class="realtime.connected ? 'bg-[color:var(--ink-green-3)]' : 'bg-surface-gray-4'"
+                  />
+                </Tooltip>
+              </span>
+
+              <Tooltip :text="sounds.on ? __('Mute sounds') : __('Turn sounds on')">
+                <Button
+                  variant="ghost"
+                  :icon="sounds.on ? 'lucide-volume-2' : 'lucide-volume-x'"
+                  :label="sounds.on ? __('Mute sounds') : __('Turn sounds on')"
+                  @click="sounds.on = !sounds.on"
+                />
+              </Tooltip>
             </template>
 
             <Tooltip :text="__('Close')">
               <Button variant="ghost" icon="lucide-x" :label="__('Close')" @click="chat.open = false" />
             </Tooltip>
+          </div>
+
+          <div
+            v-if="!realtime.connected && realtime.error"
+            class="flex items-start gap-2 border-b border-outline-gray-1 bg-surface-gray-1 px-4 py-2 text-sm text-ink-gray-6"
+          >
+            <span class="lucide-wifi-off mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
+            {{ __('Live updates are offline, so new messages and calls will not arrive until the connection is back.') }}
           </div>
 
           <template v-if="!chat.person">
@@ -255,6 +280,8 @@ import {
 import { startCall } from '@/data/call'
 import { chat, loadEarlier, openChat, openMail, sendMessage, showInbox, threads } from '@/data/chat'
 import { session } from '@/data/session'
+import { realtime } from '@/data/socket'
+import { sounds } from '@/data/sound'
 import { translate as __ } from '@/translation'
 import { dayLabel, shortDate } from '@/utils/format'
 

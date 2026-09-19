@@ -21,6 +21,16 @@ def me():
 		**resolved(),
 	}
 
+@frappe.whitelist()
+def realtime():
+	return {
+		"site_name": frappe.local.site,
+		"socketio_port": frappe.conf.socketio_port or 9000,
+		"sop_ice_servers": frappe.conf.get("sop_ice_servers"),
+		"sop_user": me(),
+	}
+
+
 def can_use_app(user=None):
 	roles = set(frappe.get_roles(user or frappe.session.user))
 

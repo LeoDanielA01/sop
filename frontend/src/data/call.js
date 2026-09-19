@@ -1,9 +1,10 @@
 import { call as request, toast } from 'frappe-ui'
 import { reactive } from 'vue'
 import { useSocket } from '@/data/socket'
+import { askToNotify, notify, startRinging, stopRinging } from '@/data/sound'
 import { translate as __ } from '@/translation'
 
-const RING_FOR = 40000
+const RING_FOR = 30000
 const ICE_SERVERS = window.sop_ice_servers || [{ urls: 'stun:stun.l.google.com:19302' }]
 
 export const phone = reactive({
@@ -22,7 +23,6 @@ let local = null
 let pending = []
 let ringTimer = null
 let dropTimer = null
-let tone = null
 
 const speaker = typeof Audio !== 'undefined' ? new Audio() : null
 if (speaker) speaker.autoplay = true
@@ -56,33 +56,16 @@ async function microphone() {
   }
 }
 
+let banner = null
+
 function ring(outgoing) {
-  quiet()
-
-  try {
-    const context = new AudioContext()
-    const beep = () => {
-      const oscillator = context.createOscillator()
-      const gain = context.createGain()
-      oscillator.frequency.value = outgoing ? 425 : 520
-      gain.gain.value = 0.06
-      oscillator.connect(gain).connect(context.destination)
-      oscillator.start()
-      oscillator.stop(context.currentTime + (outgoing ? 1 : 0.6))
-    }
-
-    beep()
-    tone = { context, timer: setInterval(beep, outgoing ? 3000 : 1800) }
-  } catch {
-    tone = null
-  }
+  startRinging(!outgoing)
 }
 
 function quiet() {
-  if (!tone) return
-  clearInterval(tone.timer)
-  tone.context.close().catch(() => {})
-  tone = null
+  stopRinging()
+  banner?.close()
+  banner = null
 }
 
 function connect() {
@@ -161,6 +144,7 @@ export async function startCall(person, sop = null) {
     return
   }
 
+  askToNotify()
   local = await microphone()
   if (!local) return
 
@@ -254,6 +238,7 @@ async function receive({ kind, call: id, data, from }) {
     })
 
     ring(false)
+    banner = notify(__('Incoming call'), __('{0} is calling you').format(from.full_name))
     ringTimer = setTimeout(() => {
       if (phone.state === 'ringing') finish(__('Missed call'))
     }, RING_FOR)

@@ -18,6 +18,7 @@ import { useShortcuts } from '@/composables/useShortcuts'
 import { listenForCalls } from '@/data/call'
 import { listenForMessages } from '@/data/chat'
 import { session } from '@/data/session'
+import { unlockSound } from '@/data/sound'
 
 const { isDesktop } = useBreakpoint()
 
@@ -28,5 +29,6 @@ useShortcuts()
 if (session.user.name !== 'Guest') {
   listenForMessages()
   listenForCalls()
+  window.addEventListener('pointerdown', unlockSound, { once: true })
 }
 </script>

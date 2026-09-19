@@ -2,104 +2,136 @@
   <Dialog v-model:open="mail.open" :title="__('New email')" size="2xl">
     <template #default>
       <div class="flex flex-col gap-3">
-        <div class="flex items-center gap-2">
-          <span class="w-10 shrink-0 text-sm text-ink-gray-5">{{ __('To') }}</span>
-          <span
-            class="inline-flex min-w-0 items-center gap-1.5 rounded-2 border border-outline-gray-2 bg-surface-gray-1 py-0.5 pl-0.5 pr-2"
-          >
-            <Avatar :image="mail.person?.image" :label="mail.person?.full_name" size="sm" shape="circle" />
-            <span class="truncate text-sm text-ink-gray-8">{{ mail.person?.full_name }}</span>
-          </span>
+        <div class="overflow-hidden rounded-2 border border-outline-gray-2 bg-surface-base">
+          <div class="flex min-h-10 items-center gap-3 border-b border-outline-gray-1 px-3">
+            <span class="w-14 shrink-0 text-sm text-ink-gray-5">{{ __('To') }}</span>
+            <span
+              class="inline-flex min-w-0 items-center gap-1.5 rounded-3 bg-surface-gray-2 py-0.5 pl-0.5 pr-2"
+            >
+              <Avatar :image="mail.person?.image" :label="mail.person?.full_name" size="sm" shape="circle" />
+              <span class="truncate text-sm text-ink-gray-8">{{ mail.person?.full_name }}</span>
+            </span>
+            <div class="flex-1" />
+            <button
+              v-if="!showCc"
+              type="button"
+              class="rounded-1 px-1.5 py-0.5 text-sm text-ink-gray-5 hover:bg-surface-gray-2 hover:text-ink-gray-8"
+              @click="revealCc"
+            >
+              {{ __('Cc') }}
+            </button>
+          </div>
 
-          <div class="flex-1" />
+          <div v-if="showCc" class="flex min-h-10 items-center gap-3 border-b border-outline-gray-1 px-3">
+            <span class="w-14 shrink-0 text-sm text-ink-gray-5">{{ __('Cc') }}</span>
+            <input
+              ref="ccInput"
+              v-model="cc"
+              type="text"
+              :placeholder="__('Email addresses, separated by commas')"
+              class="min-w-0 flex-1 border-0 bg-transparent p-0 text-base text-ink-gray-8 placeholder:text-ink-gray-4 focus:ring-0"
+            />
+          </div>
 
-          <Button v-if="!showCc" variant="ghost" size="sm" :label="__('Cc')" @click="showCc = true" />
-        </div>
+          <div class="flex min-h-10 items-center gap-3 border-b border-outline-gray-1 px-3">
+            <span class="w-14 shrink-0 text-sm text-ink-gray-5">{{ __('Subject') }}</span>
+            <input
+              v-model="subject"
+              type="text"
+              :placeholder="__('What is this about?')"
+              class="min-w-0 flex-1 border-0 bg-transparent p-0 text-base font-medium text-ink-gray-9 placeholder:font-normal placeholder:text-ink-gray-4 focus:ring-0"
+            />
+          </div>
 
-        <div v-if="showCc" class="flex items-center gap-2">
-          <span class="w-10 shrink-0 text-sm text-ink-gray-5">{{ __('Cc') }}</span>
-          <TextInput
-            v-model="cc"
-            class="flex-1"
-            type="text"
-            :placeholder="__('Email addresses, separated by commas')"
-          />
-        </div>
+          <div class="flex items-center gap-2 border-b border-outline-gray-1 bg-surface-gray-1 pl-1.5 pr-2">
+            <EditorFixedMenu v-if="editor" :editor="editor" :items="TOOLS" class="min-w-0 flex-1 overflow-x-auto py-1" />
 
-        <div class="flex items-center gap-2">
-          <span class="w-10 shrink-0 text-sm text-ink-gray-5">{{ __('Use') }}</span>
-          <FormControl
-            v-model="template"
-            class="flex-1"
-            type="select"
-            :options="templateOptions"
-            :disabled="applying"
-          />
-        </div>
+            <Dropdown :options="templateMenu" align="end">
+              <Button
+                variant="ghost"
+                size="sm"
+                icon-left="lucide-layout-template"
+                icon-right="lucide-chevron-down"
+                :label="template || __('Templates')"
+                :loading="applying"
+              />
+            </Dropdown>
+          </div>
 
-        <div class="flex items-center gap-2">
-          <span class="w-10 shrink-0 text-sm text-ink-gray-5">{{ __('Subject') }}</span>
-          <TextInput v-model="subject" class="flex-1" type="text" />
-        </div>
-
-        <div class="rounded-2 border border-outline-gray-2 bg-surface-base">
-          <EditorFixedMenu
-            v-if="editor"
-            :editor="editor"
-            :items="TOOLS"
-            class="overflow-x-auto border-b border-outline-gray-1 px-1.5 py-1"
-          />
           <EditorContent
             :editor="editor"
-            class="prose-sop max-h-[45vh] min-h-48 overflow-y-auto px-3 py-2.5 text-base text-ink-gray-8"
+            class="prose-sop max-h-[45vh] min-h-56 overflow-y-auto px-4 py-3 text-base text-ink-gray-8"
           />
-        </div>
 
-        <div v-if="files.length || uploading" class="flex flex-wrap gap-1.5">
-          <span
-            v-for="file in files"
-            :key="file.name"
-            class="inline-flex max-w-60 items-center gap-1.5 rounded-2 border border-outline-gray-2 bg-surface-gray-1 py-1 pl-2 pr-1 text-sm text-ink-gray-8"
+          <div
+            v-if="files.length || uploading"
+            class="flex flex-wrap gap-1.5 border-t border-outline-gray-1 bg-surface-gray-1 px-3 py-2"
           >
-            <span class="lucide-paperclip size-3.5 shrink-0 text-ink-gray-5" aria-hidden="true" />
-            <span class="truncate">{{ file.file_name }}</span>
-            <button
-              type="button"
-              class="grid size-5 shrink-0 place-content-center rounded-1 text-ink-gray-5 hover:bg-surface-gray-3 hover:text-ink-gray-8"
-              :aria-label="__('Remove {0}').format(file.file_name)"
-              @click="files = files.filter((row) => row.name !== file.name)"
+            <span
+              v-for="file in files"
+              :key="file.name"
+              class="inline-flex max-w-60 items-center gap-1.5 rounded-2 border border-outline-gray-2 bg-surface-base py-1 pl-2 pr-1 text-sm text-ink-gray-8"
             >
-              <span class="lucide-x size-3" aria-hidden="true" />
-            </button>
-          </span>
-          <span v-if="uploading" class="inline-flex items-center gap-1.5 px-1 text-sm text-ink-gray-5">
-            <span class="lucide-loader-circle size-3.5 animate-spin" aria-hidden="true" />
-            {{ __('Uploading…') }}
-          </span>
+              <span class="lucide-paperclip size-3.5 shrink-0 text-ink-gray-5" aria-hidden="true" />
+              <span class="truncate">{{ file.file_name }}</span>
+              <button
+                type="button"
+                class="grid size-5 shrink-0 place-content-center rounded-1 text-ink-gray-5 hover:bg-surface-gray-2 hover:text-ink-gray-8"
+                :aria-label="__('Remove {0}').format(file.file_name)"
+                @click="files = files.filter((row) => row.name !== file.name)"
+              >
+                <span class="lucide-x size-3" aria-hidden="true" />
+              </button>
+            </span>
+            <span v-if="uploading" class="inline-flex items-center gap-1.5 px-1 text-sm text-ink-gray-5">
+              <span class="lucide-loader-circle size-3.5 animate-spin" aria-hidden="true" />
+              {{ __('Uploading…') }}
+            </span>
+          </div>
         </div>
 
-        <div class="flex flex-wrap items-center gap-x-5 gap-y-2">
-          <FormControl
+        <div class="flex flex-wrap items-center gap-1.5">
+          <button
             v-if="mail.sop"
-            v-model="addLink"
-            type="checkbox"
-            :label="__('Add a link to {0}').format(mail.sop)"
-          />
-          <FormControl v-model="copyMe" type="checkbox" :label="__('Send me a copy')" />
+            type="button"
+            class="inline-flex items-center gap-1.5 rounded-3 border px-2.5 py-1 text-sm transition-colors"
+            :class="pillClass(addLink)"
+            :aria-pressed="addLink"
+            @click="addLink = !addLink"
+          >
+            <span :class="addLink ? 'lucide-check' : 'lucide-link'" class="size-3.5" aria-hidden="true" />
+            {{ __('Link to {0}').format(mail.sop) }}
+          </button>
+
+          <button
+            type="button"
+            class="inline-flex items-center gap-1.5 rounded-3 border px-2.5 py-1 text-sm transition-colors"
+            :class="pillClass(copyMe)"
+            :aria-pressed="copyMe"
+            @click="copyMe = !copyMe"
+          >
+            <span :class="copyMe ? 'lucide-check' : 'lucide-copy'" class="size-3.5" aria-hidden="true" />
+            {{ __('Send me a copy') }}
+          </button>
         </div>
 
-        <div v-if="naming" class="flex items-end gap-2 rounded-2 border border-outline-gray-2 bg-surface-gray-1 p-2.5">
-          <FormControl
+        <div
+          v-if="naming"
+          class="flex items-center gap-2 rounded-2 border border-outline-gray-2 bg-surface-gray-1 p-2"
+        >
+          <span class="lucide-bookmark-plus ml-1 size-4 shrink-0 text-ink-gray-5" aria-hidden="true" />
+          <input
+            ref="nameInput"
             v-model="templateName"
-            class="flex-1"
             type="text"
-            :label="__('Template name')"
-            :placeholder="__('e.g. Review reminder')"
+            :placeholder="__('Name this template')"
+            class="min-w-0 flex-1 border-0 bg-transparent p-0 text-base text-ink-gray-8 placeholder:text-ink-gray-4 focus:ring-0"
+            @keydown.enter.prevent="keepTemplate"
           />
-          <Button :label="__('Cancel')" @click="naming = false" />
+          <Button variant="ghost" :label="__('Cancel')" @click="naming = false" />
           <Button
             variant="solid"
-            :label="__('Save template')"
+            :label="__('Save')"
             :loading="saving"
             :disabled="!templateName.trim()"
             @click="keepTemplate"
@@ -114,15 +146,13 @@
 
     <template #actions>
       <div class="flex items-center gap-2">
-        <Button variant="subtle" icon-left="lucide-paperclip" :label="__('Attach')" @click="picker?.click()" />
-        <Button
-          v-if="canSaveTemplates && !naming"
-          variant="ghost"
-          icon-left="lucide-bookmark-plus"
-          :label="__('Save as template')"
-          :disabled="!subject.trim() || empty"
-          @click="startNaming"
-        />
+        <Tooltip :text="__('Attach files')">
+          <Button variant="subtle" icon="lucide-paperclip" :label="__('Attach files')" @click="picker?.click()" />
+        </Tooltip>
+
+        <span class="truncate text-sm text-ink-gray-5">
+          {{ files.length ? __('{0} attached').format(files.length) : '' }}
+        </span>
 
         <div class="flex-1" />
 
@@ -141,14 +171,14 @@
 </template>
 
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import {
   Avatar,
   Button,
   Dialog,
+  Dropdown,
   ErrorMessage,
-  FormControl,
-  TextInput,
+  Tooltip,
   createResource,
   toast,
   useFileUpload,
@@ -173,20 +203,7 @@ import { applyTemplate, mail, saveTemplate, sendMail } from '@/data/chat'
 import { session } from '@/data/session'
 import { translate as __ } from '@/translation'
 
-const TOOLS = [
-  Bold,
-  Italic,
-  Strike,
-  Separator,
-  BulletList,
-  OrderedList,
-  Blockquote,
-  Separator,
-  InsertLink,
-  Separator,
-  Undo,
-  Redo,
-]
+const TOOLS = [Bold, Italic, Strike, Separator, BulletList, OrderedList, Blockquote, Separator, InsertLink, Separator, Undo, Redo]
 
 const subject = ref('')
 const body = ref('')
@@ -204,6 +221,8 @@ const naming = ref(false)
 const saving = ref(false)
 const templateName = ref('')
 const picker = ref(null)
+const ccInput = ref(null)
+const nameInput = ref(null)
 
 const fileUpload = useFileUpload()
 
@@ -219,14 +238,35 @@ const editor = useEditor({
 
 const templates = createResource({ url: 'sop.api.chat.templates' })
 
-const templateOptions = computed(() => [
-  { label: __('No template'), value: '' },
-  ...(templates.data || []).map((row) => ({ label: row.name, value: row.name })),
-])
-
 const canSaveTemplates = computed(() => session.user.is_author || session.user.is_manager)
 
 const empty = computed(() => !body.value.replace(/<[^>]*>/g, '').trim())
+
+const templateMenu = computed(() => [
+  ...(templates.data || []).map((row) => ({
+    label: row.name,
+    icon: row.name === template.value ? 'lucide-check' : 'lucide-file-text',
+    onClick: () => pick(row.name),
+  })),
+  {
+    label: __('No templates yet'),
+    icon: 'lucide-info',
+    onClick: () => {},
+    condition: () => !(templates.data || []).length,
+  },
+  {
+    label: __('Save this email as a template'),
+    icon: 'lucide-bookmark-plus',
+    onClick: startNaming,
+    condition: () => canSaveTemplates.value && !!subject.value.trim() && !empty.value,
+  },
+])
+
+function pillClass(on) {
+  return on
+    ? 'border-outline-gray-4 bg-surface-gray-2 text-ink-gray-9'
+    : 'border-outline-gray-2 text-ink-gray-6 hover:bg-surface-gray-1'
+}
 
 function setBody(html) {
   body.value = html
@@ -252,14 +292,19 @@ watch(
   },
 )
 
-watch(template, async (name) => {
-  if (!name) return
+async function revealCc() {
+  showCc.value = true
+  await nextTick()
+  ccInput.value?.focus()
+}
 
+async function pick(name) {
   applying.value = true
   error.value = null
 
   try {
     const filled = await applyTemplate(name)
+    template.value = name
     subject.value = filled.subject || subject.value
     setBody(filled.message)
   } catch (failure) {
@@ -267,7 +312,7 @@ watch(template, async (name) => {
   } finally {
     applying.value = false
   }
-})
+}
 
 async function upload(event) {
   const chosen = Array.from(event.target.files || [])
@@ -289,12 +334,16 @@ async function upload(event) {
   }
 }
 
-function startNaming() {
+async function startNaming() {
   templateName.value = template.value || subject.value
   naming.value = true
+  await nextTick()
+  nameInput.value?.select()
 }
 
 async function keepTemplate() {
+  if (!templateName.value.trim() || saving.value) return
+
   saving.value = true
   error.value = null
 
@@ -305,6 +354,7 @@ async function keepTemplate() {
       message: body.value,
     })
     naming.value = false
+    template.value = saved.name
     await templates.reload()
     toast.success(__('Template {0} saved').format(saved.name))
   } catch (failure) {
