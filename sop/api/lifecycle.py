@@ -181,7 +181,9 @@ def publish(sop, effective_from=None, change_summary=None, is_material=1):
 	doc.save()
 
 	cut_revision(doc, previous, change_summary, is_material)
-	training.assign_for_procedure(doc.name, cause=_("Revision {0}").format(doc.version))
+	training.assign_for_procedure(
+		doc.name, cause=_("Revision {0}").format(doc.version), material=cint(is_material)
+	)
 
 	return {"status": doc.status, "version": doc.version}
 

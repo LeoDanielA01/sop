@@ -69,9 +69,154 @@ def assignment(name):
 		"requires_assessment": doc.requires_assessment,
 		"assessed_by": doc.assessed_by,
 		"is_refresher": doc.is_refresher,
-		"tasks": [row.as_dict() for row in doc.tasks],
-		"can_assess": can_assess(doc),
+		"tasks": [
+			{**row.as_dict(), "witnessed": row.task_type in training.WITNESSED} for row in doc.tasks
+		],
+		"can_assess": can_assess(doc) and doc.trainee != frappe.session.user,
+		"is_mine": doc.trainee == frappe.session.user,
+		"quiz": quiz_summary(doc),
+		"remarks": doc.remarks,
 	}
+
+
+def quiz_summary(doc):
+	from sop.api.quiz import summary
+
+	return summary(doc)
+
+
+@frappe.whitelist()
+def certificate(name):
+	doc = frappe.get_doc("SOP Training Assignment", name)
+
+	if doc.trainee != frappe.session.user and not can_assess(doc):
+		frappe.throw(_("You can only see your own certificates."), frappe.PermissionError)
+
+	if doc.status != "Completed" or doc.outcome != "Competent":
+		frappe.throw(_("A certificate is only issued once training is completed as competent."))
+
+	procedure = frappe.db.get_value("SOP", doc.sop, ["sop_no", "title"], as_dict=True) or {}
+
+	return {
+		"name": doc.name,
+		"trainee": frappe.db.get_value("User", doc.trainee, "full_name") or doc.trainee,
+		"sop_no": procedure.get("sop_no") or doc.sop,
+		"title": procedure.get("title") or doc.sop,
+		"version": doc.version,
+		"method": doc.method,
+		"score": doc.score,
+		"completed_on": doc.completed_on,
+		"assessed_by": (
+			_("Online quiz")
+			if doc.assessed_by_quiz and not doc.assessed_by
+			else frappe.db.get_value("User", doc.assessed_by, "full_name") or doc.assessed_by
+		),
+		"is_refresher": doc.is_refresher,
+		"organisation": frappe.db.get_single_value("Website Settings", "app_name")
+		or frappe.db.get_default("company")
+		or "",
+	}
+
+
+@frappe.whitelist()
+def export_records(space=None, status=None):
+	import csv
+	import io
+
+	if not ({"SOP Manager", "SOP Trainer", "System Manager"} & set(frappe.get_roles())):
+		frappe.throw(_("Only trainers and managers can export training records."), frappe.PermissionError)
+
+	filters = {}
+	if status:
+		filters["status"] = status
+	if space:
+		filters["sop"] = ("in", frappe.get_all("SOP", filters={"space": space}, pluck="name") or [""])
+
+	rows = frappe.get_all(
+		"SOP Training Assignment",
+		filters=filters,
+		fields=[
+			"name",
+			"trainee",
+			"sop",
+			"version",
+			"method",
+			"status",
+			"outcome",
+			"score",
+			"assigned_on",
+			"due_on",
+			"completed_on",
+			"assessed_by",
+			"assessed_by_quiz",
+			"is_refresher",
+		],
+		order_by="trainee asc, assigned_on desc",
+		limit_page_length=0,
+	)
+
+	titles = procedure_titles([row.sop for row in rows])
+	involved = {row.trainee for row in rows} | {row.assessed_by for row in rows if row.assessed_by}
+	people = {
+		row.name: row.full_name
+		for row in frappe.get_all(
+			"User", filters={"name": ("in", list(involved) or [""])}, fields=["name", "full_name"], limit_page_length=0
+		)
+	}
+
+	out = io.StringIO()
+	writer = csv.writer(out)
+	writer.writerow(
+		[
+			_("Record"),
+			_("Person"),
+			_("Email"),
+			_("Procedure"),
+			_("Title"),
+			_("Revision"),
+			_("Method"),
+			_("Status"),
+			_("Outcome"),
+			_("Score %"),
+			_("Assigned"),
+			_("Due"),
+			_("Completed"),
+			_("Assessed by"),
+			_("Refresher"),
+		]
+	)
+
+	for row in rows:
+		about = titles.get(row.sop, {})
+		writer.writerow(
+			[
+				row.name,
+				people.get(row.trainee) or row.trainee,
+				row.trainee,
+				about.get("sop_no") or row.sop,
+				about.get("title") or "",
+				row.version,
+				row.method,
+				row.status,
+				row.outcome,
+				flt(row.score) if row.score is not None else "",
+				row.assigned_on or "",
+				row.due_on or "",
+				row.completed_on or "",
+				assessor(row, people),
+				_("Yes") if row.is_refresher else "",
+			]
+		)
+
+	frappe.response["type"] = "csv"
+	frappe.response["doctype"] = f"training-records-{frappe.utils.nowdate()}"
+	frappe.response["result"] = out.getvalue()
+
+
+def assessor(row, people):
+	if row.assessed_by_quiz and not row.assessed_by:
+		return _("Online quiz")
+	return people.get(row.assessed_by) or row.assessed_by or ""
 
 
 @frappe.whitelist()

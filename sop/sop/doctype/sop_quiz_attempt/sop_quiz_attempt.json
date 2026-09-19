@@ -1,0 +1,118 @@
+{
+ "actions": [],
+ "autoname": "hash",
+ "creation": "2026-09-19 16:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "assignment",
+  "trainee",
+  "sop",
+  "version",
+  "status",
+  "started_at",
+  "submitted_at",
+  "score",
+  "passed",
+  "paper",
+  "answers"
+ ],
+ "fields": [
+  {
+   "fieldname": "assignment",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Training",
+   "options": "SOP Training Assignment",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "trainee",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Trainee",
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "fieldname": "sop",
+   "fieldtype": "Link",
+   "label": "Procedure",
+   "options": "SOP"
+  },
+  {
+   "fieldname": "version",
+   "fieldtype": "Int",
+   "label": "Revision"
+  },
+  {
+   "default": "Open",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Open\nSubmitted"
+  },
+  {
+   "fieldname": "started_at",
+   "fieldtype": "Datetime",
+   "label": "Started"
+  },
+  {
+   "fieldname": "submitted_at",
+   "fieldtype": "Datetime",
+   "label": "Submitted"
+  },
+  {
+   "fieldname": "score",
+   "fieldtype": "Percent",
+   "in_list_view": 1,
+   "label": "Score"
+  },
+  {
+   "default": "0",
+   "fieldname": "passed",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Passed"
+  },
+  {
+   "description": "The questions and answer order this person saw.",
+   "fieldname": "paper",
+   "fieldtype": "Long Text",
+   "label": "Paper"
+  },
+  {
+   "fieldname": "answers",
+   "fieldtype": "Long Text",
+   "label": "Answers"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-09-19 16:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "SOP",
+ "name": "SOP Quiz Attempt",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "read": 1,
+   "report": 1,
+   "export": 1,
+   "role": "SOP Manager"
+  },
+  {
+   "read": 1,
+   "report": 1,
+   "role": "SOP Trainer"
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}

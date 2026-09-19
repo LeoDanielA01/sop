@@ -1,6 +1,14 @@
 <template>
   <PageHeader>
     <AppBreadcrumbs :tail="[{ label: 'Matrix' }]" />
+    <div class="flex items-center gap-2">
+    <Button
+      v-if="session.user.is_manager"
+      variant="ghost"
+      icon-left="lucide-download"
+      :label="__('Export records')"
+      @click="exportRecords"
+    />
     <Button
       variant="solid"
       icon-left="lucide-user-plus"
@@ -8,6 +16,7 @@
       :disabled="!procedures.length"
       @click="showAssign = true"
     />
+    </div>
   </PageHeader>
 
   <div class="mx-auto mt-5 w-full max-w-[1200px] px-3 pb-10 sm:px-5">
@@ -160,6 +169,7 @@ import AppBreadcrumbs from '@/components/Layouts/AppBreadcrumbs.vue'
 import ListSkeleton from '@/components/Common/ListSkeleton.vue'
 import AssignTrainingDialog from '@/components/Training/AssignTrainingDialog.vue'
 import { activeSpace } from '@/data/navigation'
+import { session } from '@/data/session'
 import { matrix, trainingCounts } from '@/data/training'
 import { translate as __ } from '@/translation'
 
@@ -260,5 +270,10 @@ function reload() {
 }
 
 watch(activeSpace, reload)
+
+function exportRecords() {
+  const query = activeSpace.value ? `?space=${encodeURIComponent(activeSpace.value)}` : ''
+  window.open(`/api/method/sop.api.training.export_records${query}`, '_blank')
+}
 onMounted(reload)
 </script>

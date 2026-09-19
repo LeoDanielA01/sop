@@ -8,6 +8,7 @@ from frappe import _
 from frappe.utils import add_days, nowdate
 
 from sop.api.chat import joinable
+from sop.api.quiz import can_manage
 from sop.api.lifecycle import actions_for, approvals_of
 from sop.api.mentions import resolve
 from sop.api.review import review_rights
@@ -274,6 +275,8 @@ def get_procedure(name, revision=None):
 		"acknowledged_version": signed.version if signed else None,
 		"can_edit": doc.is_editable() and doc.has_permission("write"),
 		"can_discuss": joinable(doc.name),
+		"can_quiz": can_manage(doc.name),
+		"quiz_questions": frappe.db.count("SOP Quiz Question", {"sop": doc.name, "enabled": 1}),
 		"approvals": approvals_of(doc),
 		"actions": actions_for(doc),
 		"review": review_rights(doc),
@@ -429,14 +432,6 @@ def user_names(users):
 	return {row.name: row for row in rows}
 
 
-def has_acknowledged(sop, version):
-	return bool(
-		frappe.db.exists(
-			"SOP Acknowledgement", {"sop": sop, "version": version, "user": frappe.session.user}
-		)
-	)
-
-
 def last_acknowledgement(sop):
 	rows = frappe.get_all(
 		"SOP Acknowledgement",
@@ -572,17 +567,28 @@ def acknowledge(sop, version):
 	if doc.status != "Effective":
 		frappe.throw(_("Only an effective procedure can be acknowledged."))
 
-	if has_acknowledged(sop, version):
+	if not sign(sop, version, frappe.session.user):
 		return
+
+	from sop import training
+
+	training.mark_read(sop, frappe.session.user)
+
+	return True
+
+
+def sign(sop, version, user, method="Web"):
+	if frappe.db.exists("SOP Acknowledgement", {"sop": sop, "version": version, "user": user}):
+		return False
 
 	frappe.get_doc(
 		{
 			"doctype": "SOP Acknowledgement",
 			"sop": sop,
 			"version": version,
-			"user": frappe.session.user,
+			"user": user,
 			"acknowledged_at": frappe.utils.now_datetime(),
-			"method": "Web",
+			"method": method,
 		}
 	).insert(ignore_permissions=True)
 

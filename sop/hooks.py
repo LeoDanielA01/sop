@@ -37,5 +37,7 @@ scheduler_events = {
 	"daily": [
 		"sop.training.mark_overdue",
 		"sop.training.schedule_refreshers",
+		"sop.training.sync_requirements",
+		"sop.training.remind",
 	]
 }

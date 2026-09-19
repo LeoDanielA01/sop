@@ -86,45 +86,117 @@
           </Badge>
         </div>
 
-        <Button
-          variant="subtle"
-          icon-left="lucide-book-open"
-          :label="__('Open the procedure')"
-          @click="router.push(`/${detail.sop}`)"
-        />
+        <div class="flex flex-wrap gap-2">
+          <Button
+            variant="subtle"
+            icon-left="lucide-book-open"
+            :label="__('Open the procedure')"
+            @click="router.push(`/${detail.sop}`)"
+          />
+          <Button
+            v-if="detail.status === 'Completed' && detail.outcome === 'Competent'"
+            variant="subtle"
+            icon-left="lucide-award"
+            :label="__('Certificate')"
+            @click="router.push(`/training/certificate/${detail.name}`)"
+          />
+        </div>
+
+        <p v-if="detail.remarks" class="flex items-start gap-2 rounded-2 bg-surface-gray-1 px-3 py-2 text-sm text-ink-gray-6">
+          <span class="lucide-info mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
+          {{ detail.remarks }}
+        </p>
 
         <div class="flex flex-col gap-1">
           <div
             v-for="task in detail.tasks"
             :key="task.idx"
-            class="flex items-center gap-3 rounded-4 border border-outline-gray-1 px-3 py-2"
+            class="flex items-center gap-3 rounded-3 border border-outline-gray-1 px-3 py-2"
           >
             <span
-              :class="task.completed ? 'lucide-circle-check-big text-ink-green-3' : 'lucide-circle'"
-              class="size-4 shrink-0 text-ink-gray-4"
+              :class="task.completed ? 'lucide-circle-check-big text-ink-green-3' : 'lucide-circle text-ink-gray-4'"
+              class="size-4 shrink-0"
               aria-hidden="true"
             />
             <div class="min-w-0 flex-1">
               <div class="truncate text-base text-ink-gray-8">{{ task.task }}</div>
               <div class="text-sm text-ink-gray-5">
-                {{ task.task_type }}
-                <template v-if="task.verified_by"> · signed off by {{ task.verified_by }}</template>
-                <template v-else-if="task.completed_on">
-                  · {{ shortDate(task.completed_on) }}
+                <template v-if="task.completed">
+                  {{ shortDate(task.completed_on) }}
+                  <template v-if="task.verified_by"> · {{ __('signed off by {0}').format(task.verified_by) }}</template>
+                  <template v-if="task.note"> · {{ task.note }}</template>
                 </template>
+                <template v-else-if="task.task_type === 'Assessment' && detail.quiz?.available">
+                  {{
+                    __('{0} questions · pass mark {1}% · {2} of {3} attempts left').format(
+                      detail.quiz.questions,
+                      detail.quiz.pass_mark,
+                      detail.quiz.attempts_left,
+                      detail.quiz.attempts_allowed,
+                    )
+                  }}
+                </template>
+                <template v-else>{{ task.task_type }}</template>
               </div>
             </div>
-            <Tooltip v-if="task.verified_by" :text="__('Someone else has to witness this one')">
-              <span class="lucide-shield-check size-4 text-ink-gray-4" aria-hidden="true" />
-            </Tooltip>
-            <Button
-              v-if="!task.completed"
-              variant="subtle"
-              :label="__('Done')"
-              :loading="tick.loading"
-              @click="tick.submit({ name: detail.name, idx: task.idx })"
-            />
+
+            <template v-if="!task.completed">
+              <Button
+                v-if="task.task_type === 'Assessment' && detail.quiz?.available && detail.is_mine"
+                variant="solid"
+                icon-left="lucide-clipboard-check"
+                :label="__('Take the quiz')"
+                :disabled="!detail.quiz.attempts_left && !detail.quiz.open"
+                @click="quizFor = detail.name"
+              />
+              <Button
+                v-else-if="task.witnessed && detail.can_assess"
+                variant="solid"
+                icon-left="lucide-shield-check"
+                :label="__('Sign off')"
+                :loading="tick.loading"
+                @click="tick.submit({ name: detail.name, idx: task.idx })"
+              />
+              <Tooltip v-else-if="task.witnessed" :text="__('A trainer or supervisor has to witness and sign this off.')">
+                <span class="inline-flex items-center gap-1 rounded-2 bg-surface-gray-2 px-2 py-1 text-xs text-ink-gray-6">
+                  <span class="lucide-shield-check size-3.5" aria-hidden="true" />
+                  {{ __('Trainer signs this off') }}
+                </span>
+              </Tooltip>
+              <Tooltip v-else-if="task.task_type === 'Read Procedure'" :text="__('This also signs the procedure as read.')">
+                <Button
+                  variant="subtle"
+                  :label="__('Mark as read')"
+                  :loading="tick.loading"
+                  @click="tick.submit({ name: detail.name, idx: task.idx })"
+                />
+              </Tooltip>
+              <Button
+                v-else
+                variant="subtle"
+                :label="__('Done')"
+                :loading="tick.loading"
+                @click="tick.submit({ name: detail.name, idx: task.idx })"
+              />
+            </template>
           </div>
+        </div>
+
+        <div v-if="detail.quiz?.attempts?.length" class="rounded-3 border border-outline-gray-1 px-3 py-2">
+          <p class="mb-1.5 text-sm font-medium text-ink-gray-7">{{ __('Quiz attempts') }}</p>
+          <p
+            v-for="(attempt, index) in detail.quiz.attempts"
+            :key="index"
+            class="flex items-center gap-2 text-sm text-ink-gray-6"
+          >
+            <span
+              :class="attempt.passed ? 'lucide-circle-check text-ink-green-3' : 'lucide-circle-x text-ink-red-3'"
+              class="size-3.5"
+              aria-hidden="true"
+            />
+            {{ __('Attempt {0}').format(index + 1) }} · {{ attempt.score }}% ·
+            {{ attempt.passed ? __('Passed') : __('Below the pass mark') }}
+          </p>
         </div>
 
         <div
@@ -171,6 +243,8 @@
       </div>
     </template>
   </Dialog>
+
+  <QuizDialog v-model:assignment="quizFor" @done="afterQuiz" />
 </template>
 
 <script setup>
@@ -191,6 +265,7 @@ import {
 import { List, ListCell, ListRow } from 'frappe-ui/list'
 import AppBreadcrumbs from '@/components/Layouts/AppBreadcrumbs.vue'
 import ListSkeleton from '@/components/Common/ListSkeleton.vue'
+import QuizDialog from '@/components/Training/QuizDialog.vue'
 import { trainingCounts } from '@/data/training'
 import { shortDate } from '@/utils/format'
 
@@ -200,6 +275,7 @@ const router = useRouter()
 
 const tab = ref('Open')
 const detail = ref(null)
+const quizFor = ref(null)
 const outcome = ref({ open: false, value: 'Competent', score: null, remarks: '' })
 
 const assignments = createResource({
@@ -247,6 +323,12 @@ const OUTCOME_TONE = {
   'Needs More Practice': 'amber',
   'Not Competent': 'red',
   Pending: 'gray',
+}
+
+function afterQuiz() {
+  one.reload()
+  assignments.reload()
+  trainingCounts.reload()
 }
 
 function open(row) {

@@ -8,6 +8,11 @@ const routes = [
   { path: '/training/matrix', name: 'TrainingMatrix', component: () => import('@/pages/TrainingMatrix.vue') },
   { path: '/training/sessions', name: 'TrainingSessions', component: () => import('@/pages/TrainingSessions.vue') },
   { path: '/training/rules', name: 'TrainingRules', component: () => import('@/pages/TrainingRules.vue') },
+  {
+    path: '/training/certificate/:name',
+    name: 'Certificate',
+    component: () => import('@/pages/Certificate.vue'),
+  },
   { path: '/insights', name: 'Insights', component: () => import('@/pages/Insights.vue') },
   {
     path: '/:name',

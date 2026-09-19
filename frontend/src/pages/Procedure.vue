@@ -177,6 +177,8 @@
 
     <LiveBlocks :root="body" :sop="doc.name" :revision="revision" :content="doc.content" />
 
+    <QuizEditor v-if="doc.can_quiz" v-model:open="showQuiz" :sop="doc.name" @update:open="(value) => !value && load()" />
+
     <ClarityFeedback
       v-if="doc.name && isEffective"
       :sop="doc.name"
@@ -381,6 +383,7 @@ import ReviewComments from '@/components/Procedure/ReviewComments.vue'
 import ReviewRouteDialog from '@/components/Procedure/ReviewRouteDialog.vue'
 import MentionChip from '@/components/Procedure/MentionChip.vue'
 import LiveBlocks from '@/components/Procedure/LiveBlocks.vue'
+import QuizEditor from '@/components/Training/QuizEditor.vue'
 import CompareRevisionsModal from '@/components/Procedure/CompareRevisionsModal.vue'
 import { openRoom, roomUnread } from '@/data/chat'
 import { acknowledge, procedure } from '@/data/procedures'
@@ -423,6 +426,7 @@ const RING = {
 
 
 const revision = ref(null)
+const showQuiz = ref(false)
 const body = ref(null)
 const showRoute = ref(false)
 const routeMode = ref('view')
@@ -477,6 +481,14 @@ const quick = computed(() =>
       trailing: 'lucide-chevron-right',
       hidden: !doc.value.can_discuss,
       onClick: () => openRoom(doc.value.name),
+    },
+    {
+      label: __('Quiz questions'),
+      icon: 'lucide-clipboard-check',
+      count: doc.value.quiz_questions,
+      trailing: 'lucide-chevron-right',
+      hidden: !doc.value.can_quiz,
+      onClick: () => (showQuiz.value = true),
     },
     {
       label: __('Training'),

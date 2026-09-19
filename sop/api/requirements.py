@@ -39,6 +39,8 @@ def requirements(space=None):
 			"requires_assessment",
 			"pass_mark",
 			"refresher_months",
+			"max_attempts",
+			"question_count",
 		],
 		order_by="modified desc",
 		limit_page_length=0,
@@ -98,6 +100,8 @@ def save_requirement(name=None, **values):
 		"requires_assessment",
 		"pass_mark",
 		"refresher_months",
+		"max_attempts",
+		"question_count",
 		"enabled",
 	)
 
@@ -146,25 +150,13 @@ def run_requirement(name):
 	requirement = frappe.get_doc("SOP Training Requirement", name)
 	created = 0
 
-	for sop in procedures_of(requirement):
+	for sop in training.procedures_of(requirement):
 		doc = frappe.get_doc("SOP", sop)
 		for user in training.expand(requirement):
 			if training.create_assignment(doc, requirement, user):
 				created += 1
 
 	return {"created": created}
-
-
-def procedures_of(requirement):
-	if requirement.scope == "Procedure":
-		return [requirement.sop] if requirement.sop else []
-
-	return frappe.get_all(
-		"SOP",
-		filters={"space": requirement.space, "status": "Effective"},
-		pluck="name",
-		limit_page_length=0,
-	)
 
 
 def ensure_manager():

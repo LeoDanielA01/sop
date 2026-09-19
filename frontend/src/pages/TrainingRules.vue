@@ -131,6 +131,14 @@
             v-model="draft.refresher_months"
           />
           <FormControl type="number" :label="__('Pass mark %')" v-model="draft.pass_mark" />
+          <template v-if="draft.method === 'Assessment'">
+            <FormControl type="number" :label="__('Quiz attempts allowed')" v-model="draft.max_attempts" />
+            <FormControl
+              type="number"
+              :label="__('Questions per quiz (0 = all)')"
+              v-model="draft.question_count"
+            />
+          </template>
         </div>
 
         <FormControl
@@ -209,6 +217,8 @@ const draft = reactive({
   refresher_months: 12,
   pass_mark: 80,
   requires_assessment: false,
+  max_attempts: 3,
+  question_count: 0,
   enabled: 1,
 })
 
@@ -286,6 +296,8 @@ function edit(row) {
     refresher_months: row?.refresher_months ?? 12,
     pass_mark: row?.pass_mark ?? 80,
     requires_assessment: !!row?.requires_assessment,
+    max_attempts: row?.max_attempts || 3,
+    question_count: row?.question_count ?? 0,
     enabled: row ? row.enabled : 1,
   })
 
@@ -315,6 +327,8 @@ function submit() {
     refresher_months: draft.refresher_months,
     pass_mark: draft.pass_mark,
     requires_assessment: draft.requires_assessment ? 1 : 0,
+    max_attempts: draft.max_attempts,
+    question_count: draft.question_count,
     enabled: draft.enabled,
   })
 }

@@ -4,7 +4,7 @@
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import flt, getdate, now_datetime, nowdate
+from frappe.utils import cint, flt, getdate, now_datetime, nowdate
 
 OPEN_STATES = ("Assigned", "In Progress", "Overdue")
 
@@ -12,8 +12,16 @@ OPEN_STATES = ("Assigned", "In Progress", "Overdue")
 class SOPTrainingAssignment(Document):
 	def validate(self):
 		self.set_progress()
+		self.settle_quiz()
 		self.set_status()
 		self.validate_outcome()
+
+	def settle_quiz(self):
+		if not self.assessed_by_quiz or self.outcome not in (None, "", "Pending"):
+			return
+
+		if self.tasks and all(row.completed for row in self.tasks) and flt(self.score) >= flt(self.pass_mark):
+			self.outcome = "Competent"
 
 	def set_progress(self):
 		if not self.tasks:
@@ -58,11 +66,23 @@ class SOPTrainingAssignment(Document):
 					)
 				)
 
+	def on_update(self):
+		if self.has_value_changed("outcome") and self.outcome == "Not Competent":
+			from sop.training import retrain
+
+			retrain(self)
+
 	def complete_task(self, idx, user=None):
+		from sop.training import WITNESSED
+
 		user = user or frappe.session.user
+
 		for row in self.tasks:
-			if row.idx != idx:
+			if row.idx != idx or row.completed:
 				continue
+
+			if row.task_type in WITNESSED and user == self.trainee:
+				frappe.throw(_("“{0}” has to be signed off by a trainer.").format(row.task))
 
 			if row.verified_by and row.verified_by != user:
 				frappe.throw(_("Task {0} has to be signed off by {1}.").format(row.idx, row.verified_by))
@@ -71,5 +91,18 @@ class SOPTrainingAssignment(Document):
 			row.completed_on = now_datetime()
 			row.completed_by = user
 
+			if user != self.trainee:
+				row.verified_by = user
+
+			if row.task_type == "Read Procedure" and user == self.trainee:
+				self.sign_procedure()
+
 		self.save(ignore_permissions=True)
 		return self.status
+
+	def sign_procedure(self):
+		from sop.api.procedures import sign
+
+		status, version = frappe.db.get_value("SOP", self.sop, ["status", "version"])
+		if status == "Effective" and cint(version) == cint(self.version):
+			sign(self.sop, self.version, self.trainee, method="Training Session" if self.session else "Web")

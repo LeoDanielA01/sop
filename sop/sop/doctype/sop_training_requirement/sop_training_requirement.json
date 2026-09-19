@@ -24,6 +24,8 @@
   "column_break_how",
   "requires_assessment",
   "pass_mark",
+  "max_attempts",
+  "question_count",
   "refresher_months"
  ],
  "fields": [
@@ -152,6 +154,20 @@
    "label": "Pass Mark"
   },
   {
+   "default": "3",
+   "description": "How many tries a trainee gets at the quiz.",
+   "fieldname": "max_attempts",
+   "fieldtype": "Int",
+   "label": "Quiz Attempts"
+  },
+  {
+   "default": "0",
+   "description": "Questions drawn per quiz. 0 asks every question.",
+   "fieldname": "question_count",
+   "fieldtype": "Int",
+   "label": "Questions per Quiz"
+  },
+  {
    "default": "12",
    "description": "0 means train once and never again.",
    "fieldname": "refresher_months",
@@ -161,7 +177,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-09-12 23:30:00.000000",
+ "modified": "2026-09-19 15:00:00.000000",
  "modified_by": "Administrator",
  "module": "SOP",
  "name": "SOP Training Requirement",

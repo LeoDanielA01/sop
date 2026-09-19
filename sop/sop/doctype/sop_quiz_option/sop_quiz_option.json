@@ -1,0 +1,42 @@
+{
+ "actions": [],
+ "autoname": "hash",
+ "creation": "2026-09-19 16:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "option",
+  "correct"
+ ],
+ "fields": [
+  {
+   "fieldname": "option",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Answer",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "correct",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Correct"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-09-19 16:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "SOP",
+ "name": "SOP Quiz Option",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0,
+ "istable": 1
+}

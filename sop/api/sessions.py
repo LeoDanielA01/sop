@@ -202,7 +202,8 @@ def settle(sop, attendee, session_name):
 		if not task.completed:
 			task.completed = 1
 			task.completed_on = now_datetime()
-			task.completed_by = attendee.user
+			task.completed_by = frappe.session.user
+			task.verified_by = frappe.session.user
 
 	assignment.save(ignore_permissions=True)
 
