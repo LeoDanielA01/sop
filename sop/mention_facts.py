@@ -33,7 +33,9 @@ def item(name):
 
 		facts.append(
 			{
+				"key": "stock",
 				"label": _("In stock"),
+				"amount": stock,
 				"value": _("{0} {1} in {2} warehouses").format(quantity(stock), uom, places),
 				"short": _("{0} {1} in stock").format(quantity(stock), uom),
 				"tone": "red" if stock <= 0 else "gray",
@@ -43,7 +45,13 @@ def item(name):
 
 		if flt(projected) != flt(stock):
 			facts.append(
-				{"label": _("Projected"), "value": f"{quantity(projected)} {uom}", "tone": "gray"}
+				{
+					"key": "projected",
+					"label": _("Projected"),
+					"value": f"{quantity(projected)} {uom}",
+					"tone": "gray",
+					"amount": projected,
+				}
 			)
 
 	return facts + nearest_batch(name)
@@ -68,6 +76,7 @@ def nearest_batch(name):
 
 	return [
 		{
+			"key": "batch_expiry",
 			"label": _("Next batch expiry"),
 			"value": _("{0} · {1} · {2} left").format(
 				frappe.format_value(batch.expiry_date, {"fieldtype": "Date"}),
@@ -89,7 +98,9 @@ def warehouse(name):
 
 	return [
 		{
+			"key": "items_in_stock",
 			"label": _("Items in stock"),
+			"amount": stocked,
 			"value": str(stocked),
 			"short": _("{0} items in stock").format(stocked),
 			"tone": "gray",

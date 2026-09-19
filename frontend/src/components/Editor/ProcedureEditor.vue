@@ -19,6 +19,8 @@
 
     <ClarityCheck v-if="editable" :editor="editor" />
 
+    <LiveDialog v-model:open="live.open" :mode="live.mode" :editor="editor" />
+
     <div
       v-if="!ui.editorToolsPinned"
       class="flex items-center gap-1.5 border-t border-outline-gray-1 px-3 py-1.5 text-sm text-ink-gray-5"
@@ -30,7 +32,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { reactive, ref } from 'vue'
 import { useFileUpload } from 'frappe-ui'
 import {
   EditorBubbleMenu,
@@ -40,6 +42,7 @@ import {
   useEditor,
 } from 'frappe-ui/editor'
 import ClarityCheck from './ClarityCheck.vue'
+import LiveDialog from './LiveDialog.vue'
 import MentionSuggest from './MentionSuggest.vue'
 import ToolPalette from './ToolPalette.vue'
 import { useUI } from '@/stores/ui'
@@ -54,6 +57,7 @@ const props = defineProps({
 const emit = defineEmits(['change'])
 
 const palette = ref(null)
+const live = reactive({ open: false, mode: 'live' })
 const ui = useUI()
 const fileUpload = useFileUpload()
 
@@ -100,5 +104,7 @@ const api = {
   insertCallout,
   pickRecord: () => mention('#'),
   pickPerson: () => mention('@'),
+  insertLive: () => Object.assign(live, { open: true, mode: 'live' }),
+  insertCheck: () => Object.assign(live, { open: true, mode: 'check' }),
 }
 </script>

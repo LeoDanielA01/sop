@@ -82,6 +82,16 @@ function procedureItems(api) {
       label: __('Mention a person'),
       action: () => api.pickPerson(),
     },
+    live: {
+      icon: 'lucide-activity',
+      label: __('Live value'),
+      action: () => api.insertLive(),
+    },
+    check: {
+      icon: 'lucide-circle-check',
+      label: __('Check'),
+      action: () => api.insertCheck(),
+    },
   }
 }
 
@@ -114,6 +124,8 @@ export function fixedItems(api) {
     sop.note,
     sop.record,
     sop.person,
+    sop.live,
+    sop.check,
     Separator,
     AlignLeft,
     AlignCenter,
@@ -322,6 +334,20 @@ function insertGroup(api) {
       icon: 'lucide-user',
       label: 'Mention a person',
       run: () => api.pickPerson(),
+    },
+    {
+      key: 'live',
+      icon: 'lucide-activity',
+      label: 'Live value',
+      hint: 'A number or date that stays current',
+      run: () => api.insertLive(),
+    },
+    {
+      key: 'check',
+      icon: 'lucide-circle-check',
+      label: 'Check',
+      hint: 'A green tick or red cross from live data',
+      run: () => api.insertCheck(),
     },
     {
       key: 'table',

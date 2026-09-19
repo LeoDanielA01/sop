@@ -124,6 +124,28 @@
 .prose-sop [data-mention] {
   white-space: nowrap;
 }
+.prose-sop a[href^='#live:'],
+.prose-sop a[href^='#check:'] {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3em;
+  border: 1px dashed var(--outline-gray-3);
+  border-radius: var(--radius-2);
+  background: var(--surface-gray-1);
+  padding: 0 0.4em;
+  color: var(--ink-gray-8);
+  text-decoration: none;
+}
+.prose-sop a[href^='#live:']::before {
+  content: '◉';
+  font-size: 0.7em;
+  color: var(--ink-gray-5);
+}
+.prose-sop a[href^='#check:']::before {
+  content: '✓';
+  font-size: 0.8em;
+  color: var(--ink-gray-5);
+}
 .prose-sop a[data-mention-chip] {
   color: var(--ink-gray-8);
   text-decoration: none;

@@ -175,6 +175,8 @@
       :root="body"
     />
 
+    <LiveBlocks :root="body" :sop="doc.name" :revision="revision" :content="doc.content" />
+
     <ClarityFeedback
       v-if="doc.name && isEffective"
       :sop="doc.name"
@@ -378,6 +380,7 @@ import ClarityFeedback from '@/components/Procedure/ClarityFeedback.vue'
 import ReviewComments from '@/components/Procedure/ReviewComments.vue'
 import ReviewRouteDialog from '@/components/Procedure/ReviewRouteDialog.vue'
 import MentionChip from '@/components/Procedure/MentionChip.vue'
+import LiveBlocks from '@/components/Procedure/LiveBlocks.vue'
 import CompareRevisionsModal from '@/components/Procedure/CompareRevisionsModal.vue'
 import { openRoom, roomUnread } from '@/data/chat'
 import { acknowledge, procedure } from '@/data/procedures'
