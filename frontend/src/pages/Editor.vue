@@ -57,7 +57,7 @@
       <FormControl
         type="text"
         size="lg"
-        :placeholder="__('Title — what this procedure covers')"
+        :placeholder="__('Title what this procedure covers')"
         v-model="draft.title"
       />
       <div class="grid gap-3 sm:grid-cols-2">

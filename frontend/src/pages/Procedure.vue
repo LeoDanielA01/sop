@@ -64,7 +64,7 @@
           "
         >
           <span class="lucide-triangle-alert size-4 shrink-0" aria-hidden="true" />
-          {{ doc.status }} — not in force
+          {{ doc.status }} not in "Force"
         </div>
 
         <div class="shrink-0 border-b border-outline-gray-1 px-4 py-3">
@@ -176,7 +176,7 @@
     />
 
     <ClarityFeedback
-      v-if="doc.name"
+      v-if="doc.name && isEffective"
       :sop="doc.name"
       :version="doc.version"
       @summary="(value) => (clarity = value)"
@@ -266,7 +266,7 @@
   >
     <div class="mx-auto flex max-w-[1400px] items-center justify-between gap-4">
       <p class="text-sm text-ink-gray-6">
-        {{ __('Confirm you have read and understood') }} <b>Rev {{ doc.version }}</b>{{ __('. You will be asked again when a new revision comes into force — not every time you open it.') }}
+        {{ __('Confirm you have read and understood') }} <b>Rev {{ doc.version }}</b>{{ __('. You will be asked again when a new revision comes into force.') }}
       </p>
       <Button
         variant="solid"
@@ -349,6 +349,11 @@
       </div>
     </template>
   </Dialog>
+
+  <CompareRevisionsModal
+    v-model="showCompareModal"
+    :sop-name="doc.name || route.params.name"
+  />
 </template>
 
 <script setup>
@@ -373,6 +378,7 @@ import ClarityFeedback from '@/components/Procedure/ClarityFeedback.vue'
 import ReviewComments from '@/components/Procedure/ReviewComments.vue'
 import ReviewRouteDialog from '@/components/Procedure/ReviewRouteDialog.vue'
 import MentionChip from '@/components/Procedure/MentionChip.vue'
+import CompareRevisionsModal from '@/components/Procedure/CompareRevisionsModal.vue'
 import { acknowledge, procedure } from '@/data/procedures'
 import { useBreakpoint } from '@/composables/useBreakpoint'
 import { useUI } from '@/stores/ui'
@@ -388,14 +394,8 @@ const ui = useUI()
 const RISK_THEME = { High: 'red', Medium: 'orange', Low: 'green' }
 
 const openComments = ref(0)
-
-watch(
-  () => doc.value.review?.visible,
-  (visible) => {
-    if (!visible) openComments.value = 0
-  },
-)
 const clarity = ref(null)
+const showCompareModal = ref(false)
 
 const nearby = createResource({ url: 'sop.api.procedures.neighbours' })
 
@@ -435,6 +435,14 @@ const isMaterial = ref(true)
 const changes = reactive({ open: false, comment: '' })
 
 const doc = computed(() => procedure.data || {})
+
+watch(
+  () => doc.value.review?.visible,
+  (visible) => {
+    if (!visible) openComments.value = 0
+  },
+)
+
 const isEffective = computed(() => doc.value.status === 'Effective')
 const ownerName = computed(() => doc.value.process_owner_name || doc.value.process_owner)
 const overdue = computed(() => reviewTone(doc.value.review_due) === 'red')
@@ -619,6 +627,11 @@ const actions = computed(() =>
       label: __('Revision history'),
       icon: 'lucide-history',
       onClick: () => router.push(`/${route.params.name}/history`),
+    },
+    {
+      label: __('Compare revisions'),
+      icon: 'lucide-git-compare',
+      onClick: () => (showCompareModal.value = true),
     },
     { label: __('Print controlled copy'), icon: 'lucide-printer', onClick: () => window.print() },
     doc.value.actions?.retire && {

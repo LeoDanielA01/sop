@@ -38,6 +38,49 @@
           {{ __('You are not allowed to see this record.') }}
         </p>
 
+        <template v-else-if="info.is_user || info.doctype === 'User'">
+          <div class="flex items-center gap-3">
+            <Avatar :image="info.image" :label="info.title" size="xl" shape="circle" />
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-1.5">
+                <p class="truncate text-base font-semibold text-ink-gray-9">{{ info.title }}</p>
+                <Badge v-if="info.status" :theme="info.status_tone" variant="subtle" size="sm">
+                  {{ info.status }}
+                </Badge>
+              </div>
+              <p class="truncate text-xs text-ink-gray-5 mt-0.5">{{ info.role }}</p>
+              <p class="truncate text-xs font-mono text-ink-gray-6 mt-0.5">{{ info.email }}</p>
+            </div>
+          </div>
+
+          <div class="mt-4 flex items-center justify-between gap-2 border-t border-outline-gray-1 pt-3">
+            <a
+              :href="`mailto:${info.email}`"
+              class="flex flex-1 items-center justify-center gap-1.5 rounded-md border border-outline-gray-2 bg-surface-white px-2 py-1.5 text-xs font-medium text-ink-gray-8 no-underline hover:bg-surface-gray-2 hover:text-ink-gray-9 transition-colors shadow-xs"
+            >
+              <span class="lucide-mail size-3.5 text-ink-gray-5" />
+              {{ __('Mail') }}
+            </a>
+
+            <a
+              :href="`mailto:${info.email}?subject=Internal%20Message`"
+              class="flex flex-1 items-center justify-center gap-1.5 rounded-md border border-outline-gray-2 bg-surface-white px-2 py-1.5 text-xs font-medium text-ink-gray-8 no-underline hover:bg-surface-gray-2 hover:text-ink-gray-9 transition-colors shadow-xs"
+            >
+              <span class="lucide-message-square size-3.5 text-ink-gray-5" />
+              {{ __('Message') }}
+            </a>
+
+            <a
+              :href="info.phone ? `tel:${info.phone}` : undefined"
+              :class="info.phone ? 'hover:bg-surface-gray-2 text-ink-gray-8' : 'opacity-50 cursor-not-allowed text-ink-gray-4'"
+              class="flex flex-1 items-center justify-center gap-1.5 rounded-md border border-outline-gray-2 bg-surface-white px-2 py-1.5 text-xs font-medium no-underline transition-colors shadow-xs"
+            >
+              <span class="lucide-phone size-3.5 text-ink-gray-5" />
+              {{ __('Call') }}
+            </a>
+          </div>
+        </template>
+
         <template v-else>
           <div class="flex items-start gap-2.5">
             <Avatar :image="info.image" :label="info.title" size="xl" shape="square" />

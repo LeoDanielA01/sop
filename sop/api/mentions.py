@@ -286,6 +286,36 @@ def card(doctype, name):
 	if cached:
 		return cached
 
+	if doctype == "User":
+		user_doc = frappe.get_doc("User", name)
+		roles = frappe.get_all(
+			"Has Role",
+			filters={"parent": name, "parenttype": "User", "role": ("like", "SOP%")},
+			pluck="role",
+			limit_page_length=5,
+		)
+		role_label = ", ".join(roles) if roles else (user_doc.user_type or "Team Member")
+		phone_no = user_doc.mobile_no or user_doc.phone or ""
+
+		result = {
+			"doctype": "User",
+			"name": name,
+			"title": user_doc.full_name or name,
+			"image": user_doc.user_image,
+			"status": "Active" if user_doc.enabled else "Inactive",
+			"status_tone": "green" if user_doc.enabled else "red",
+			"email": user_doc.email or name,
+			"phone": phone_no,
+			"role": role_label,
+			"is_user": True,
+			"facts": [],
+			"counts": [],
+			"url": None,
+		}
+
+		frappe.cache().set_value(key, result, expires_in_sec=CACHE_TTL)
+		return result
+
 	meta = frappe.get_meta(doctype)
 	row, picked, deadlines = read(meta, name)
 	status = status_of(meta, row)

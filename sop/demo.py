@@ -13,130 +13,139 @@ from sop.api import sessions as sessions_api
 from sop.api import training as training_api
 
 PEOPLE = [
-	("priya.nair@example.com", "Priya", "Nair", ["SOP Manager", "SOP Approver"]),
-	("arun.kumar@example.com", "Arun", "Kumar", ["SOP Author"]),
-	("mei.tan@example.com", "Mei", "Tan", ["SOP Approver", "SOP Trainer"]),
-	("sam.oduya@example.com", "Sam", "Oduya", ["SOP Reader"]),
+	("sara.james@example.com", "Sara", "James", ["SOP Manager", "SOP Approver"]),
+	("dan.walsh@example.com", "Dan", "Walsh", ["SOP Author"]),
+	("leila.k@example.com", "Leila", "Karimian", ["SOP Approver", "SOP Trainer"]),
+	("tom.r@example.com", "Tom", "Rivera", ["SOP Reader"]),
 ]
 
-TEAM = "Plant Floor"
+TEAM = "All Staff"
 
-QUALITY_PROCESSES = [
-	("Documentation", ["Writing a procedure", "Change control", "Record retention"]),
-	("Audits", ["Internal audit", "Supplier audit", "Regulatory inspection"]),
+APP_PROCESSES = [
+	("Writing Procedures", ["Drafting", "Review & Approval", "Publishing"]),
+	("Training", ["Assigning training", "Recording outcomes"]),
 ]
 
 PROCEDURES = [
 	{
-		"title": "Line clearance before a batch",
-		"space": "MFG",
-		"process": "Line clearance and setup",
-		"summary": "What two people must confirm before any material reaches a clean line.",
+		"slug": "write",
+		"title": "How to write a procedure in this app",
+		"space": "OPS",
+		"process": "Drafting",
+		"summary": "Open the app, pick a space, and write your first procedure in under five minutes.",
 		"state": "effective",
-		"tags": ["gmp", "batch-start"],
+		"tags": ["getting-started"],
 		"content": """<h2>Purpose</h2>
-<p>No batch starts on a line that still holds anything from the batch before it. Line clearance is the check that proves it, and it is signed by two people.</p>
-<h2>Scope</h2>
-<p>Every production and packing line, at every changeover and at the start of every shift where the product changes.</p>
-<h2>Responsibilities</h2>
-<ul>
-<li>Operator — carries out the clearance.</li>
-<li>Line supervisor — checks it independently and signs.</li>
-<li>Quality — audits clearance records weekly.</li>
-</ul>
-<h2>Procedure</h2>
-<div data-sop="step"><p><strong>Stop and mark the line</strong> — hang the board so nobody feeds material while the check runs.</p>
-<p data-sop="step-meta">Responsible: Operator · Records: Line clearance record</p></div>
-<div data-sop="step"><p><strong>Strip the line</strong> — components, labels, printed records and part-used containers all leave the area.</p>
-<p data-sop="step-meta">Responsible: Operator · Records: Line clearance record</p></div>
-<div data-sop="callout" data-tone="warning"><p>A single label from the previous batch is a mix-up. Check under the conveyor and inside the reject bin.</p></div>
-<div data-sop="step"><p><strong>Independent check</strong> — a second person repeats the walk and signs. The same person cannot do both.</p>
-<p data-sop="step-meta">Responsible: Line supervisor · Records: Line clearance record</p></div>
-<h2>Records</h2>
-<p>Line clearance record, filed with the batch record. Kept for the shelf life of the product plus one year.</p>""",
+<p>Anyone on the team can create a procedure. This guide walks you through it from a blank page to a published document.</p>
+<h2>Steps</h2>
+<div data-sop="step"><p><strong>Open your space</strong> — click the space name in the left sidebar. A space groups related procedures together (e.g. Operations, HR).</p></div>
+<div data-sop="step"><p><strong>Create a new procedure</strong> — click <em>New procedure</em> in the top right. Give it a short, action-oriented title.</p></div>
+<div data-sop="step"><p><strong>Write the content</strong> — use the editor to add steps, callouts and headings. Keep each step to one action.</p>
+<p data-sop="step-meta">Tip: use the <em>Step</em> block from the toolbar to get numbered steps automatically.</p></div>
+<div data-sop="step"><p><strong>Save your draft</strong> — your draft is private until you send it for review. Save often.</p></div>
+<div data-sop="callout" data-tone="note"><p>A good title answers the question "What does this procedure make happen?" — not just "What is this about?"</p></div>
+<h2>What's next</h2>
+<p>Once the draft looks right, send it for review — see {sop:review} for the full steps.</p>""",
 	},
 	{
-		"title": "Weighing and dispensing raw material",
-		"space": "MFG",
-		"process": "Weighing and dispensing",
-		"summary": "How material is weighed, labelled and reconciled so a batch can be traced back.",
+		"slug": "review",
+		"title": "How to send a procedure for review",
+		"space": "OPS",
+		"process": "Review & Approval",
+		"summary": "When your draft is ready, one click puts it in front of the right approvers.",
 		"state": "effective",
-		"effective_since": -380,
-		"tags": ["gmp"],
+		"effective_since": -60,
+		"tags": ["getting-started", "review"],
 		"content": """<h2>Purpose</h2>
-<p>Every gram that enters a batch is traceable to a material, a lot and the person who weighed it.</p>
-<h2>Scope</h2>
-<p>All raw material and in-process material dispensed in the weighing booth.</p>
-<h2>Procedure</h2>
-<div data-sop="step"><p><strong>Check the balance</strong> — calibration in date, pan clean, zero stable.</p>
-<p data-sop="step-meta">Responsible: Operator · Records: Balance log</p></div>
-<div data-sop="step"><p><strong>Identify the material</strong> — material code, lot number and released status against the batch record.</p>
-<p data-sop="step-meta">Responsible: Operator · Records: Batch record</p></div>
-<div data-sop="callout" data-tone="warning"><p>Never weigh from a container without a release label. Quarantine material stays in quarantine.</p></div>
-<div data-sop="step"><p><strong>Weigh, label, verify</strong> — a second person confirms the weight before the container leaves the booth.</p>
-<p data-sop="step-meta">Responsible: Line supervisor · Records: Dispensing record</p></div>
-<h2>Records</h2>
-<p>Dispensing record and balance log.</p>""",
+<p>Sending for review locks the content and routes it to the people who need to approve it before it goes live.</p>
+<h2>Steps</h2>
+<div data-sop="step"><p><strong>Open the draft</strong> — find it in your space or in the <em>Waiting on you</em> section of your profile. {user:manager} will be notified once you send.</p></div>
+<div data-sop="step"><p><strong>Click "Send for review"</strong> — this button appears in the top bar when your draft is ready to go. The procedure moves to <em>In Review</em> status.</p></div>
+<div data-sop="step"><p><strong>Approvers are notified</strong> — each person in the approval chain gets a notification. They can add comments directly on the text. See {sop:approve} for what they do next.</p></div>
+<div data-sop="step"><p><strong>Watch for comments</strong> — if an approver requests changes, the procedure comes back to you. Make the edits and send again.</p></div>
+<div data-sop="callout" data-tone="note"><p>You can see who is in the approval chain by clicking <em>Reviewers</em> in the sidebar while the procedure is open.</p></div>""",
 	},
 	{
-		"title": "Changeover on the filling line",
-		"space": "MFG",
-		"process": "Changeover",
-		"summary": "Stripping, cleaning and re-setting the filler between products.",
+		"slug": "approve",
+		"title": "How to approve a procedure",
+		"space": "OPS",
+		"process": "Review & Approval",
+		"summary": "Approvers read, comment, and either approve or send the procedure back for changes.",
 		"state": "in_review",
-		"tags": ["maintenance"],
+		"tags": ["review"],
 		"content": """<h2>Purpose</h2>
-<p>A changeover is finished when the line is clean, the right parts are fitted, and the first containers are within the fill tolerance.</p>
-<h2>Procedure</h2>
-<div data-sop="step"><p><strong>Isolate</strong> — lockout and tagout before a guard is opened.</p>
-<p data-sop="step-meta">Responsible: Line supervisor · Records: Lockout register</p></div>
-<div data-sop="step"><p><strong>Strip and clean</strong> — change parts go to the wash bay with their identification tags.</p>
-<p data-sop="step-meta">Responsible: Operator · Records: Cleaning log</p></div>
-<div data-sop="step"><p><strong>Set and prove</strong> — five containers checked against the fill tolerance before normal running.</p>
-<p data-sop="step-meta">Responsible: Line supervisor · Records: Setup record</p></div>""",
+<p>As an approver your job is to make sure the procedure is accurate, complete and safe to follow before it becomes the official way of working.</p>
+<h2>Steps</h2>
+<div data-sop="step"><p><strong>Open the notification</strong> — click the link in your email or notification. The procedure opens in read mode.</p></div>
+<div data-sop="step"><p><strong>Read carefully</strong> — highlight any text and click <em>Comment</em> to pin a note to that exact spot. Comments stay visible to {user:author}.</p></div>
+<div data-sop="step"><p><strong>Approve or request changes</strong> — use the buttons at the bottom of the page. Once approved, {user:manager} can publish it — see {sop:publish}.</p></div>
+<div data-sop="callout" data-tone="warning"><p>Approving means you have read and are satisfied with the procedure as written. Only approve when you are sure.</p></div>""",
 	},
 	{
-		"title": "Raising a deviation",
-		"space": "QA",
-		"process": "Change control",
-		"summary": "What to do in the first hour after something does not go to plan.",
+		"slug": "publish",
+		"title": "How to bring a procedure into force",
+		"space": "OPS",
+		"process": "Publishing",
+		"summary": "Publishing sets the effective date, assigns a revision number, and notifies everyone who needs training.",
 		"state": "approved",
-		"tags": ["gmp", "quality"],
+		"tags": ["getting-started"],
 		"content": """<h2>Purpose</h2>
-<p>A deviation is anything that did not happen the way a procedure says. Reporting it quickly is what keeps a batch defensible.</p>
-<h2>Scope</h2>
-<p>Every department. Quality owns the outcome; the shift owns the first hour.</p>
-<h2>Procedure</h2>
-<div data-sop="step"><p><strong>Make it safe</strong> — stop, segregate the affected material, label it on hold.</p>
-<p data-sop="step-meta">Responsible: Operator · Records: Hold label</p></div>
-<div data-sop="step"><p><strong>Report within the hour</strong> — supervisor and Quality, verbally, then in writing.</p>
-<p data-sop="step-meta">Responsible: Operator · Records: Deviation form</p></div>
-<div data-sop="callout" data-tone="note"><p>Write what you saw, not what you think caused it. The investigation decides the cause.</p></div>""",
+<p>Once all approvers have signed off, a Manager can publish the procedure. Publishing gives it a revision number and sets the date it becomes the official way of working.</p>
+<h2>Steps</h2>
+<div data-sop="step"><p><strong>Open the approved procedure</strong> — its status shows <em>Approved</em> in the header badge.</p></div>
+<div data-sop="step"><p><strong>Click "Bring into force"</strong> — a dialog asks for the effective date and a short summary of what changed.</p></div>
+<div data-sop="step"><p><strong>Set the effective date</strong> — this can be today or a future date. Training is assigned automatically — see {sop:training} for how that works.</p></div>
+<div data-sop="step"><p><strong>Mark material changes</strong> — tick the checkbox if the change is significant enough that everyone must be trained again, not just new staff.</p></div>
+<div data-sop="callout" data-tone="note"><p>After publishing, readers who need to acknowledge the procedure will see a banner the next time they open it.</p></div>""",
 	},
 	{
-		"title": "Gowning for the clean area",
-		"space": "MFG",
-		"process": "Hygiene and gowning",
-		"summary": "The order the change room is used, and what never goes past the step-over bench.",
+		"slug": "training",
+		"title": "How to assign and track training",
+		"space": "HR",
+		"process": "Assigning training",
+		"summary": "Training rules automatically assign the right procedures to the right people. Here is how to set them up.",
+		"state": "effective",
+		"tags": ["training", "getting-started"],
+		"content": """<h2>Purpose</h2>
+<p>Training rules connect a group of people to a set of procedures. When a new procedure is published — like {sop:publish} — assignments are created automatically.</p>
+<h2>Steps</h2>
+<div data-sop="step"><p><strong>Go to Training rules</strong> — find it in the left navigation under Training.</p></div>
+<div data-sop="step"><p><strong>Create a rule</strong> — pick whether it covers a whole space (all procedures in that space) or a specific process.</p></div>
+<div data-sop="step"><p><strong>Set the audience</strong> — a team, a single person, or everyone. {user:trainer} manages training sign-offs for this demo.</p></div>
+<div data-sop="step"><p><strong>Choose the method and due days</strong> — Read & Understand means they read the procedure and acknowledge it. On the Job needs a trainer to sign off.</p></div>
+<div data-sop="callout" data-tone="note"><p>Check the Training matrix to see who is compliant, overdue, or not yet assigned across the whole space at a glance.</p></div>""",
+	},
+	{
+		"slug": "onboard",
+		"title": "Onboarding a new team member",
+		"space": "HR",
+		"process": "Recording outcomes",
+		"summary": "What to do before a new person's first day so they are set up in the app on day one.",
 		"state": "draft",
-		"tags": ["hygiene"],
+		"tags": ["onboarding"],
 		"content": """<h2>Purpose</h2>
-<p>The change room only works if it is used in one direction, in one order.</p>
-<h2>Procedure</h2>
-<div data-sop="step"><p><strong>Grey side</strong> — outdoor clothing, watches and jewellery come off here.</p></div>
-<div data-sop="step"><p><strong>Wash and dry</strong> — twenty seconds, then a single-use towel.</p></div>
-<div data-sop="step"><p><strong>Gown in order</strong> — hairnet, coverall, overshoes, gloves. Gloves go on last.</p></div>
-<div data-sop="callout" data-tone="warning"><p>Nothing from the grey side crosses the bench — no phones, no notebooks, no pens.</p></div>""",
+<p>New team members need an account, the right role, and their first training assignments waiting for them when they log in. See {sop:training} for how training rules work.</p>
+<h2>Steps</h2>
+<div data-sop="step"><p><strong>Create the user account</strong> — go to Settings &gt; Users in the desk and add them. Assign the SOP Reader role as a minimum.</p></div>
+<div data-sop="step"><p><strong>Add them to a team</strong> — go to Settings &gt; Teams, open the right team and add them. Their training rules apply immediately. Contact {user:manager} if you need a new team created.</p></div>
+<div data-sop="step"><p><strong>Check their training queue</strong> — open Training &gt; Matrix, filter by their name, and confirm the right assignments are showing.</p></div>
+<div data-sop="callout" data-tone="note"><p>If no assignments appear, check that a training rule covers the team they joined and covers the space or process you expect.</p></div>""",
 	},
 	{
-		"title": "Retained samples (old process)",
-		"space": "QA",
-		"process": "Record retention",
-		"summary": "Superseded by the sampling and testing procedure.",
+		"slug": "retire",
+		"title": "How to retire a procedure that is no longer used",
+		"space": "OPS",
+		"process": "Drafting",
+		"summary": "Retiring removes a procedure from active use without deleting its history.",
 		"state": "retired",
-		"tags": ["quality"],
+		"tags": ["admin"],
 		"content": """<h2>Purpose</h2>
-<p>Replaced. Retained samples are now covered by the sampling and testing procedure for the whole plant.</p>""",
+<p>When a procedure is replaced or no longer needed, retire it. The history and all acknowledgements are preserved, but it no longer appears as active. For the full lifecycle — from {sop:write} through to retirement — this is the final step.</p>
+<h2>Steps</h2>
+<div data-sop="step"><p><strong>Open the effective procedure</strong> — only an effective procedure can be retired.</p></div>
+<div data-sop="step"><p><strong>Click the three-dot menu</strong> — choose <em>Retire</em> from the list. Only {user:manager} and users with the Manager role can do this.</p></div>
+<div data-sop="step"><p><strong>Confirm</strong> — the procedure moves to <em>Retired</em> status immediately. It will no longer trigger new training assignments.</p></div>
+<div data-sop="callout" data-tone="warning"><p>Retiring is permanent. If you need to update a procedure instead, use <em>Start a revision</em> — that keeps the current version in force while you work on the next one.</p></div>""",
 	},
 ]
 
@@ -148,6 +157,8 @@ SHAPES = {
 }
 
 
+
+
 def after_migrate():
 	if not wanted():
 		print("SOP demo data: off. Run `bench --site <site> set-config sop_demo_data 1` to seed it.")
@@ -157,11 +168,11 @@ def after_migrate():
 		return
 
 	result = install(force=1)
-	print(f"SOP demo data: created {len(result.get('procedures', []))} procedures in MFG and QA.")
+	print(f"SOP demo data: created {len(result.get('procedures', []))} procedures in OPS and HR.")
 
 
 def seeded():
-	return bool(frappe.db.exists("SOP Space", {"space_code": ("in", ["MFG", "QA"])}))
+	return bool(frappe.db.exists("SOP Space", {"space_code": ("in", ["OPS", "HR"])}))
 
 
 def wanted():
@@ -178,25 +189,26 @@ def install(force=0):
 	manager = people[0]
 
 	spaces = {
-		"MFG": ensure_space(
+		"OPS": ensure_space(
 			manager,
-			"Manufacturing",
-			"MFG",
-			"How the plant makes, checks and packs what it ships.",
-			template="manufacturing",
+			"Operations",
+			"OPS",
+			"How the team gets things done — the official way of working.",
 		),
-		"QA": ensure_space(
-			manager, "Quality", "QA", "How the plant proves what it shipped was right."
+		"HR": ensure_space(
+			manager, "People & Culture", "HR", "Onboarding, training and team practices."
 		),
 	}
 
-	seed_quality_processes(manager, spaces["QA"])
+	seed_app_processes(manager, spaces)
 
 	created = []
 	for definition in PROCEDURES:
 		created.append(build(definition, spaces, people))
 
-	seed_training(spaces["MFG"], people)
+	inject_mentions(created, people)
+
+	seed_training(spaces["OPS"], people)
 	seed_session(people)
 	frappe.db.commit()
 
@@ -285,8 +297,9 @@ def ensure_space(manager, title, code, description, template=None):
 	return space["name"]
 
 
-def seed_quality_processes(manager, space):
-	for index, (group, children) in enumerate(QUALITY_PROCESSES, start=1):
+def seed_app_processes(manager, spaces):
+	for index, (group, children) in enumerate(APP_PROCESSES, start=1):
+		space = spaces["OPS"] if group == "Writing Procedures" else spaces["HR"]
 		parent = ensure_process(manager, space, group, None, index * 10)
 
 		for position, child in enumerate(children, start=1):
@@ -326,7 +339,7 @@ def build(definition, spaces, people):
 		summary=definition["summary"],
 		content=definition["content"],
 		process=process,
-		risk_level="High" if definition["space"] == "MFG" else "Medium",
+		risk_level="Medium",
 		is_controlled=1,
 	)
 
@@ -336,6 +349,41 @@ def build(definition, spaces, people):
 	advance(draft["name"], definition["state"], people, definition.get("effective_since", -40))
 
 	return draft["name"]
+
+
+def inject_mentions(created, people):
+	slug_to_name = {d["slug"]: sop for d, sop in zip(PROCEDURES, created)}
+
+	user_map = {
+		"manager": people[0],
+		"author":  people[1],
+		"trainer": people[2],
+		"reader":  people[3],
+	}
+
+	for sop_name in created:
+		doc = frappe.get_doc("SOP", sop_name)
+		content = doc.content or ""
+		changed = False
+
+		for slug, target_name in slug_to_name.items():
+			placeholder = f"{{sop:{slug}}}"
+			if placeholder in content:
+				title = frappe.db.get_value("SOP", target_name, "title")
+				link = f'<a href="#mention:SOP:{target_name}">{title}</a>'
+				content = content.replace(placeholder, link)
+				changed = True
+
+		for role, email in user_map.items():
+			placeholder = f"{{user:{role}}}"
+			if placeholder in content:
+				full_name = frappe.db.get_value("User", email, "full_name") or email
+				link = f'<a href="#mention:User:{email}">{full_name}</a>'
+				content = content.replace(placeholder, link)
+				changed = True
+
+		if changed:
+			frappe.db.set_value("SOP", sop_name, "content", content, update_modified=False)
 
 
 def add_tag(tag, doctype, name):
@@ -553,7 +601,7 @@ def clear():
 
 def wipe_demo():
 	spaces = frappe.get_all(
-		"SOP Space", filters={"space_code": ("in", ["MFG", "QA"])}, pluck="name",
+		"SOP Space", pluck="name",
 		limit_page_length=0,
 	)
 	if not spaces:

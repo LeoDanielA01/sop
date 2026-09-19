@@ -30,7 +30,14 @@
           </div>
         </ListCell>
 
-        <ListCell class="justify-end">
+        <ListCell class="justify-end items-center gap-3">
+          <Button
+            size="sm"
+            variant="ghost"
+            icon-left="lucide-git-compare"
+            :label="__('Compare')"
+            @click="openCompare(row.version)"
+          />
           <div class="text-right">
             <div class="text-sm text-ink-gray-5">{{ shortDate(row.effective_from) }}</div>
             <div class="mt-1.5 text-sm text-ink-gray-5">{{ row.approved_by }}</div>
@@ -47,21 +54,33 @@
     >
       {{ __('No revisions yet. The first one is cut when this procedure becomes effective.') }}
     </p>
+
+    <CompareRevisionsModal
+      v-model="showCompare"
+      :sop-name="route.params.name"
+      :initial-v1="compareV1"
+      :initial-v2="compareV2"
+    />
   </div>
 </template>
 
 <script setup>
-import { computed, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Badge, Button, PageHeader, createResource } from 'frappe-ui'
 import { List, ListCell, ListRow } from 'frappe-ui/list'
 import AppBreadcrumbs from '@/components/Layouts/AppBreadcrumbs.vue'
 import ListSkeleton from '@/components/Common/ListSkeleton.vue'
+import CompareRevisionsModal from '@/components/Procedure/CompareRevisionsModal.vue'
 import { procedure } from '@/data/procedures'
 import { shortDate } from '@/utils/format'
 
 const route = useRoute()
 const router = useRouter()
+
+const showCompare = ref(false)
+const compareV1 = ref(null)
+const compareV2 = ref(null)
 
 const revisions = createResource({
   url: 'frappe.client.get_list',
@@ -88,5 +107,15 @@ const sopNo = computed(() =>
 )
 
 const rows = computed(() => revisions.data || [])
+
+const openCompare = (version) => {
+  const currentList = rows.value
+  const targetVer = version
+  const prevRev = currentList.find((r) => r.version < targetVer)
+  compareV1.value = prevRev ? prevRev.version : null
+  compareV2.value = targetVer
+  showCompare.value = true
+}
+
 onMounted(() => revisions.fetch())
 </script>

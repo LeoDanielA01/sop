@@ -16,7 +16,7 @@
         <FormControl
           type="number"
           :label="__('Sequence')"
-          :description="__('Order among its siblings — lower comes first')"
+          :description="__('Order among its siblings lower comes first')"
           v-model="sequence"
         />
       </div>

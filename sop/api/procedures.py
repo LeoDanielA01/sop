@@ -320,6 +320,101 @@ def references_of(doc):
 	]
 
 
+@frappe.whitelist()
+def compare_revisions(sop, v1=None, v2=None):
+	import difflib
+
+	doc = frappe.get_doc("SOP", sop)
+	doc.check_permission("read")
+
+	revisions = frappe.get_all(
+		"SOP Revision",
+		filters={"sop": doc.name},
+		fields=["name", "version", "content", "effective_from", "change_summary", "cause", "approved_by", "is_material"],
+		order_by="version asc",
+		limit_page_length=0,
+	)
+
+	if not revisions:
+		blocks = split_html_blocks(doc.content or "")
+		return {
+			"v1": None,
+			"v2": {"version": doc.version, "change_summary": doc.summary},
+			"diffs": [{"type": "inserted", "text": block} for block in blocks],
+			"revisions_list": [],
+		}
+
+	versions_map = {str(r.version): r for r in revisions}
+
+	if not v2:
+		v2 = str(revisions[-1].version)
+	else:
+		v2 = str(v2)
+
+	if not v1:
+		v2_idx = next((i for i, r in enumerate(revisions) if str(r.version) == v2), len(revisions) - 1)
+		v1 = str(revisions[v2_idx - 1].version) if v2_idx > 0 else None
+	else:
+		v1 = str(v1)
+
+	rev1 = versions_map.get(v1)
+	rev2 = versions_map.get(v2)
+
+	content1 = rev1.content if rev1 else ""
+	content2 = rev2.content if rev2 else (doc.content if str(doc.version) == v2 else "")
+
+	old_blocks = split_html_blocks(content1)
+	new_blocks = split_html_blocks(content2)
+
+	matcher = difflib.SequenceMatcher(None, old_blocks, new_blocks)
+	diffs = []
+
+	for tag, i1, i2, j1, j2 in matcher.get_opcodes():
+		if tag == "equal":
+			for block in old_blocks[i1:i2]:
+				diffs.append({"type": "unchanged", "text": block})
+		elif tag == "delete":
+			for block in old_blocks[i1:i2]:
+				diffs.append({"type": "deleted", "text": block})
+		elif tag == "insert":
+			for block in new_blocks[j1:j2]:
+				diffs.append({"type": "inserted", "text": block})
+		elif tag == "replace":
+			for block in old_blocks[i1:i2]:
+				diffs.append({"type": "deleted", "text": block})
+			for block in new_blocks[j1:j2]:
+				diffs.append({"type": "inserted", "text": block})
+
+	names = user_names([rev1.approved_by if rev1 else None, rev2.approved_by if rev2 else None])
+
+	return {
+		"v1": {
+			"version": rev1.version,
+			"effective_from": rev1.effective_from,
+			"change_summary": rev1.change_summary,
+			"cause": rev1.cause,
+			"approved_by_name": names.get(rev1.approved_by, {}).get("full_name") if rev1 else None,
+		} if rev1 else None,
+		"v2": {
+			"version": rev2.version,
+			"effective_from": rev2.effective_from,
+			"change_summary": rev2.change_summary,
+			"cause": rev2.cause,
+			"approved_by_name": names.get(rev2.approved_by, {}).get("full_name") if rev2 else None,
+		} if rev2 else None,
+		"diffs": diffs,
+		"revisions_list": [{"version": r.version, "change_summary": r.change_summary} for r in revisions],
+	}
+
+
+def split_html_blocks(html):
+	if not html:
+		return []
+	text = re.sub(r'(</?(?:p|h[1-6]|li|div|tr|blockquote|section)[^>]*>)', r'\1\n', html)
+	return [l.strip() for l in text.splitlines() if l.strip()]
+
+
+
 def user_names(users):
 	users = [user for user in users if user]
 	if not users:
