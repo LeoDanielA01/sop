@@ -179,3 +179,21 @@
   --viz-1: #3987e5;
   --viz-2: #d95926;
 }
+
+.prose-sop .sop-when {
+  border-left: 2px solid var(--outline-gray-2);
+  padding-left: 0.9em;
+}
+.sop-when-off > :not(.sop-flow-host) {
+  display: none;
+}
+.prose-sop .sop-ask {
+  font-weight: 500;
+  color: var(--ink-gray-9);
+}
+
+@media print {
+  .sop-when-off > :not(.sop-flow-host) {
+    display: revert;
+  }
+}

@@ -16,6 +16,7 @@ def me():
 		"full_name": user.full_name,
 		"image": user.user_image,
 		"is_manager": "SOP Manager" in roles,
+		"is_admin": "System Manager" in roles or frappe.session.user == "Administrator",
 		"is_author": bool({"SOP Author", "SOP Manager"} & set(roles)),
 		"csrf_token": frappe.sessions.get_csrf_token(),
 		**resolved(),

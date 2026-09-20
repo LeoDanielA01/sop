@@ -97,6 +97,7 @@ import { Badge, Button, ScrollArea, createResource, debounce } from 'frappe-ui'
 import { translate as __ } from '@/translation'
 import { session } from '@/data/session'
 import { analyse, rulesFor } from './clarity'
+import { flowIssues } from './flow'
 
 const props = defineProps({
   editor: { type: Object, default: null },
@@ -116,6 +117,8 @@ const KINDS = {
   section: { label: 'Section', theme: 'gray' },
   abbreviation: { label: 'Term', theme: 'gray' },
   mention: { label: 'Link', theme: 'red' },
+  branch: { label: 'Branch', theme: 'amber' },
+  condition: { label: 'Condition', theme: 'amber' },
   long: { label: 'Long', theme: 'amber' },
   passive: { label: 'Passive', theme: 'blue' },
   vague: { label: 'Vague', theme: 'red' },
@@ -135,9 +138,10 @@ const rules = computed(() => rulesFor(language.value))
 const open = ref(false)
 const report = ref(analyse([], language.value))
 const linkIssues = ref([])
+const branchIssues = ref([])
 let checkedLinks = ''
 
-const all = computed(() => [...linkIssues.value, ...report.value.issues])
+const all = computed(() => [...branchIssues.value, ...linkIssues.value, ...report.value.issues])
 
 const groups = computed(() => ({
   procedure: all.value.filter((issue) => issue.group === 'procedure'),
@@ -250,6 +254,7 @@ const run = debounce(() => {
   if (!props.editor) return
 
   report.value = analyse(blocksOf(props.editor), language.value)
+  branchIssues.value = flowIssues(props.editor)
   checkLinks()
 }, 300)
 
@@ -270,6 +275,8 @@ function hintOf(issue) {
     case 'abbreviation':
       return __('Spell out {0} the first time it appears.').format(issue.word)
     case 'mention':
+    case 'branch':
+    case 'condition':
       return issue.message
     case 'long':
       return __('{0} words. Split it into two steps.').format(issue.count)

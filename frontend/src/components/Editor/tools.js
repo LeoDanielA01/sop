@@ -92,6 +92,16 @@ function procedureItems(api) {
       label: __('Check'),
       action: () => api.insertCheck(),
     },
+    branch: {
+      icon: 'lucide-git-branch',
+      label: __('Branch'),
+      action: () => api.insertBranch(),
+    },
+    ask: {
+      icon: 'lucide-message-circle-question',
+      label: __('Question'),
+      action: () => api.insertAsk(),
+    },
   }
 }
 
@@ -126,6 +136,8 @@ export function fixedItems(api) {
     sop.person,
     sop.live,
     sop.check,
+    sop.branch,
+    sop.ask,
     Separator,
     AlignLeft,
     AlignCenter,
@@ -348,6 +360,20 @@ function insertGroup(api) {
       label: 'Check',
       hint: 'A green tick or red cross from live data',
       run: () => api.insertCheck(),
+    },
+    {
+      key: 'branch',
+      icon: 'lucide-git-branch',
+      label: 'Branch',
+      hint: 'Show a section only when something is true',
+      run: () => api.insertBranch(),
+    },
+    {
+      key: 'ask',
+      icon: 'lucide-message-circle-question',
+      label: 'Question',
+      hint: 'Let the reader pick which branch applies',
+      run: () => api.insertAsk(),
     },
     {
       key: 'table',

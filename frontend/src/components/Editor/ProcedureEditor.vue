@@ -19,7 +19,14 @@
 
     <ClarityCheck v-if="editable" :editor="editor" />
 
-    <LiveDialog v-model:open="live.open" :mode="live.mode" :editor="editor" />
+    <LiveDialog
+      v-model:open="live.open"
+      :mode="live.mode"
+      :editor="editor"
+      :asks="asks"
+      :condition="live.when"
+      :apply="live.apply"
+    />
 
     <div
       v-if="!ui.editorToolsPinned"
@@ -32,7 +39,7 @@
 </template>
 
 <script setup>
-import { reactive, ref } from 'vue'
+import { onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import { useFileUpload } from 'frappe-ui'
 import {
   EditorBubbleMenu,
@@ -46,6 +53,8 @@ import LiveDialog from './LiveDialog.vue'
 import MentionSuggest from './MentionSuggest.vue'
 import ToolPalette from './ToolPalette.vue'
 import { useUI } from '@/stores/ui'
+import { AskBlock, WhenBlock, asksOf } from './flow'
+import { nextAskId, onFlowEdit } from '@/data/flow'
 import { bubbleItems } from './tools'
 
 const content = defineModel({ type: String, default: '' })
@@ -57,7 +66,8 @@ const props = defineProps({
 const emit = defineEmits(['change'])
 
 const palette = ref(null)
-const live = reactive({ open: false, mode: 'live' })
+const asks = ref([])
+const live = reactive({ open: false, mode: 'live', when: '', apply: null })
 const ui = useUI()
 const fileUpload = useFileUpload()
 
@@ -66,7 +76,7 @@ const editor = useEditor({
   format: 'html',
   editable: () => props.editable,
   placeholder: props.placeholder,
-  extensions: [RichTextKit],
+  extensions: [RichTextKit, WhenBlock, AskBlock],
   uploadFunction: (file) => fileUpload.upload(file, { private: false, folder: 'Home/SOP' }),
   onUpdate({ editor }) {
     content.value = editor.getHTML()
@@ -99,12 +109,42 @@ function mention(trigger) {
   editor.value?.chain().focus().insertContent(trigger).run()
 }
 
+function openLive(mode) {
+  Object.assign(live, { open: true, mode, when: '', apply: null })
+}
+
+function insertBranch() {
+  asks.value = asksOf(editor.value)
+  openLive('when')
+}
+
+function insertAsk() {
+  const taken = asksOf(editor.value).map((row) => row.id)
+
+  editor.value?.chain().focus().insertAsk({ ask: nextAskId(taken), options: '' }).run()
+}
+
+let stopFlowEdit = null
+
+onMounted(() => {
+  stopFlowEdit = onFlowEdit(({ editor: target, when, apply }) => {
+    if (target !== editor.value) return
+
+    asks.value = asksOf(editor.value)
+    Object.assign(live, { open: true, mode: 'when', when, apply })
+  })
+})
+
+onBeforeUnmount(() => stopFlowEdit?.())
+
 const api = {
   insertStep,
   insertCallout,
+  insertBranch,
+  insertAsk,
   pickRecord: () => mention('#'),
   pickPerson: () => mention('@'),
-  insertLive: () => Object.assign(live, { open: true, mode: 'live' }),
-  insertCheck: () => Object.assign(live, { open: true, mode: 'check' }),
+  insertLive: () => openLive('live'),
+  insertCheck: () => openLive('check'),
 }
 </script>

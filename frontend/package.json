@@ -9,6 +9,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@tiptap/core": "^3.26.0",
+    "@tiptap/vue-3": "^3.26.0",
     "frappe-ui": "^1.0.0",
     "pinia": "^2.3.1",
     "socket.io-client": "^4.8.1",

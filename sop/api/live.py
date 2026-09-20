@@ -21,6 +21,7 @@ from sop.api.mentions import (
 )
 
 LINK = re.compile(r'href="(#(?:live|check):[^"]+)"')
+WHEN = re.compile(r'data-sop-when="([^"]+)"')
 NUMBERS = {"Int", "Float", "Currency", "Percent"}
 CHECKS = {
 	"number": ["at_least", "at_most", "above_zero", "no_warning"],
@@ -114,8 +115,14 @@ def passes(option, check, target):
 	return False
 
 
-def parse(href):
-	kind, *parts = [unquote(part) for part in href[1:].split(":")]
+def parse(spec):
+	if spec.startswith("#"):
+		spec = spec[1:]
+
+	kind, *parts = [unquote(part) for part in spec.split(":")]
+
+	if kind == "ask" and len(parts) >= 3:
+		return {"kind": "ask", "ask": parts[0], "check": parts[1], "target": parts[2]}
 
 	if kind == "live" and len(parts) >= 3:
 		return {"kind": "live", "doctype": parts[0], "name": parts[1], "key": parts[2]}
@@ -219,5 +226,16 @@ def evaluate(sop, revision=None):
 		except Exception:
 			frappe.log_error(title=f"SOP live value failed in {sop}")
 			out[href] = {"missing": True, "message": _("This live value could not be read.")}
+
+	for condition in dict.fromkeys(unescape(match) for match in WHEN.findall(content or "")):
+		spec = parse(condition)
+		if not spec or spec["kind"] != "check":
+			continue
+
+		try:
+			out[condition] = outcome(spec, cache)
+		except Exception:
+			frappe.log_error(title=f"SOP condition failed in {sop}")
+			out[condition] = {"missing": True, "message": _("This condition could not be read.")}
 
 	return out

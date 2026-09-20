@@ -1,16 +1,94 @@
 <template>
-  <Dialog v-model:open="open" :title="mode === 'check' ? __('Add a check') : __('Show a live value')" size="lg">
+  <Dialog v-model:open="open" :title="__(condition ? 'Change the condition' : TITLES[mode])" size="lg">
     <template #default>
       <div class="flex flex-col gap-4">
-        <p class="text-sm text-ink-gray-6">
-          {{
-            mode === 'check'
-              ? __('Readers see a green tick or a red cross, worked out fresh every time they open the procedure.')
-              : __('Readers always see the current value, taken fresh every time they open the procedure.')
-          }}
-        </p>
+        <p class="text-sm text-ink-gray-6">{{ __(BLURBS[mode]) }}</p>
 
-        <section>
+        <div v-if="mode === 'when' && asks.length" class="flex gap-2">
+          <button
+            v-for="option in SOURCES"
+            :key="option.value"
+            type="button"
+            class="flex flex-1 items-center gap-2.5 rounded-2 border px-3 py-2 text-left transition-colors"
+            :class="
+              source === option.value
+                ? 'border-outline-gray-4 bg-surface-gray-2'
+                : 'border-outline-gray-2 hover:bg-surface-gray-1'
+            "
+            @click="pickSource(option.value)"
+          >
+            <span :class="option.icon" class="size-4 shrink-0 text-ink-gray-5" aria-hidden="true" />
+            <span class="min-w-0">
+              <span class="block truncate text-base text-ink-gray-8">{{ __(option.label) }}</span>
+              <span class="block truncate text-xs text-ink-gray-5">{{ __(option.hint) }}</span>
+            </span>
+          </button>
+        </div>
+
+        <section v-if="source === 'ask'">
+          <p class="mb-1.5 flex items-center gap-2 text-sm font-medium text-ink-gray-8">
+            <span class="grid size-5 place-content-center rounded-full bg-surface-gray-2 text-xs">1</span>
+            {{ __('Which question?') }}
+          </p>
+
+          <div class="flex flex-col gap-1.5">
+            <button
+              v-for="row in asks"
+              :key="row.id"
+              type="button"
+              class="flex items-center gap-3 rounded-2 border px-3 py-2 text-left transition-colors"
+              :class="
+                row.id === ask?.id
+                  ? 'border-outline-gray-4 bg-surface-gray-2'
+                  : 'border-outline-gray-2 hover:bg-surface-gray-1'
+              "
+              @click="pickAsk(row)"
+            >
+              <span
+                :class="row.id === ask?.id ? 'lucide-circle-dot text-ink-gray-9' : 'lucide-circle text-ink-gray-4'"
+                class="size-4 shrink-0"
+                aria-hidden="true"
+              />
+              <span class="min-w-0 flex-1 truncate text-base text-ink-gray-8">
+                {{ row.question || __('Untitled question') }}
+              </span>
+              <span class="shrink-0 text-sm text-ink-gray-5">
+                {{ __('{0} answers').format(row.options.length) }}
+              </span>
+            </button>
+          </div>
+        </section>
+
+        <section v-if="source === 'ask' && ask">
+          <p class="mb-1.5 flex items-center gap-2 text-sm font-medium text-ink-gray-8">
+            <span class="grid size-5 place-content-center rounded-full bg-surface-gray-2 text-xs">2</span>
+            {{ __('Which answer opens this branch?') }}
+          </p>
+
+          <p v-if="!ask.options.length" class="rounded-2 bg-surface-gray-1 px-3 py-3 text-sm text-ink-gray-6">
+            {{ __('That question has no answers yet. Add them on the question first.') }}
+          </p>
+
+          <div v-else class="flex flex-wrap items-center gap-2">
+            <FormControl v-model="askCheck" type="select" :options="askChecks" class="min-w-32" />
+            <button
+              v-for="option in ask.options"
+              :key="option"
+              type="button"
+              class="rounded-full border px-3 py-1 text-base transition-colors"
+              :class="
+                option === answer
+                  ? 'border-outline-gray-4 bg-surface-gray-2 text-ink-gray-9'
+                  : 'border-outline-gray-2 text-ink-gray-7 hover:bg-surface-gray-1'
+              "
+              @click="answer = option"
+            >
+              {{ option }}
+            </button>
+          </div>
+        </section>
+
+        <section v-if="source === 'record'">
           <p class="mb-1.5 flex items-center gap-2 text-sm font-medium text-ink-gray-8">
             <span class="grid size-5 place-content-center rounded-full bg-surface-gray-2 text-xs">1</span>
             {{ __('Which record?') }}
@@ -74,10 +152,10 @@
           </div>
         </section>
 
-        <section v-if="record">
+        <section v-if="source === 'record' && record">
           <p class="mb-1.5 flex items-center gap-2 text-sm font-medium text-ink-gray-8">
             <span class="grid size-5 place-content-center rounded-full bg-surface-gray-2 text-xs">2</span>
-            {{ mode === 'check' ? __('What should be checked?') : __('What should readers see?') }}
+            {{ mode === 'live' ? __('What should readers see?') : __('What should be checked?') }}
           </p>
 
           <div v-if="details.loading" class="flex flex-col gap-2">
@@ -115,10 +193,10 @@
           </div>
         </section>
 
-        <section v-if="mode === 'check' && picked">
+        <section v-if="mode !== 'live' && source === 'record' && picked">
           <p class="mb-1.5 flex items-center gap-2 text-sm font-medium text-ink-gray-8">
             <span class="grid size-5 place-content-center rounded-full bg-surface-gray-2 text-xs">3</span>
-            {{ __('When is it OK?') }}
+            {{ mode === 'when' ? __('When does it apply?') : __('When is it OK?') }}
           </p>
 
           <div class="flex flex-wrap items-center gap-2 rounded-2 border border-outline-gray-2 px-3 py-2.5">
@@ -135,10 +213,12 @@
         </section>
 
         <section
-          v-if="picked"
+          v-if="ready"
           class="rounded-2 border border-dashed border-outline-gray-3 bg-surface-gray-1 px-3 py-2.5"
         >
-          <p class="mb-1.5 text-xs font-medium uppercase tracking-wide text-ink-gray-5">{{ __('Readers will see') }}</p>
+          <p class="mb-1.5 text-xs font-medium uppercase tracking-wide text-ink-gray-5">
+            {{ mode === 'when' ? __('This section shows when') : __('Readers will see') }}
+          </p>
 
           <p v-if="mode === 'live'" class="text-base text-ink-gray-8">
             <span
@@ -148,6 +228,11 @@
               <span class="lucide-activity size-3" aria-hidden="true" />
               {{ picked.value }}
             </span>
+          </p>
+
+          <p v-else-if="source === 'ask'" class="flex items-center gap-2 text-base text-ink-gray-8">
+            <span class="lucide-message-circle-question size-4 shrink-0 text-ink-gray-5" aria-hidden="true" />
+            {{ sentence }}
           </p>
 
           <p v-else class="flex items-center gap-2 text-base">
@@ -161,7 +246,7 @@
             <span class="text-ink-gray-8">{{ sentence }}</span>
           </p>
 
-          <p v-if="mode === 'check' && result && !checking" class="mt-1 text-xs text-ink-gray-5">
+          <p v-if="mode !== 'live' && source === 'record' && result && !checking" class="mt-1 text-xs text-ink-gray-5">
             {{ result.ok ? __('Right now this passes.') : __('Right now this fails.') }}
             {{ __('Current value: {0}').format(result.value) }}
           </p>
@@ -174,8 +259,8 @@
         <Button :label="__('Cancel')" @click="open = false" />
         <Button
           variant="solid"
-          :icon-left="mode === 'check' ? 'lucide-circle-check' : 'lucide-activity'"
-          :label="mode === 'check' ? __('Add check') : __('Add live value')"
+          :icon-left="ACTIONS[mode].icon"
+          :label="__(condition ? 'Save condition' : ACTIONS[mode].label)"
           :disabled="!ready"
           @click="insert"
         />
@@ -187,13 +272,56 @@
 <script setup>
 import { computed, nextTick, ref, watch } from 'vue'
 import { Button, Dialog, ErrorMessage, FormControl, Skeleton, call, createResource, debounce, toast } from 'frappe-ui'
-import { CHECK_WORDS, checkHref, checkPhrase, liveHref } from '@/data/live'
+import { CHECK_WORDS, checkHref, liveHref } from '@/data/live'
+import {
+  askCondition,
+  askLabel,
+  checkCondition,
+  checkLabel,
+  parseCondition,
+} from '@/data/flow'
 import { translate as __ } from '@/translation'
 
 const props = defineProps({
   editor: { type: Object, default: null },
   mode: { type: String, default: 'live' },
+  asks: { type: Array, default: () => [] },
+  condition: { type: String, default: '' },
+  apply: { type: Function, default: null },
 })
+
+const TITLES = {
+  live: 'Show a live value',
+  check: 'Add a check',
+  when: 'Show this only when\u2026',
+}
+
+const BLURBS = {
+  live: 'Readers always see the current value, taken fresh every time they open the procedure.',
+  check: 'Readers see a green tick or a red cross, worked out fresh every time they open the procedure.',
+  when: 'Readers who do not meet the condition see a single line saying why, instead of this section.',
+}
+
+const ACTIONS = {
+  live: { icon: 'lucide-activity', label: 'Add live value' },
+  check: { icon: 'lucide-circle-check', label: 'Add check' },
+  when: { icon: 'lucide-git-branch', label: 'Add branch' },
+}
+
+const SOURCES = [
+  {
+    value: 'record',
+    icon: 'lucide-database',
+    label: 'On record data',
+    hint: 'A value in the system decides',
+  },
+  {
+    value: 'ask',
+    icon: 'lucide-message-circle-question',
+    label: 'On an answer',
+    hint: 'The reader decides',
+  },
+]
 
 const open = defineModel('open', { type: Boolean, default: false })
 
@@ -206,6 +334,10 @@ const target = ref('')
 const result = ref(null)
 const checking = ref(false)
 const searchBox = ref(null)
+const source = ref('record')
+const ask = ref(null)
+const answer = ref('')
+const askCheck = ref('is')
 
 const types = createResource({ url: 'sop.api.mentions.doctypes' })
 const records = createResource({ url: 'sop.api.mentions.find' })
@@ -235,14 +367,26 @@ const checkOptions = computed(() =>
   (picked.value?.checks || []).map((value) => ({ value, label: __(CHECK_WORDS[value].label) })),
 )
 
+const askChecks = computed(() => [
+  { value: 'is', label: __('is') },
+  { value: 'is_not', label: __('is not') },
+])
+
 const needsTarget = computed(() => !!CHECK_WORDS[check.value]?.target)
 
 const sentence = computed(() => {
+  if (source.value === 'ask') {
+    if (!ask.value || !answer.value) return ''
+    return askLabel(ask.value.question, askCheck.value, answer.value)
+  }
+
   if (!picked.value || !record.value) return ''
-  return `${record.value.label}: ${picked.value.label} ${checkPhrase(check.value, target.value)}`
+  return checkLabel(record.value.label, picked.value.label, check.value, target.value)
 })
 
 const ready = computed(() => {
+  if (source.value === 'ask') return !!ask.value && !!answer.value
+
   if (!record.value || !picked.value) return false
   if (props.mode === 'live') return true
   return !!check.value && (!needsTarget.value || String(target.value).trim() !== '')
@@ -255,14 +399,46 @@ watch(open, (value) => {
   record.value = null
   picked.value = null
   result.value = null
+  source.value = 'record'
+  ask.value = null
+  answer.value = ''
+  askCheck.value = 'is'
   search()
+  prefill()
   nextTick(() => searchBox.value?.focus())
 })
+
+function prefill() {
+  const spec = parseCondition(props.condition)
+  if (!spec) return
+
+  if (spec.kind === 'ask') {
+    source.value = 'ask'
+    ask.value = props.asks.find((row) => row.id === spec.ask) || null
+    askCheck.value = spec.check
+    answer.value = spec.target
+    return
+  }
+
+  type.value = spec.doctype
+  record.value = { name: spec.name, label: spec.name }
+
+  details.submit({ doctype: spec.doctype, name: spec.name }).then(() => {
+    record.value = { name: spec.name, label: details.data?.title || spec.name }
+
+    const option = choices.value.find((row) => row.key === spec.key)
+    if (!option) return
+
+    picked.value = option
+    check.value = spec.check
+    target.value = spec.target
+  })
+}
 
 watch(query, search)
 
 const runPreview = debounce(async () => {
-  if (props.mode !== 'check' || !ready.value) {
+  if (props.mode === 'live' || source.value !== 'record' || !ready.value) {
     result.value = null
     return
   }
@@ -284,6 +460,15 @@ const runPreview = debounce(async () => {
 }, 300)
 
 watch([check, target, picked], runPreview)
+
+function pickSource(value) {
+  source.value = value
+}
+
+function pickAsk(row) {
+  ask.value = row
+  answer.value = row.options.includes(answer.value) ? answer.value : ''
+}
 
 function pickType(value) {
   type.value = value
@@ -333,6 +518,8 @@ function pillTone(tone) {
 function insert() {
   if (!ready.value || !props.editor) return
 
+  if (props.mode === 'when') return branch()
+
   const doctype = type.value
   const name = record.value.name
   const key = picked.value.key
@@ -355,5 +542,28 @@ function insert() {
 
   open.value = false
   toast.success(props.mode === 'check' ? __('Check added') : __('Live value added'))
+}
+
+function branch() {
+  const attrs =
+    source.value === 'ask'
+      ? { when: askCondition(ask.value.id, askCheck.value, answer.value), label: sentence.value }
+      : {
+          when: checkCondition(
+            type.value,
+            record.value.name,
+            picked.value.key,
+            check.value,
+            needsTarget.value ? target.value : '',
+          ),
+          label: sentence.value,
+        }
+
+  if (props.apply) props.apply(attrs)
+  else if (props.editor.state.selection.empty) props.editor.chain().focus().insertWhen(attrs).run()
+  else props.editor.chain().focus().wrapInWhen(attrs).run()
+
+  open.value = false
+  toast.success(props.condition ? __('Condition saved') : __('Branch added'))
 }
 </script>
