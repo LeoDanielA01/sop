@@ -4,13 +4,9 @@
       v-if="!ui.fullScreen"
       class="flex items-center gap-1 border-b border-outline-gray-1 px-2 py-2"
     >
-      <Button
-        v-if="!onList"
-        variant="ghost"
-        icon="lucide-arrow-left"
-        :label="__('Back')"
-        @click="router.back()"
-      />
+      <Button v-if="!onList" variant="ghost" :label="__('Back')" @click="router.back()">
+        <span class="lucide-arrow-left size-5 text-ink-gray-7" aria-hidden="true" />
+      </Button>
       <Button
         v-else
         variant="ghost"
@@ -21,7 +17,9 @@
 
       <div class="flex-1" />
 
-      <Button variant="ghost" icon="lucide-search" :label="__('Search')" @click="ui.searchDialog = true" />
+      <Button variant="ghost" :label="__('Search')" @click="ui.searchDialog = true">
+        <span class="lucide-search size-5 text-ink-gray-7" aria-hidden="true" />
+      </Button>
       <Button variant="ghost" :label="__('Messages')" @click="showInbox">
         <span class="relative">
           <span class="lucide-message-square size-5 text-ink-gray-7" aria-hidden="true" />
@@ -46,7 +44,7 @@
         <span class="lucide-settings size-5 text-ink-gray-7" aria-hidden="true" />
       </Button>
       <Button variant="ghost" :label="__('Account')" @click="ui.profileDialog = true">
-        <Avatar :image="session.user.image" :label="session.user.full_name" size="sm" />
+        <Avatar :image="session.user.image" :label="session.user.full_name" size="sm" class="size-5" />
       </Button>
     </header>
 
@@ -62,11 +60,11 @@
         v-for="item in bottom"
         :key="item.label"
         variant="ghost"
-        class="!h-14 flex-1 !flex-col !gap-1 !rounded-none"
+        class="!h-14 flex-1 !flex-col !gap-1 !overflow-visible !rounded-none"
         :label="item.label"
         @click="go(item)"
       >
-        <span class="relative">
+        <span class="relative inline-flex">
           <span
             :class="[item.icon, isActive(item) ? 'text-ink-gray-9' : 'text-ink-gray-5']"
             class="size-5"
@@ -74,9 +72,9 @@
           />
           <span
             v-if="item.count"
-            class="absolute -right-2 -top-1 grid min-w-4 place-content-center rounded-full bg-surface-red-6 px-1 text-[10px] font-medium text-white"
+            class="absolute -right-2.5 -top-1.5 h-4 min-w-4 rounded-full bg-surface-red-6 px-1 text-center text-[10px] font-semibold leading-4 text-white ring-2 ring-surface-base"
           >
-            {{ item.count }}
+            {{ item.count > 99 ? '99+' : item.count }}
           </span>
         </span>
         <span

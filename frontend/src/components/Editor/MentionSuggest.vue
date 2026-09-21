@@ -56,7 +56,7 @@ const props = defineProps({
   editor: { type: Object, default: null },
 })
 
-const TRIGGER = /(^|[\s(])([@#])([\w .@%-]*)$/
+const TRIGGER = /(^|[\s(])([@#])([\w .@%:-]*)$/
 
 const open = ref(false)
 const cursor = ref(0)
