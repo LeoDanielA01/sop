@@ -177,6 +177,10 @@
 
     <LiveBlocks :root="body" :sop="doc.name" :revision="revision" :content="doc.content" />
 
+    <ControlledCopy v-if="doc.name" :doc="doc" :body="body" />
+
+    <RevisionHistory :revisions="doc.revisions || []" :current="inForce" />
+
     <QuizEditor v-if="doc.can_quiz" v-model:open="showQuiz" :sop="doc.name" @update:open="(value) => !value && load()" />
 
     <ClarityFeedback
@@ -329,6 +333,38 @@
     </template>
   </Dialog>
 
+  <Dialog v-model:open="reviewed.open" :title="__('Reviewed — still valid')" size="sm">
+    <template #default>
+      <div class="flex flex-col gap-3">
+        <ErrorMessage :message="confirmReview.error?.messages?.[0]" />
+        <p class="text-sm text-ink-gray-6">
+          {{
+            __(
+              'Records that you checked Rev {0} against how the work is done today and it needs no change. The revision stays the same, nobody is retrained, and the next review moves on from today.',
+            ).format(doc.version)
+          }}
+        </p>
+        <FormControl
+          type="textarea"
+          :label="__('Note (optional)')"
+          :placeholder="__('What you checked, or who you checked it with')"
+          v-model="reviewed.note"
+        />
+      </div>
+    </template>
+    <template #actions>
+      <div class="flex justify-end gap-2">
+        <Button
+          variant="solid"
+          icon-left="lucide-calendar-check"
+          :label="__('Confirm still valid')"
+          :loading="confirmReview.loading"
+          @click="confirmReview.submit({ sop: doc.name, note: reviewed.note })"
+        />
+      </div>
+    </template>
+  </Dialog>
+
   <Dialog v-model:open="changes.open" :title="__('Request changes')" size="sm">
     <template #default>
       <div class="flex flex-col gap-3">
@@ -383,6 +419,8 @@ import ReviewComments from '@/components/Procedure/ReviewComments.vue'
 import ReviewRouteDialog from '@/components/Procedure/ReviewRouteDialog.vue'
 import MentionChip from '@/components/Procedure/MentionChip.vue'
 import LiveBlocks from '@/components/Procedure/LiveBlocks.vue'
+import ControlledCopy from '@/components/Procedure/ControlledCopy.vue'
+import RevisionHistory from '@/components/Procedure/RevisionHistory.vue'
 import QuizEditor from '@/components/Training/QuizEditor.vue'
 import CompareRevisionsModal from '@/components/Procedure/CompareRevisionsModal.vue'
 import { openRoom, roomUnread } from '@/data/chat'
@@ -441,6 +479,7 @@ const publishOn = ref(today())
 const changeSummary = ref('')
 const isMaterial = ref(true)
 const changes = reactive({ open: false, comment: '' })
+const reviewed = reactive({ open: false, note: '' })
 
 const doc = computed(() => procedure.data || {})
 
@@ -452,6 +491,9 @@ watch(
 )
 
 const isEffective = computed(() => doc.value.status === 'Effective')
+const inForce = computed(() =>
+  ['Effective', 'Under Revision'].includes(doc.value.status) ? doc.value.effective_revision : null,
+)
 const ownerName = computed(() => doc.value.process_owner_name || doc.value.process_owner)
 const overdue = computed(() => reviewTone(doc.value.review_due) === 'red')
 const quick = computed(() =>
@@ -510,6 +552,10 @@ const facts = computed(() => {
       value: doc.value.review_due ? shortDate(doc.value.review_due) : 'Not scheduled',
       tone: overdue.value ? 'text-ink-red-3' : null,
     },
+    doc.value.last_reviewed_on && {
+      label: __('Last reviewed'),
+      value: `${shortDate(doc.value.last_reviewed_on)} · ${doc.value.last_reviewed_by}`,
+    },
     { label: __('Version'), value: `Rev ${doc.value.version || 1}` },
     {
       label: __('Read & understood'),
@@ -519,7 +565,7 @@ const facts = computed(() => {
           ? 'Not signed off'
           : '—',
     },
-  ]
+  ].filter(Boolean)
 
   if (clarity.value?.can_see_notes && clarity.value.total) {
     const percent = clarity.value.percent
@@ -565,6 +611,8 @@ function afterAction() {
   showPublish.value = false
   changes.open = false
   changes.comment = ''
+  reviewed.open = false
+  reviewed.note = ''
   load()
   refreshCounts()
 }
@@ -590,6 +638,11 @@ const revise = createResource({
     afterAction()
     router.push(`/${route.params.name}/edit`)
   },
+})
+
+const confirmReview = createResource({
+  url: 'sop.api.lifecycle.confirm_review',
+  onSuccess: afterAction,
 })
 
 const withdraw = createResource({
@@ -656,6 +709,11 @@ const actions = computed(() =>
       label: __('Compare revisions'),
       icon: 'lucide-git-compare',
       onClick: () => (showCompareModal.value = true),
+    },
+    doc.value.actions?.confirm_review && {
+      label: __('Reviewed — still valid'),
+      icon: 'lucide-calendar-check',
+      onClick: () => (reviewed.open = true),
     },
     { label: __('Print controlled copy'), icon: 'lucide-printer', onClick: () => window.print() },
     doc.value.actions?.retire && {

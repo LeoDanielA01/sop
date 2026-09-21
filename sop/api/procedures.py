@@ -5,7 +5,7 @@ import re
 
 import frappe
 from frappe import _
-from frappe.utils import add_days, nowdate
+from frappe.utils import add_days, cint, nowdate
 
 from sop.api.chat import joinable
 from sop.api.quiz import can_manage
@@ -263,13 +263,9 @@ def get_procedure(name, revision=None):
 		"edited_by": editor_name(doc.modified_by),
 		"created": frappe.utils.pretty_date(doc.creation),
 		"created_by": editor_name(doc.owner),
-		"revisions": frappe.get_all(
-			"SOP Revision",
-			filters={"sop": doc.name},
-			fields=["version", "effective_from"],
-			order_by="version desc",
-			limit_page_length=0,
-		),
+		"revisions": revision_history(doc.name),
+		"last_reviewed_on": doc.last_reviewed_on,
+		"last_reviewed_by": editor_name(doc.last_reviewed_by),
 		"acknowledged": bool(signed and signed.version == doc.version),
 		"acknowledged_on": signed.acknowledged_at if signed else None,
 		"acknowledged_version": signed.version if signed else None,
@@ -278,9 +274,98 @@ def get_procedure(name, revision=None):
 		"can_quiz": can_manage(doc.name),
 		"quiz_questions": frappe.db.count("SOP Quiz Question", {"sop": doc.name, "enabled": 1}),
 		"approvals": approvals_of(doc),
+		"copy": controlled_copy(doc, version),
 		"actions": actions_for(doc),
 		"review": review_rights(doc),
 	}
+
+
+def controlled_copy(doc, version):
+	revision = (
+		frappe.db.get_value(
+			"SOP Revision",
+			{"sop": doc.name, "version": version},
+			["effective_from", "change_summary", "is_material", "approved_by", "approved_on", "signatures"],
+			as_dict=True,
+		)
+		if cint(version)
+		else None
+	)
+
+	in_force = cint(version) == cint(doc.version) and doc.status in ("Effective", "Under Revision")
+
+	if doc.status == "Retired":
+		state = "retired"
+	elif revision and cint(version) < cint(doc.version):
+		state = "superseded"
+	elif in_force:
+		state = "in_force"
+	else:
+		state = "draft"
+
+	cycle = approvals_of(doc)
+	published = revision if state != "draft" else None
+
+	return {
+		"state": state,
+		"effective_from": published.effective_from if published else None,
+		"change_summary": published.change_summary if published else None,
+		"is_material": cint(published.is_material) if published else None,
+		"signatures": (revision_signatures(published) if published else []) or cycle,
+	}
+
+
+def revision_signatures(revision):
+	rows = frappe.parse_json(revision.get("signatures") or "[]") or []
+
+	if not rows and revision.get("approved_by"):
+		rows = [
+			{
+				"approver": revision.approved_by,
+				"approval_role": "Approver",
+				"decision": "Approved",
+				"signed_at": revision.approved_on,
+			}
+		]
+
+	names = user_names([row.get("approver") for row in rows])
+
+	return [
+		{
+			**row,
+			"approver_name": names.get(row.get("approver"), {}).get("full_name") or row.get("approver"),
+		}
+		for row in rows
+	]
+
+
+def revision_history(sop):
+	rows = frappe.get_all(
+		"SOP Revision",
+		filters={"sop": sop},
+		fields=[
+			"version",
+			"effective_from",
+			"change_summary",
+			"is_material",
+			"approved_by",
+			"approved_on",
+			"signatures",
+		],
+		order_by="version desc",
+		limit_page_length=0,
+	)
+
+	return [
+		{
+			"version": row.version,
+			"effective_from": row.effective_from,
+			"change_summary": row.change_summary,
+			"is_material": cint(row.is_material),
+			"approved_by": [sign["approver_name"] for sign in revision_signatures(row)],
+		}
+		for row in rows
+	]
 
 
 def editor_name(user):

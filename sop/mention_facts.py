@@ -107,3 +107,45 @@ def warehouse(name):
 			"headline": True,
 		}
 	]
+
+
+def space(name):
+	effective = frappe.db.count("SOP", {"space": name, "status": "Effective"})
+	in_review = frappe.db.count("SOP", {"space": name, "status": "In Review"})
+	drafts = frappe.db.count("SOP", {"space": name, "status": ("in", ("Draft", "Under Revision"))})
+	overdue = frappe.db.count(
+		"SOP", {"space": name, "status": "Effective", "review_due": ("<", nowdate())}
+	)
+
+	return [
+		{
+			"key": "effective",
+			"label": _("Effective procedures"),
+			"amount": effective,
+			"value": str(effective),
+			"short": _("{0} effective").format(effective),
+			"tone": "gray",
+			"headline": True,
+		},
+		{
+			"key": "in_review",
+			"label": _("Procedures in review"),
+			"amount": in_review,
+			"value": str(in_review),
+			"tone": "amber" if in_review else "gray",
+		},
+		{
+			"key": "drafts",
+			"label": _("Drafts"),
+			"amount": drafts,
+			"value": str(drafts),
+			"tone": "gray",
+		},
+		{
+			"key": "reviews_overdue",
+			"label": _("Reviews overdue"),
+			"amount": overdue,
+			"value": str(overdue),
+			"tone": "red" if overdue else "gray",
+		},
+	]

@@ -26,6 +26,8 @@
   "effective_from",
   "review_interval_months",
   "review_due",
+  "last_reviewed_on",
+  "last_reviewed_by",
   "approvals_section",
   "approvals",
   "meta_section",
@@ -159,6 +161,19 @@
    "read_only": 1
   },
   {
+   "fieldname": "last_reviewed_on",
+   "fieldtype": "Date",
+   "label": "Last Reviewed On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "last_reviewed_by",
+   "fieldtype": "Link",
+   "label": "Last Reviewed By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
    "collapsible": 1,
    "fieldname": "approvals_section",
    "fieldtype": "Section Break",
@@ -200,7 +215,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-09-12 22:30:00.000000",
+ "modified": "2026-09-22 10:00:00.000000",
  "modified_by": "Administrator",
  "module": "SOP",
  "name": "SOP",

@@ -72,10 +72,15 @@ class SOP(Document):
 				frappe.db.get_value("SOP Space", self.space, "review_interval_months")
 			) or 12
 
-		if self.effective_from:
-			self.review_due = add_months(getdate(self.effective_from), cint(self.review_interval_months))
-		else:
+		if not self.effective_from:
 			self.review_due = None
+			return
+
+		since = getdate(self.effective_from)
+		if self.last_reviewed_on and getdate(self.last_reviewed_on) > since:
+			since = getdate(self.last_reviewed_on)
+
+		self.review_due = add_months(since, cint(self.review_interval_months))
 
 	def build_search_text(self):
 		parts = [self.sop_no, self.title, self.summary, strip_html(self.content or "")]

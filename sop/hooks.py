@@ -33,6 +33,7 @@ sqlite_search = ["sop.sop.doctype.sop.sop_sqlite_search.SOPSQLiteSearch"]
 sop_mention_facts = {
 	"Item": ["sop.mention_facts.item"],
 	"Warehouse": ["sop.mention_facts.warehouse"],
+	"SOP Space": ["sop.mention_facts.space"],
 }
 
 scheduler_events = {

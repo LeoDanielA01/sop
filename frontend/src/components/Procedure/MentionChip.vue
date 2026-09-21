@@ -124,24 +124,6 @@
               </dd>
             </div>
           </dl>
-
-          <div v-if="info.counts.length" class="mt-3">
-            <p class="mb-1.5 text-sm text-ink-gray-5">{{ __('Linked records') }}</p>
-            <div class="flex flex-wrap gap-1.5">
-              <a
-                v-for="count in info.counts"
-                :key="count.doctype"
-                :href="count.route || undefined"
-                target="_blank"
-                class="inline-flex items-center gap-1 rounded-3 bg-surface-gray-2 px-1.5 py-0.5 text-sm text-ink-gray-7 no-underline hover:bg-surface-gray-3"
-              >
-                {{ count.doctype }}
-                <span class="tabular-nums text-ink-gray-9">{{ count.label }}</span>
-              </a>
-            </div>
-          </div>
-
-          
         </template>
       </div>
     </HoverCard>

@@ -197,3 +197,137 @@
     display: revert;
   }
 }
+
+#sop-print {
+  display: none;
+}
+
+@media print {
+  html.sop-printing,
+  html.sop-printing body {
+    height: auto !important;
+    overflow: visible !important;
+    background: #fff !important;
+  }
+  html.sop-printing body > *:not(#sop-print) {
+    display: none !important;
+  }
+  html.sop-printing #sop-print {
+    display: block;
+    color: #111;
+    font-size: 10.5pt;
+    line-height: 1.5;
+  }
+  #sop-print .prose-sop,
+  #sop-print .prose-sop * {
+    color: #111 !important;
+  }
+  #sop-print a {
+    text-decoration: none;
+  }
+  #sop-print .sop-print-head {
+    margin-bottom: 8mm;
+    border: 1px solid #999;
+  }
+  #sop-print .sop-print-title {
+    padding: 3mm 4mm;
+  }
+  #sop-print .sop-print-no {
+    font-family: ui-monospace, monospace;
+    font-size: 9pt;
+    color: #555;
+  }
+  #sop-print h1 {
+    margin-top: 1mm;
+    font-size: 16pt;
+    font-weight: 600;
+  }
+  #sop-print .sop-print-summary {
+    margin-top: 1mm;
+    font-size: 10pt;
+    color: #333;
+  }
+  #sop-print .sop-print-grid,
+  #sop-print .sop-print-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 9pt;
+  }
+  #sop-print .sop-print-grid th,
+  #sop-print .sop-print-grid td {
+    padding: 1.5mm 3mm;
+    border-top: 1px solid #ccc;
+    text-align: left;
+    vertical-align: top;
+  }
+  #sop-print .sop-print-grid th {
+    width: 18%;
+    font-weight: 500;
+    color: #555;
+  }
+  #sop-print .sop-print-grid td {
+    width: 32%;
+  }
+  #sop-print .sop-print-table th,
+  #sop-print .sop-print-table td {
+    padding: 1.5mm 2.5mm;
+    border: 1px solid #ccc;
+    text-align: left;
+  }
+  #sop-print .sop-print-table th {
+    background: #f3f3f3;
+    font-weight: 500;
+  }
+  #sop-print .sop-print-section {
+    margin-top: 8mm;
+    break-inside: avoid;
+  }
+  #sop-print .sop-print-section h2 {
+    margin-bottom: 2mm;
+    font-size: 11pt;
+    font-weight: 600;
+  }
+  #sop-print .sop-print-notice {
+    margin-top: 8mm;
+    padding-top: 3mm;
+    border-top: 1px solid #999;
+    font-size: 8.5pt;
+    color: #444;
+  }
+  #sop-print .sop-print-mark {
+    position: fixed;
+    top: 42%;
+    right: 0;
+    left: 0;
+    z-index: 0;
+    transform: rotate(-30deg);
+    text-align: center;
+    font-size: 60pt;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(200, 30, 30, 0.14);
+    pointer-events: none;
+  }
+  #sop-print h2,
+  #sop-print h3 {
+    break-after: avoid;
+  }
+  #sop-print li,
+  #sop-print blockquote,
+  #sop-print table,
+  #sop-print tr {
+    break-inside: avoid;
+  }
+  #sop-print [data-sop-when] > .sop-flow-host {
+    display: none !important;
+  }
+  #sop-print [data-sop-when]::before {
+    content: attr(data-sop-print-label);
+    display: block;
+    margin-bottom: 1mm;
+    font-size: 8.5pt;
+    font-style: italic;
+    color: #555 !important;
+  }
+}

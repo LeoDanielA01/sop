@@ -309,7 +309,6 @@ def card(doctype, name):
 			"role": role_label,
 			"is_user": True,
 			"facts": [],
-			"counts": [],
 			"url": None,
 		}
 
@@ -331,7 +330,6 @@ def card(doctype, name):
 		"status": status,
 		"status_tone": tone_of(status),
 		"facts": extras_for(doctype, name) + times + values + table_facts(meta, name),
-		"counts": counts_for(doctype, name),
 		"url": record_url(doctype, name),
 	}
 
@@ -733,92 +731,6 @@ def extras_for(doctype, name):
 			frappe.log_error(title=f"SOP mention facts failed for {doctype}")
 
 	return facts
-
-
-def counts_for(doctype, name):
-	try:
-		links = frappe.get_meta(doctype).get_dashboard_data()
-		rows = dashboard_counts(doctype, name, links) if links and links.get("transactions") else []
-		rows = rows or reverse_counts(doctype, name)
-	except Exception:
-		frappe.log_error(title=f"SOP mention counts failed for {doctype}")
-		return []
-
-	rows.sort(key=lambda row: -row["count"])
-
-	return rows[:6]
-
-
-def dashboard_counts(doctype, name, links):
-	from frappe.desk.notifications import get_open_count
-
-	found = (get_open_count(doctype, name) or {}).get("count") or {}
-	fieldnames = links.get("non_standard_fieldnames") or {}
-	out = []
-
-	for row in (found.get("internal_links_found") or []) + (found.get("external_links_found") or []):
-		total = cint(row.get("count"))
-		if not total:
-			continue
-
-		opened = cint(row.get("open_count"))
-		fieldname = None if row.get("names") is not None else fieldnames.get(row["doctype"], links.get("fieldname"))
-
-		out.append(
-			{
-				"doctype": row["doctype"],
-				"count": total,
-				"label": f"{total} · {opened} {_('open')}" if opened else str(total),
-				"route": list_route(row["doctype"], fieldname, name),
-			}
-		)
-
-	return out
-
-
-def reverse_counts(doctype, name):
-	from frappe.desk.form.linked_with import get_linked_doctypes
-
-	out = []
-
-	for linked, info in list((get_linked_doctypes(doctype) or {}).items())[:12]:
-		if info.get("child_doctype") or info.get("doctype_fieldname") or info.get("get_parent"):
-			continue
-
-		fields = info.get("fieldname") or []
-		fields = [fields] if isinstance(fields, str) else list(fields)
-		if not fields or not frappe.has_permission(linked, "read"):
-			continue
-
-		found = frappe.get_all(
-			linked,
-			or_filters=[[linked, field, "=", name] for field in fields],
-			pluck="name",
-			limit_page_length=101,
-		)
-		if not found:
-			continue
-
-		total = len(found)
-		out.append(
-			{
-				"doctype": linked,
-				"count": total,
-				"label": "100+" if total > 100 else str(total),
-				"route": list_route(linked, fields[0], name),
-			}
-		)
-
-	return out
-
-
-def list_route(doctype, fieldname, name):
-	slug = frappe.scrub(doctype).replace("_", "-")
-
-	if not fieldname:
-		return f"/app/{slug}"
-
-	return f"/app/{slug}?{fieldname}={quote(str(name))}"
 
 
 def plain(doctype, name):

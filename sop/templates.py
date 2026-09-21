@@ -154,8 +154,10 @@ def ensure_draft(space, process, title):
 
 
 def skeleton(title):
+	title = frappe.utils.escape_html(title.lower())
+
 	return f"""<h2>Purpose</h2>
-<p>Why {title.lower()} is carried out, and the result it has to produce.</p>
+<p>Why {title} is carried out, and the result it has to produce.</p>
 <h2>Scope</h2>
 <p>Which lines, shifts, products or materials this covers — and what it does not.</p>
 <h2>Responsibilities</h2>
@@ -165,9 +167,11 @@ def skeleton(title):
 <li>Quality — checks the record and releases the batch.</li>
 </ul>
 <h2>Procedure</h2>
-<div data-sop="step"><p><strong>Step 1</strong> — what is done, in the order it is done.</p>
-<p data-sop="step-meta">Responsible: role · Records: document</p></div>
-<div data-sop="callout" data-tone="warning"><p>The hazard or the mistake that matters most here.</p></div>
+<blockquote><p><strong>Warning</strong> — the hazard or the mistake that matters most here. Put it before the step it applies to.</p></blockquote>
+<ol>
+<li><strong>What is done first</strong> — responsible: role · records: document</li>
+<li><strong>What is done next</strong> — responsible: role · records: document</li>
+</ol>
 <h2>Records</h2>
 <p>The form, log or system entry this procedure produces, and where it is kept.</p>
 <h2>References</h2>

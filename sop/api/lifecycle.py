@@ -189,6 +189,27 @@ def publish(sop, effective_from=None, change_summary=None, is_material=1):
 
 
 @frappe.whitelist()
+def confirm_review(sop, note=None):
+	doc = frappe.get_doc("SOP", sop)
+	doc.check_permission("write")
+
+	if doc.status != "Effective":
+		frappe.throw(_("Only a procedure in force can be confirmed as still valid."))
+
+	doc.last_reviewed_on = nowdate()
+	doc.last_reviewed_by = frappe.session.user
+	doc.save()
+
+	note = (note or "").strip()
+	doc.add_comment(
+		"Info",
+		_("Reviewed Rev {0} — still valid, no change.").format(doc.version) + (f" {note}" if note else ""),
+	)
+
+	return {"review_due": doc.review_due}
+
+
+@frappe.whitelist()
 def start_revision(sop):
 	doc = frappe.get_doc("SOP", sop)
 	doc.check_permission("write")
@@ -241,6 +262,7 @@ def actions_for(doc):
 		"decide": doc.status == "In Review" and waiting,
 		"publish": can_write and doc.status == "Approved",
 		"start_revision": can_write and doc.status == "Effective",
+		"confirm_review": can_write and doc.status == "Effective",
 		"retire": can_write and doc.status in ("Approved", "Effective"),
 		**removal_actions(doc),
 	}
@@ -280,6 +302,7 @@ def cut_revision(doc, previous, change_summary=None, is_material=1):
 			"is_material": cint(is_material),
 			"approved_by": approver_of(doc),
 			"approved_on": now_datetime(),
+			"signatures": frappe.as_json(signatures_of(doc)),
 		}
 	)
 	revision.insert(ignore_permissions=True)
@@ -292,6 +315,20 @@ def latest_revision(sop):
 		"SOP Revision", filters={"sop": sop}, pluck="name", order_by="version desc", limit=1
 	)
 	return rows[0] if rows else None
+
+
+def signatures_of(doc):
+	return [
+		{
+			"approver": row.approver,
+			"approval_role": row.approval_role,
+			"decision": row.decision,
+			"signed_at": str(row.signed_at) if row.signed_at else None,
+			"signature_hash": row.signature_hash,
+		}
+		for row in doc.approvals
+		if row.decision == "Approved"
+	]
 
 
 def approver_of(doc):
