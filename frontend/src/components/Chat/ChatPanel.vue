@@ -81,12 +81,12 @@
                 </Tooltip>
               </span>
 
-              <Tooltip :text="sounds.on ? __('Mute sounds') : __('Turn sounds on')">
+              <Tooltip :text="sound.on ? __('Mute sounds') : __('Turn sounds on')">
                 <Button
                   variant="ghost"
-                  :icon="sounds.on ? 'lucide-volume-2' : 'lucide-volume-x'"
-                  :label="sounds.on ? __('Mute sounds') : __('Turn sounds on')"
-                  @click="sounds.on = !sounds.on"
+                  :icon="sound.on ? 'lucide-volume-2' : 'lucide-volume-x'"
+                  :label="sound.on ? __('Mute sounds') : __('Turn sounds on')"
+                  @click="sound.toggle()"
                 />
               </Tooltip>
             </template>
@@ -380,12 +380,13 @@ import {
 } from '@/data/chat'
 import { session } from '@/data/session'
 import { realtime } from '@/data/socket'
-import { sounds } from '@/data/sound'
+import { useSound } from '@/stores/sound'
 import { translate as __ } from '@/translation'
 import { dayLabel, shortDate } from '@/utils/format'
 
 const route = useRoute()
 const router = useRouter()
+const sound = useSound()
 const fileUpload = useFileUpload()
 
 const query = ref('')

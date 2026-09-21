@@ -1,7 +1,6 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import { FrappeUI, frappeRequest, setConfig } from 'frappe-ui'
-import router from './router'
 import translationPlugin from './translation'
 import { withFeedback } from './utils/feedback'
 import './index.css'
@@ -26,6 +25,7 @@ async function start() {
   await hydrate().catch(() => {})
 
   const { default: App } = await import('./App.vue')
+  const { default: router } = await import('./router')
 
   const app = createApp(App)
   app.use(createPinia())

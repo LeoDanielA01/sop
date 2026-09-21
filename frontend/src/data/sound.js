@@ -1,25 +1,8 @@
-import { reactive, watch } from 'vue'
+import { useSound } from '@/stores/sound'
 
-const KEY = 'sop:sounds'
-
-function stored() {
-  try {
-    return localStorage.getItem(KEY) !== 'off'
-  } catch {
-    return true
-  }
+function muted() {
+  return !useSound().on
 }
-
-export const sounds = reactive({ on: stored() })
-
-watch(
-  () => sounds.on,
-  (on) => {
-    try {
-      localStorage.setItem(KEY, on ? 'on' : 'off')
-    } catch {}
-  },
-)
 
 let context = null
 let loop = null
@@ -55,13 +38,13 @@ export function unlockSound() {
 }
 
 export function chime() {
-  if (!sounds.on) return
+  if (muted()) return
   note(880, 0, 0.25)
   note(1320, 0.12, 0.35)
 }
 
 export function alertTone() {
-  if (!sounds.on) return
+  if (muted()) return
   note(660, 0, 0.2)
   note(990, 0.14, 0.3)
 }
@@ -71,7 +54,7 @@ export function startRinging(incoming) {
 
   const play = incoming
     ? () => {
-        if (!sounds.on) return
+        if (muted()) return
         note(784, 0, 0.35, 0.1)
         note(988, 0.4, 0.35, 0.1)
         note(784, 0.8, 0.35, 0.1)
