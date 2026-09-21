@@ -194,6 +194,7 @@ export function useAppMenu() {
             label: __('New procedure here'),
             icon: 'lucide-file-plus-2',
             onClick: () => startIn(space, process),
+            condition: () => !!session.user.is_author,
           },
         ],
       })
@@ -206,6 +207,7 @@ export function useAppMenu() {
             label: __('New procedure here'),
             icon: 'lucide-file-plus-2',
             onClick: () => startIn(space),
+            condition: () => !!session.user.is_author,
           },
           {
             label: __('Delete space'),
@@ -221,7 +223,12 @@ export function useAppMenu() {
     groups.push({
       group: __('Procedures'),
       options: [
-        { label: __('New procedure'), icon: 'lucide-file-plus-2', onClick: () => router.push('/new') },
+        {
+          label: __('New procedure'),
+          icon: 'lucide-file-plus-2',
+          onClick: () => router.push('/new'),
+          condition: () => !!session.user.is_author,
+        },
         {
           label: __('Search procedures'),
           icon: 'lucide-search',
@@ -231,6 +238,7 @@ export function useAppMenu() {
           label: __('Find and replace'),
           icon: 'lucide-replace',
           onClick: () => (ui.replaceDialog = true),
+          condition: () => !!session.user.is_author,
         },
       ],
     })

@@ -2,6 +2,17 @@
 # For license information, please see license.txt
 
 import frappe
+from frappe import _
+
+API_PREFIXES = ("/api/method/sop.", "/api/v2/method/sop.")
+APP_ROLES = (
+	"SOP Manager",
+	"SOP Author",
+	"SOP Approver",
+	"SOP Reviewer",
+	"SOP Trainer",
+	"SOP Reader",
+)
 
 
 @frappe.whitelist()
@@ -18,6 +29,7 @@ def me():
 		"is_manager": "SOP Manager" in roles,
 		"is_admin": "System Manager" in roles or frappe.session.user == "Administrator",
 		"is_author": bool({"SOP Author", "SOP Manager"} & set(roles)),
+		"is_approver": bool({"SOP Approver", "SOP Reviewer", "SOP Manager"} & set(roles)),
 		"csrf_token": frappe.sessions.get_csrf_token(),
 		**resolved(),
 	}
@@ -30,6 +42,17 @@ def realtime():
 		"sop_ice_servers": frappe.conf.get("sop_ice_servers"),
 		"sop_user": me(),
 	}
+
+
+def guard_api():
+	path = getattr(frappe.request, "path", "") or ""
+	command = frappe.form_dict.get("cmd") or ""
+
+	if not path.startswith(API_PREFIXES) and not command.startswith("sop."):
+		return
+
+	if not can_use_app():
+		frappe.throw(_("You do not have access to the SOP app."), frappe.PermissionError)
 
 
 def can_use_app(user=None):
@@ -69,6 +92,8 @@ def profile():
 	else:
 		role = "Reader"
 
+	held = [name.removeprefix("SOP ") for name in APP_ROLES if name in roles]
+
 	return {
 		"full_name": doc.full_name,
 		"email": doc.email,
@@ -80,37 +105,8 @@ def profile():
 		"member_since": doc.creation,
 		"last_active": doc.last_active,
 		"role": role,
+		"roles": held,
+		"time_zone": doc.time_zone or "",
+		"language": doc.language or "",
 		"teams": [{"name": row.parent, "role": row.team_role} for row in teams],
-	}
-
-
-@frappe.whitelist()
-def stats():
-	user = frappe.session.user
-
-	from sop.api.procedures import attention
-
-	doc = frappe.get_cached_doc("User", user)
-
-	teams = frappe.get_all(
-		"SOP Team Member",
-		filters={"user": user, "parenttype": "SOP Team"},
-		fields=["parent", "team_role"],
-		limit_page_length=0,
-	)
-
-	return {
-		"member_since": doc.creation,
-		"teams": [{"name": row.parent, "role": row.team_role} for row in teams],
-		"waiting": attention(user),
-		"owned": frappe.db.count("SOP", {"process_owner": user}),
-		"drafts": frappe.db.count("SOP", {"owner": user, "status": "Draft"}),
-		"signed": frappe.db.count("SOP Acknowledgement", {"user": user}),
-		"training_open": frappe.db.count(
-			"SOP Training Assignment",
-			{"trainee": user, "status": ("in", ("Assigned", "In Progress", "Overdue"))},
-		),
-		"training_overdue": frappe.db.count(
-			"SOP Training Assignment", {"trainee": user, "status": "Overdue"}
-		),
 	}

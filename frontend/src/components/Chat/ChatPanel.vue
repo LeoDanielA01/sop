@@ -109,9 +109,10 @@
             </span>
           </div>
 
-          <div
+          <ScrollArea
             v-if="chat.room && showMembers"
-            class="max-h-56 overflow-y-auto border-b border-outline-gray-1 bg-surface-gray-1 py-1.5"
+            class="border-b border-outline-gray-1 bg-surface-gray-1"
+            viewport-class="max-h-56 py-1.5"
           >
             <button
               v-for="member in chat.room.members"
@@ -132,7 +133,7 @@
                 aria-hidden="true"
               />
             </button>
-          </div>
+          </ScrollArea>
 
           <template v-if="!inThread">
             <div class="px-3 pt-3">
@@ -143,7 +144,7 @@
               </TextInput>
             </div>
 
-            <div class="min-h-0 flex-1 overflow-y-auto py-2">
+            <ScrollArea class="min-h-0 flex-1" viewport-class="py-2">
               <template v-if="query.trim()">
                 <button
                   v-for="row in people.data || []"
@@ -220,11 +221,11 @@
                   {{ __('Find someone above, or open Discussion on a procedure.') }}
                 </p>
               </div>
-            </div>
+            </ScrollArea>
           </template>
 
           <template v-else>
-            <div ref="scroller" class="relative min-h-0 flex-1 overflow-y-auto px-4 py-3">
+            <ScrollArea ref="area" class="relative min-h-0 flex-1" viewport-class="px-4 py-3">
               <div v-if="chat.loading" class="flex flex-col gap-3">
                 <Skeleton class="h-8 w-2/3 rounded-3" />
                 <Skeleton class="ml-auto h-8 w-1/2 rounded-3" />
@@ -271,7 +272,7 @@
                 <span class="lucide-upload mx-auto size-6 text-ink-gray-5" aria-hidden="true" />
                 <p class="mt-2 text-sm text-ink-gray-7">{{ __('Drop files to share them') }}</p>
               </div>
-            </div>
+            </ScrollArea>
 
             <div class="border-t border-outline-gray-1 px-3 pb-3 pt-2">
               <p class="mb-1 flex h-4 items-center gap-1.5 text-xs text-ink-gray-5" aria-live="polite">
@@ -354,6 +355,7 @@ import {
   Badge,
   Button,
   ErrorMessage,
+  ScrollArea,
   Skeleton,
   TextInput,
   Tooltip,
@@ -388,7 +390,8 @@ const fileUpload = useFileUpload()
 
 const query = ref('')
 const draft = ref('')
-const scroller = ref(null)
+const area = ref(null)
+const scroller = computed(() => area.value?.viewportElement || null)
 const box = ref(null)
 const picker = ref(null)
 const earlier = ref(false)

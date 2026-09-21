@@ -84,6 +84,34 @@
                 @update:model-value="(value) => setPreference('rows_per_page', Number(value))"
               />
             </SettingsRow>
+            <SettingsRow
+              :title="__('Language')"
+              :description="__('The language the app is shown in. The app reloads when you change it.')"
+            >
+              <Select
+                class="w-44"
+                :options="appLanguageOptions"
+                :model-value="appLanguage.data || 'en'"
+                :disabled="switchingLanguage.loading"
+                @update:model-value="pickLanguage"
+              />
+            </SettingsRow>
+          </div>
+
+          <p class="mt-8 text-sm font-medium text-ink-gray-5">{{ __('Account') }}</p>
+          <div class="divide-y divide-outline-gray-1">
+            <SettingsRow
+              :title="__('Open the desk')"
+              :description="__('The full back office, in a new tab')"
+            >
+              <Button icon-left="lucide-external-link" :label="__('Open')" @click="openDesk" />
+            </SettingsRow>
+            <SettingsRow
+              :title="__('Log out')"
+              :description="__('Sign out of the app in this browser')"
+            >
+              <Button theme="red" icon-left="lucide-log-out" :label="__('Log out')" @click="session.logout()" />
+            </SettingsRow>
           </div>
         </SettingsBody>
       </SettingsPanel>
@@ -445,6 +473,25 @@ const ui = useUI()
 
 const org = ref({})
 const demo = ref({})
+
+const appLanguages = createResource({ url: 'sop.api.i18n.languages' })
+const appLanguage = createResource({ url: 'sop.api.i18n.current' })
+const switchingLanguage = createResource({
+  url: 'sop.api.i18n.set_language',
+  onSuccess: () => window.location.reload(),
+})
+
+const appLanguageOptions = computed(() => appLanguages.data || [{ label: 'English', value: 'en' }])
+
+function pickLanguage(value) {
+  if (!value || value === (appLanguage.data || 'en')) return
+
+  switchingLanguage.submit({ language: value })
+}
+
+function openDesk() {
+  window.open('/app/sop', '_blank')
+}
 const confirmingRemoval = ref(false)
 
 function adopt(data) {
@@ -515,6 +562,9 @@ watch(open, (value) => {
     return
   }
 
+  appLanguages.reload()
+  appLanguage.reload()
+
   if (session.user.is_manager) organisation.reload()
   if (session.user.is_admin) demoOverview.reload()
 })
@@ -528,11 +578,12 @@ const KEYS = {
 }
 
 const groups = computed(() => {
-  const names = [...new Set(SHORTCUTS.map((row) => row.group))]
+  const usable = SHORTCUTS.filter((row) => !row.authors || session.user.is_author)
+  const names = [...new Set(usable.map((row) => row.group))]
 
   return names.map((name) => ({
     name,
-    rows: SHORTCUTS.filter((row) => row.group === name),
+    rows: usable.filter((row) => row.group === name),
   }))
 })
 

@@ -1,7 +1,14 @@
 import { createResource } from 'frappe-ui'
 import { reactive } from 'vue'
 
-const GUEST = { name: 'Guest', full_name: 'Guest', image: null, is_manager: false, is_author: false }
+const GUEST = {
+  name: 'Guest',
+  full_name: 'Guest',
+  image: null,
+  is_manager: false,
+  is_author: false,
+  is_approver: false,
+}
 
 export const session = reactive({
   user: window.sop_user || GUEST,

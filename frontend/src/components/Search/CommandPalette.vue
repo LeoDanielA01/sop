@@ -130,7 +130,7 @@ const jumpTo = computed(() => [
         icon: section.icon,
         route: section.route,
       })),
-      { label: __('New procedure'), icon: 'lucide-plus', route: '/new' },
+      ...(session.user.is_author ? [{ label: __('New procedure'), icon: 'lucide-plus', route: '/new' }] : []),
       { label: __('Training matrix'), icon: 'lucide-grid-3x3', route: '/training/matrix' },
     ],
   },

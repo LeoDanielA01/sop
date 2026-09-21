@@ -1,6 +1,7 @@
 import { createResource } from 'frappe-ui'
 import { computed, ref, watch } from 'vue'
 import { createRetryingResource } from '@/data/resource'
+import { session } from '@/data/session'
 import { translate as __ } from '@/translation'
 
 export const SECTIONS = [
@@ -34,13 +35,26 @@ export const attention = computed(() => viewsResource.data?.attention || 0)
 export const views = computed(() => {
   const counts = viewsResource.data || {}
   return [
-    { label: __('Awaiting my approval'), value: 'approval', icon: 'lucide-stamp', count: counts.approval },
-    { label: __('My drafts'), value: 'drafts', icon: 'lucide-pencil-line', count: counts.drafts },
+    {
+      label: __('Awaiting my approval'),
+      value: 'approval',
+      icon: 'lucide-stamp',
+      count: counts.approval,
+      show: session.user.is_approver,
+    },
+    {
+      label: __('My drafts'),
+      value: 'drafts',
+      icon: 'lucide-pencil-line',
+      count: counts.drafts,
+      show: session.user.is_author,
+    },
     {
       label: __('Unacknowledged'),
       value: 'unacknowledged',
       icon: 'lucide-check-check',
       count: counts.unacknowledged,
+      show: true,
     },
     {
       label: __('Due for review'),
@@ -48,8 +62,9 @@ export const views = computed(() => {
       icon: 'lucide-calendar-clock',
       count: counts.review,
       tone: 'overdue',
+      show: session.user.is_author,
     },
-  ]
+  ].filter((view) => view.show)
 })
 
 export const createSpace = createResource({

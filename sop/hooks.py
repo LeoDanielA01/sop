@@ -23,6 +23,8 @@ website_route_rules = [
 
 website_redirects = [{"source": "/procedures", "target": "/sop"}]
 
+before_request = ["sop.api.session.guard_api"]
+
 after_install = "sop.install.after_install"
 after_migrate = "sop.install.after_migrate"
 

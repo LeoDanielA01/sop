@@ -1,6 +1,7 @@
 import { onBeforeUnmount, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { preferences } from '@/data/preferences'
+import { session } from '@/data/session'
 import { useUI } from '@/stores/ui'
 
 const GO_TO = { p: '/', t: '/training', m: '/training/matrix', s: '/training/sessions' }
@@ -10,8 +11,8 @@ export const SHORTCUTS = [
   { keys: ['mod', 'B'], label: 'Show or hide the sidebar', group: 'Anywhere' },
   { keys: ['mod', 'S'], label: 'Save the draft you are editing', group: 'Anywhere' },
   { keys: ['mod', '/'], label: 'This list', group: 'Anywhere' },
-  { keys: ['mod', 'alt', 'N'], label: 'New procedure', group: 'Do' },
-  { keys: ['mod', 'shift', 'F'], label: 'Find and replace', group: 'Do' },
+  { keys: ['mod', 'alt', 'N'], label: 'New procedure', group: 'Do', authors: true },
+  { keys: ['mod', 'shift', 'F'], label: 'Find and replace', group: 'Do', authors: true },
   { keys: ['mod', 'shift', 'U'], label: 'Notifications', group: 'Do' },
   { keys: ['mod', 'alt', 'P'], label: 'Procedures', group: 'Go to' },
   { keys: ['mod', 'alt', 'T'], label: 'Training', group: 'Go to' },
@@ -58,7 +59,7 @@ export function useShortcuts() {
     if (!preferences.shortcuts) return
 
     if (event.altKey && !event.shiftKey) {
-      if (key === 'n') {
+      if (key === 'n' && session.user.is_author) {
         event.preventDefault()
         router.push('/new')
         return
@@ -73,7 +74,7 @@ export function useShortcuts() {
     }
 
     if (event.shiftKey && !event.altKey) {
-      if (key === 'f') {
+      if (key === 'f' && session.user.is_author) {
         event.preventDefault()
         ui.replaceDialog = true
       }

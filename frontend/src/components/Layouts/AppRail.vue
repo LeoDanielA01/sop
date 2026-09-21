@@ -35,6 +35,7 @@
       />
 
       <SidebarRailItem
+        v-if="session.user.is_author"
         :label="__('Find and replace')"
         variant="ghost"
         icon="lucide-replace"

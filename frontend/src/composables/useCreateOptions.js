@@ -1,6 +1,7 @@
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { activeSpace } from '@/data/navigation'
+import { session } from '@/data/session'
 import { useUI } from '@/stores/ui'
 import { translate as __ } from '@/translation'
 
@@ -13,18 +14,19 @@ export function useCreateOptions() {
       label: __('Procedure'),
       icon: 'lucide-file-plus-2',
       onClick: () => router.push('/new'),
+      condition: () => !!session.user.is_author,
     },
     {
       label: __('Procedure from a template'),
       icon: 'lucide-sparkles',
       onClick: () => (ui.templateDialog = true),
-      condition: () => !!activeSpace.value,
+      condition: () => !!session.user.is_author && !!activeSpace.value,
     },
     {
       label: __('Process'),
       icon: 'lucide-workflow',
       onClick: () => ui.askForProcess({ space: activeSpace.value }),
-      condition: () => !!activeSpace.value,
+      condition: () => !!session.user.is_author && !!activeSpace.value,
     },
     {
       label: __('Space'),

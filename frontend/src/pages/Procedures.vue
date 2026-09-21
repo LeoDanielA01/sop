@@ -2,7 +2,7 @@
   <PageHeader>
     <AppBreadcrumbs />
     <Button
-      v-if="spaces.length"
+      v-if="spaces.length && session.user.is_author"
       variant="solid"
       :label="__('New procedure')"
       icon-left="lucide-plus"
@@ -103,6 +103,7 @@
         <span v-if="activeProcess">{{ __('Nothing filed under this process yet.') }}</span>
         <span v-else>{{ __('Nothing here yet.') }}</span>
         <Button
+          v-if="session.user.is_author"
           variant="solid"
           icon-left="lucide-plus"
           :label="__('Write the first procedure')"
@@ -144,6 +145,7 @@ import { procedures, page, pageLength, reloadProcedures, view } from '@/data/pro
 import { activeSpace, setSpace, spaces } from '@/data/navigation'
 import { preferences } from '@/data/preferences'
 import { activeProcess, setProcess } from '@/data/processes'
+import { session } from '@/data/session'
 import { useUI } from '@/stores/ui'
 import { STATUS_THEME, reviewTone, shortDate } from '@/utils/format'
 

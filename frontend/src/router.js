@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { session } from '@/data/session'
 
 const routes = [
   { path: '/', redirect: (to) => ({ path: '/procedures', query: to.query, hash: to.hash }) },
@@ -24,7 +25,13 @@ const routes = [
   { path: '/:name/history', name: 'History', component: () => import('@/pages/History.vue') },
 ]
 
-export default createRouter({
+const router = createRouter({
   history: createWebHistory('/sop'),
   routes,
 })
+
+router.beforeEach((to) => {
+  if (to.name === 'NewProcedure' && !session.user.is_author) return { name: 'Procedures' }
+})
+
+export default router

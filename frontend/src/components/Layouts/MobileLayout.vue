@@ -42,6 +42,9 @@
           />
         </span>
       </Button>
+      <Button variant="ghost" :label="__('Settings')" @click="ui.openSettings()">
+        <span class="lucide-settings size-5 text-ink-gray-7" aria-hidden="true" />
+      </Button>
       <Button variant="ghost" :label="__('Account')" @click="ui.profileDialog = true">
         <Avatar :image="session.user.image" :label="session.user.full_name" size="sm" />
       </Button>
@@ -154,17 +157,33 @@ const onList = computed(() => route.name === 'Procedures')
 const tree = computed(() => flatten(processes.value))
 
 
-const bottom = computed(() => [
-  { label: 'Procedures', icon: 'lucide-book-text', value: 'all' },
-  { label: 'Approvals', icon: 'lucide-stamp', value: 'approval', count: views.value[0]?.count },
-  {
-    label: __('Training'),
-    icon: 'lucide-graduation-cap',
-    route: '/training',
-    count: trainingCounts.data?.open,
-  },
-  { label: 'Due', icon: 'lucide-calendar-clock', value: 'review', count: views.value[3]?.count },
-])
+function viewOf(value) {
+  return views.value.find((view) => view.value === value)
+}
+
+const bottom = computed(() =>
+  [
+    { label: 'Procedures', icon: 'lucide-book-text', value: 'all' },
+    viewOf('approval') && {
+      label: 'Approvals',
+      icon: 'lucide-stamp',
+      value: 'approval',
+      count: viewOf('approval').count,
+    },
+    {
+      label: __('Training'),
+      icon: 'lucide-graduation-cap',
+      route: '/training',
+      count: trainingCounts.data?.open,
+    },
+    viewOf('review') && {
+      label: 'Due',
+      icon: 'lucide-calendar-clock',
+      value: 'review',
+      count: viewOf('review').count,
+    },
+  ].filter(Boolean),
+)
 
 function go(item) {
   if (item.route) return router.push(item.route)
