@@ -5,7 +5,7 @@ app_description = "Standard operating procedures with live record context"
 app_email = "daniel@onebook.app"
 app_license = "mit"
 
-required_apps = ["frappe"]
+# required_apps = ["frappe"]
 
 add_to_apps_screen = [
 	{
