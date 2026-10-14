@@ -162,6 +162,8 @@
 
     <div v-else class="mb-5" />
 
+    <SafetyBox :sop="doc.name" :version="doc.version" />
+
     <article
       ref="body"
       class="prose-sop max-w-[68ch] text-base leading-relaxed text-ink-gray-8 lg:max-w-none"
@@ -419,6 +421,7 @@ import ReviewComments from '@/components/Procedure/ReviewComments.vue'
 import ReviewRouteDialog from '@/components/Procedure/ReviewRouteDialog.vue'
 import MentionChip from '@/components/Procedure/MentionChip.vue'
 import LiveBlocks from '@/components/Procedure/LiveBlocks.vue'
+import SafetyBox from '@/components/Procedure/SafetyBox.vue'
 import ControlledCopy from '@/components/Procedure/ControlledCopy.vue'
 import RevisionHistory from '@/components/Procedure/RevisionHistory.vue'
 import QuizEditor from '@/components/Training/QuizEditor.vue'

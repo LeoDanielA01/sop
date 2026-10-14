@@ -91,6 +91,7 @@ import {
   Button,
   FormControl,
   PageHeader,
+  call,
   createResource,
 } from 'frappe-ui'
 import AppBreadcrumbs from '@/components/Layouts/AppBreadcrumbs.vue'
@@ -197,6 +198,10 @@ onMounted(() => {
 
   draft.space = activeSpace.value || spaces.value[0]?.name
   draft.process = activeProcess.value
+
+  call('sop.api.settings.authoring').then((data) => {
+    if (data?.layout && !draft.content) draft.content = data.layout
+  })
 })
 
 watch(spaces, (list) => {

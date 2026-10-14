@@ -1,0 +1,207 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:chemical_name",
+ "creation": "2026-10-15 10:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "chemical_name",
+  "cas_number",
+  "signal_word",
+  "column_break_identity",
+  "hazard_class",
+  "disabled",
+  "safety_section",
+  "precautions",
+  "exposure_risks",
+  "column_break_safety",
+  "first_aid",
+  "storage",
+  "ppe_section",
+  "required_ppe",
+  "column_break_sds",
+  "sds",
+  "sds_review_date"
+ ],
+ "fields": [
+  {
+   "fieldname": "chemical_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Chemical",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "cas_number",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "CAS Number"
+  },
+  {
+   "fieldname": "signal_word",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Signal Word",
+   "options": "\nDanger\nWarning"
+  },
+  {
+   "fieldname": "column_break_identity",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "hazard_class",
+   "fieldtype": "Select",
+   "in_standard_filter": 1,
+   "label": "Hazard Class",
+   "options": "\nFlammable\nCorrosive\nAcute toxicity\nHealth hazard\nIrritant\nOxidiser\nExplosive\nCompressed gas\nEnvironmental\nNot classified"
+  },
+  {
+   "default": "0",
+   "fieldname": "disabled",
+   "fieldtype": "Check",
+   "label": "Disabled"
+  },
+  {
+   "fieldname": "safety_section",
+   "fieldtype": "Section Break",
+   "label": "Safety"
+  },
+  {
+   "fieldname": "precautions",
+   "fieldtype": "Small Text",
+   "label": "Precautions"
+  },
+  {
+   "fieldname": "exposure_risks",
+   "fieldtype": "Small Text",
+   "label": "Exposure Risks"
+  },
+  {
+   "fieldname": "column_break_safety",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "first_aid",
+   "fieldtype": "Small Text",
+   "label": "First Aid"
+  },
+  {
+   "fieldname": "storage",
+   "fieldtype": "Small Text",
+   "label": "Storage And Disposal"
+  },
+  {
+   "fieldname": "ppe_section",
+   "fieldtype": "Section Break",
+   "label": "PPE And Data Sheet"
+  },
+  {
+   "fieldname": "required_ppe",
+   "fieldtype": "Table MultiSelect",
+   "label": "Required PPE",
+   "options": "SOP Chemical PPE"
+  },
+  {
+   "fieldname": "column_break_sds",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "sds",
+   "fieldtype": "Attach",
+   "label": "Safety Data Sheet"
+  },
+  {
+   "description": "When the data sheet must be checked against the supplier's latest.",
+   "fieldname": "sds_review_date",
+   "fieldtype": "Date",
+   "label": "SDS Review Date"
+  }
+ ],
+ "links": [],
+ "modified": "2026-10-15 10:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "SOP",
+ "name": "SOP Chemical",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "SOP Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "SOP Author",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "SOP Reviewer",
+   "share": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "SOP Approver",
+   "share": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "SOP Trainer",
+   "share": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "SOP Reader",
+   "share": 1
+  }
+ ],
+ "search_fields": "cas_number,hazard_class",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "chemical_name",
+ "track_changes": 1
+}

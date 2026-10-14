@@ -1,6 +1,8 @@
 import frappe
 
 from sop import demo
+from sop.integrations import erpnext
+from sop.patches.seed_safety_record_types import execute as seed_record_types
 
 ROLES = [
 	("SOP Reader", "Reads effective procedures and acknowledges them."),
@@ -14,12 +16,15 @@ ROLES = [
 
 def after_install():
 	create_roles()
+	erpnext.setup()
+	seed_record_types()
 	create_default_space()
 	seed_demo()
 
 
 def after_migrate():
 	create_roles()
+	erpnext.setup()
 	seed_demo()
 
 

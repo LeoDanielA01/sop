@@ -10,7 +10,18 @@
   "records_section",
   "allow_permanent_delete",
   "column_break_records",
-  "show_week_numbers"
+  "show_week_numbers",
+  "linked_records_section",
+  "record_types",
+  "authoring_section",
+  "use_procedure_template",
+  "procedure_template",
+  "proficiency_section",
+  "intermediate_from",
+  "column_break_proficiency",
+  "expert_from",
+  "erpnext_section",
+  "job_card_check"
  ],
  "fields": [
   {
@@ -54,11 +65,77 @@
    "fieldname": "show_week_numbers",
    "fieldtype": "Check",
    "label": "Show Week Numbers"
+  },
+  {
+   "description": "Record types that procedures link to, which fields to show for them, and which belong in the Safety box.",
+   "fieldname": "linked_records_section",
+   "fieldtype": "Section Break",
+   "label": "Linked Records"
+  },
+  {
+   "fieldname": "record_types",
+   "fieldtype": "Table",
+   "label": "Record Types",
+   "options": "SOP Record Type"
+  },
+  {
+   "fieldname": "authoring_section",
+   "fieldtype": "Section Break",
+   "label": "Authoring"
+  },
+  {
+   "default": "1",
+   "description": "New procedures start with these sections instead of an empty page.",
+   "fieldname": "use_procedure_template",
+   "fieldtype": "Check",
+   "label": "Start From Standard Layout"
+  },
+  {
+   "description": "Leave empty to use the built-in layout: Purpose, Scope, Responsibilities, Safety and PPE, Materials and tools, Steps, Records, References.",
+   "fieldname": "procedure_template",
+   "fieldtype": "Text Editor",
+   "label": "Standard Layout"
+  },
+  {
+   "description": "A person's level on a procedure comes from how many times they have completed its training.",
+   "fieldname": "proficiency_section",
+   "fieldtype": "Section Break",
+   "label": "Proficiency"
+  },
+  {
+   "default": "4",
+   "fieldname": "intermediate_from",
+   "fieldtype": "Int",
+   "label": "Intermediate From (Completions)"
+  },
+  {
+   "fieldname": "column_break_proficiency",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "7",
+   "fieldname": "expert_from",
+   "fieldtype": "Int",
+   "label": "Expert From (Completions)"
+  },
+  {
+   "description": "Used only when ERPNext is installed on this site.",
+   "fieldname": "erpnext_section",
+   "fieldtype": "Section Break",
+   "label": "ERPNext"
+  },
+  {
+   "default": "Off",
+   "description": "When a Job Card's operation is tied to a procedure, check that its employees are proficient enough.",
+   "fieldname": "job_card_check",
+   "fieldtype": "Select",
+   "label": "Job Card Qualification Check",
+   "options": "Off\nWarn\nBlock"
   }
  ],
  "issingle": 1,
  "links": [],
- "modified": "2026-09-16 12:30:00.000000",
+ "modified": "2026-10-15 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "SOP",
  "name": "SOP Settings",

@@ -5,6 +5,8 @@ import frappe
 from frappe import _
 from frappe.utils import add_days, add_months, cint, getdate, now_datetime, nowdate
 
+from sop.proficiency import completions, tier_for
+
 OPEN_STATES = ("Assigned", "In Progress", "Overdue")
 IN_FORCE = ("Effective", "Under Revision")
 WITNESSED = ("Attend Session", "Practical", "Verification", "Assessment")
@@ -493,9 +495,13 @@ def matrix(space=None):
 		)
 	}
 
+	counts = completions(people, [p.name for p in procedures])
 	for user, person in people.items():
 		person["full_name"] = names.get(user, {}).get("full_name") or user
 		person["user_image"] = names.get(user, {}).get("user_image")
+		for sop, cell in person["cells"].items():
+			cell["completions"] = counts.get((user, sop), 0)
+			cell["tier"] = tier_for(cell["completions"])
 
 	return {
 		"procedures": procedures,

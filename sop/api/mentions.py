@@ -563,7 +563,25 @@ def usable_fields(meta):
 	]
 
 
+def configured_fields(meta):
+	from sop.api.settings import field_names, record_type
+
+	deadlines = deadline_fields(meta)
+	return [
+		df
+		for df in (meta.get_field(name) for name in field_names(record_type(meta.name)))
+		if df
+		and df.fieldtype not in no_value_fields
+		and df.fieldtype not in table_fields
+		and df not in deadlines
+	]
+
+
 def key_fields(meta, limit=6):
+	configured = configured_fields(meta)
+	if configured:
+		return configured
+
 	usable = usable_fields(meta)
 	picked = []
 
@@ -737,12 +755,26 @@ def plain(doctype, name):
 	return chip(doctype, name, name, [], url=None)
 
 
+def type_label(doctype):
+	from sop.api.settings import record_type
+
+	configured = record_type(doctype)
+	if configured and configured.label:
+		return configured.label
+
+	return doctype.removeprefix("SOP ") if doctype.startswith("SOP ") else doctype
+
+
 def chip(doctype, name, label, badges, url=...):
+	from sop.api.settings import record_type
+
+	configured = record_type(doctype)
 	return {
 		"key": f"{doctype}::{name}",
 		"reference_doctype": doctype,
 		"reference_name": name,
-		"short_type": frappe.unscrub(doctype).split(" ")[0][:12],
+		"icon": configured.icon if configured else None,
+		"short_type": frappe.unscrub(type_label(doctype)).split(" ")[0][:12],
 		"label": label,
 		"badges": badges,
 		"url": record_url(doctype, name) if url is ... else url,

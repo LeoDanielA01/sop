@@ -311,6 +311,16 @@ const TURN_INTO = [
   },
 ]
 
+function recordGroup(api) {
+  return (api.recordTypes || []).map((row) => ({
+    key: `record:${row.doctype}`,
+    icon: row.icon || 'lucide-file-text',
+    label: row.label,
+    hint: row.doctype,
+    run: () => api.pickType(row.doctype),
+  }))
+}
+
 function insertGroup(api) {
   return [
     {
@@ -570,6 +580,9 @@ export function paletteGroups(context, api, editor) {
 
   groups.push({ name: 'Turn into', items: TURN_INTO })
   groups.push({ name: 'Insert', items: insertGroup(api) })
+
+  const records = recordGroup(api)
+  if (records.length) groups.push({ name: 'Records', items: records })
 
   if (context.kind !== CONTEXTS.TABLE) groups.push({ name: 'Align', items: ALIGN })
 

@@ -34,6 +34,11 @@ sop_mention_facts = {
 	"Item": ["sop.mention_facts.item"],
 	"Warehouse": ["sop.mention_facts.warehouse"],
 	"SOP Space": ["sop.mention_facts.space"],
+	"Asset": ["sop.integrations.assets.maintenance"],
+}
+
+doc_events = {
+	"Job Card": {"validate": "sop.integrations.job_card.check_qualification"},
 }
 
 scheduler_events = {

@@ -35,6 +35,12 @@
           </template>
           {{ __('Organisation') }}
         </SettingsNavItem>
+        <SettingsNavItem v-if="session.user.is_manager" value="linked-records">
+          <template #prefix>
+            <span class="lucide-link-2 size-4 shrink-0 text-ink-gray-6" />
+          </template>
+          {{ __('Linked records') }}
+        </SettingsNavItem>
         <SettingsNavItem v-if="session.user.is_admin" value="demo">
           <template #prefix>
             <span class="lucide-flask-conical size-4 shrink-0 text-ink-gray-6" />
@@ -317,13 +323,67 @@
                 @update:model-value="(value) => saveOrganisation({ show_week_numbers: value ? 1 : 0 })"
               />
             </SettingsRow>
+            <SettingsRow
+              :title="__('Start from the standard layout')"
+              :description="__('New procedures open with Purpose, Scope, Responsibilities, Safety and PPE, Materials, Steps, Records and References.')"
+            >
+              <div class="flex items-center gap-2">
+                <Button variant="ghost" icon-left="lucide-external-link" :label="__('Edit layout')" @click="openDeskSettings" />
+                <Switch
+                  :model-value="!!org.use_procedure_template"
+                  @update:model-value="(value) => saveOrganisation({ use_procedure_template: value ? 1 : 0 })"
+                />
+              </div>
+            </SettingsRow>
+            <SettingsRow
+              :title="__('Proficiency levels')"
+              :description="__('Completed trainings needed for Intermediate and for Expert. Fewer is Beginner.')"
+            >
+              <div class="flex items-center gap-2">
+                <FormControl
+                  type="number"
+                  class="w-20"
+                  :aria-label="__('Intermediate from')"
+                  :modelValue="org.intermediate_from"
+                  @change="(event) => saveOrganisation({ intermediate_from: Number(event.target.value) })"
+                />
+                <FormControl
+                  type="number"
+                  class="w-20"
+                  :aria-label="__('Expert from')"
+                  :modelValue="org.expert_from"
+                  @change="(event) => saveOrganisation({ expert_from: Number(event.target.value) })"
+                />
+              </div>
+            </SettingsRow>
+            <SettingsRow
+              v-if="org.erpnext"
+              :title="__('Job Card qualification check')"
+              :description="__('When an operation is tied to a procedure, check the Job Card employees are proficient enough: warn, or stop the save.')"
+            >
+              <Select
+                class="w-32"
+                :options="['Off', 'Warn', 'Block']"
+                :modelValue="org.job_card_check"
+                @update:modelValue="(value) => saveOrganisation({ job_card_check: value })"
+              />
+            </SettingsRow>
           </div>
+        </SettingsBody>
+      </SettingsPanel>
+      <SettingsPanel value="linked-records">
+        <SettingsHeader
+          :title="__('Linked records')"
+          :description="__('The record types procedures mention, the fields shown for each, and which ones belong in the Safety box at the top of a procedure.')"
+        />
+        <SettingsBody>
+          <LinkedRecords :value="org.record_types || []" @saved="adopt" />
         </SettingsBody>
       </SettingsPanel>
       <SettingsPanel value="demo">
         <SettingsHeader
           :title="__('Demo data')"
-          :description="__('A worked example — two spaces of procedures about this app, with people, training and history. Safe to remove once you have your own.')"
+          :description="__('A worked example — procedures about this app and a plant safety space with chemicals and PPE, with people, training and history. Safe to remove once you have your own.')"
         />
         <SettingsBody>
           <ErrorMessage class="mt-4" :message="demoError" />
@@ -363,7 +423,7 @@
             <SettingsRow
               v-if="!demo.installed"
               :title="__('Insert the demo data')"
-              :description="__('Creates the two spaces, four example people, and fourteen procedures at every stage from draft to retired.')"
+              :description="__('Creates three spaces, four example people, seventeen procedures at every stage from draft to retired, and example chemicals and PPE.')"
             >
               <Button
                 variant="solid"
@@ -445,6 +505,7 @@ import {
   Badge,
   Button,
   ErrorMessage,
+  FormControl,
   Select,
   SettingsBody,
   SettingsContent,
@@ -467,6 +528,7 @@ import { session } from '@/data/session'
 import { useUI } from '@/stores/ui'
 import { preferences, preferencesError, setPreference } from '@/data/preferences'
 import { SHORTCUTS } from '@/composables/useShortcuts'
+import LinkedRecords from './LinkedRecords.vue'
 
 const open = defineModel('open', { type: Boolean, default: false })
 const ui = useUI()
@@ -491,6 +553,10 @@ function pickLanguage(value) {
 
 function openDesk() {
   window.open('/app/sop', '_blank')
+}
+
+function openDeskSettings() {
+  window.open('/app/sop-settings', '_blank')
 }
 const confirmingRemoval = ref(false)
 

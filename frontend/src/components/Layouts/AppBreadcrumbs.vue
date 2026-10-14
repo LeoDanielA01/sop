@@ -31,6 +31,10 @@ const items = computed(() => {
     return [{ label: __('Insights'), route: '/insights' }, ...props.tail]
   }
 
+  if (section.value === 'safety') {
+    return [{ label: __('Safety'), route: '/where-used' }, ...props.tail]
+  }
+
   if (section.value === 'training') {
     return [{ label: __('Training'), route: '/training' }, ...props.tail]
   }

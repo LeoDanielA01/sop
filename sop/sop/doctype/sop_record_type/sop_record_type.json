@@ -1,0 +1,67 @@
+{
+ "actions": [],
+ "creation": "2026-10-15 10:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "reference_doctype",
+  "label",
+  "icon",
+  "fields_to_show",
+  "in_safety"
+ ],
+ "fields": [
+  {
+   "columns": 3,
+   "fieldname": "reference_doctype",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Record Type",
+   "options": "DocType",
+   "reqd": 1
+  },
+  {
+   "columns": 2,
+   "fieldname": "label",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Label"
+  },
+  {
+   "columns": 1,
+   "description": "A lucide icon name, for example lucide-flask-conical.",
+   "fieldname": "icon",
+   "fieldtype": "Data",
+   "label": "Icon"
+  },
+  {
+   "columns": 3,
+   "description": "Field names to show, one per line. Leave empty to let the app pick.",
+   "fieldname": "fields_to_show",
+   "fieldtype": "Small Text",
+   "in_list_view": 1,
+   "label": "Fields To Show"
+  },
+  {
+   "columns": 1,
+   "default": "0",
+   "description": "Show mentioned records of this type in the Safety box at the top of a procedure.",
+   "fieldname": "in_safety",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "In Safety Box"
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-10-15 10:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "SOP",
+ "name": "SOP Record Type",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

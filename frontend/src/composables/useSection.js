@@ -8,6 +8,7 @@ export function useSection() {
   const section = computed(() => {
     if (route.path.startsWith('/training')) return 'training'
     if (route.path.startsWith('/insights')) return 'insights'
+    if (route.path.startsWith('/where-used') || route.path.startsWith('/issue-ppe')) return 'safety'
     return 'procedures'
   })
   const space = computed(() => spaces.value.find((row) => row.name === activeSpace.value))

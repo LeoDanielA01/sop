@@ -10,6 +10,7 @@
     <ScrollArea class="min-h-0 flex-1" viewport-class="px-2 pt-0.5 pb-10">
       <TrainingNav v-if="section === 'training'" />
       <InsightsNav v-else-if="section === 'insights'" />
+      <SafetyNav v-else-if="section === 'safety'" />
       <ProceduresNav v-else />
     </ScrollArea>
   </Sidebar>
@@ -22,6 +23,7 @@ import { ScrollArea, Sidebar, SidebarHeader } from 'frappe-ui'
 import ProceduresNav from './ProceduresNav.vue'
 import InsightsNav from './InsightsNav.vue'
 import TrainingNav from './TrainingNav.vue'
+import SafetyNav from './SafetyNav.vue'
 import { useSection } from '@/composables/useSection'
 import { activeSpace, spaces } from '@/data/navigation'
 import { session } from '@/data/session'
@@ -36,12 +38,14 @@ const { section, space } = useSection()
 const title = computed(() => {
   if (section.value === 'training') return 'Training'
   if (section.value === 'insights') return 'Insights'
+  if (section.value === 'safety') return 'Safety'
   return space.value?.title || 'Procedures'
 })
 
 const subtitle = computed(() => {
   if (section.value === 'training') return `${trainingCounts.data?.open || 0} outstanding`
   if (section.value === 'insights') return session.user.is_manager ? 'Across the organisation' : 'Procedures you own'
+  if (section.value === 'safety') return 'Chemicals, PPE and where they are used'
   if (space.value) return `${space.value.total || 0} procedures`
 
   const total = spaces.value.reduce((sum, row) => sum + (row.total || 0), 0)
@@ -50,7 +54,7 @@ const subtitle = computed(() => {
 })
 
 const menuItems = computed(() => {
-  if (section.value === 'insights') return []
+  if (section.value === 'insights' || section.value === 'safety') return []
 
   if (section.value === 'training') {
     return [

@@ -8,6 +8,7 @@ export const SECTIONS = [
   { key: 'procedures', label: 'Procedures', icon: 'lucide-book-text', route: '/procedures' },
   { key: 'training', label: 'Training', icon: 'lucide-graduation-cap', route: '/training' },
   { key: 'insights', label: 'Insights', icon: 'lucide-bar-chart-3', route: '/insights', authors: true },
+  { key: 'safety', label: 'Safety', icon: 'lucide-shield-check', route: '/where-used' },
 ]
 
 export const activeSpace = ref(null)

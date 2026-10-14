@@ -15,6 +15,8 @@ const routes = [
     component: () => import('@/pages/Certificate.vue'),
   },
   { path: '/insights', name: 'Insights', component: () => import('@/pages/Insights.vue') },
+  { path: '/where-used', name: 'WhereUsed', component: () => import('@/pages/WhereUsed.vue') },
+  { path: '/issue-ppe', name: 'IssuePpe', component: () => import('@/pages/IssuePpe.vue') },
   {
     path: '/:name',
     name: 'Procedure',

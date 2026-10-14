@@ -1,9 +1,12 @@
 # Copyright (c) 2026, Leo Daniel and contributors
 # For license information, please see license.txt
 
+import re
+
 import frappe
 from frappe.utils import add_days, nowdate
 
+from sop import training
 from sop.api import lifecycle
 from sop.api import procedures as procedures_api
 from sop.api import processes as processes_api
@@ -21,13 +24,68 @@ PEOPLE = [
 
 TEAM = "All Staff"
 
-DEMO_CODES = ("OPS", "HR")
+DEMO_CODES = ("OPS", "HR", "SAFE")
 
 APP_PROCESSES = [
 	("OPS", "Writing Procedures", ["Drafting", "Review & Approval", "Publishing"]),
 	("OPS", "Running the app", ["Spaces & processes", "Insights & admin"]),
 	("HR", "Training", ["Assigning training", "Recording outcomes"]),
+	("SAFE", "Chemical handling", ["Cleaning", "Dispensing"]),
+	("SAFE", "Stores", ["Receiving"]),
 ]
+
+PPE_TREE = [
+	("Respiratory protection", None, 1, "", 0, "Anything worn to keep fumes, vapours and dust out of the lungs."),
+	("Half-face respirator", "Respiratory protection", 1, "EN 140", 0, "Kept by one person. Check the seal before every use."),
+	("ABEK1 filter", "Half-face respirator", 0, "EN 14387", 1, "Swap after every eight hours of use, or sooner if you smell anything."),
+	("Eye protection", None, 1, "", 0, "Goggles and face shields."),
+	("Chemical splash goggles", "Eye protection", 0, "EN 166", 0, "Indirect vents. Not safety glasses."),
+	("Hand protection", None, 1, "", 0, "Gloves, chosen for the chemical."),
+	("Nitrile gloves", "Hand protection", 0, "EN 374", 1, "Single use. Change when torn or splashed."),
+	("Body protection", None, 1, "", 0, "Aprons and suits."),
+	("Chemical apron", "Body protection", 0, "EN 14605", 0, "Wipe down and hang to dry after use."),
+]
+
+CHEMICALS = [
+	{
+		"chemical_name": "Sulphuric acid 98%",
+		"cas_number": "7664-93-9",
+		"signal_word": "Danger",
+		"hazard_class": "Corrosive",
+		"precautions": "Always add acid to water, never water to acid. Work at the tank with the extraction running.",
+		"exposure_risks": "Severe skin burns and eye damage. Mist irritates the airways.",
+		"first_aid": "Rinse skin or eyes with water for at least 15 minutes. Get medical help.",
+		"storage": "Bunded store, away from bases and metals. Neutralise spills with soda ash.",
+		"required_ppe": ["ABEK1 filter", "Chemical splash goggles", "Nitrile gloves", "Chemical apron"],
+		"sds_review_in": 20,
+	},
+	{
+		"chemical_name": "Sodium hypochlorite 12%",
+		"cas_number": "7681-52-9",
+		"signal_word": "Danger",
+		"hazard_class": "Corrosive",
+		"precautions": "Never mix with acids: it releases chlorine gas.",
+		"exposure_risks": "Burns skin and eyes. Chlorine gas if it meets acid.",
+		"first_aid": "Rinse with water for 15 minutes. Move to fresh air if gas is released.",
+		"storage": "Cool, dark, away from acids.",
+		"required_ppe": ["Chemical splash goggles", "Nitrile gloves"],
+		"sds_review_in": -5,
+	},
+	{
+		"chemical_name": "Isopropyl alcohol",
+		"cas_number": "67-63-0",
+		"signal_word": "Danger",
+		"hazard_class": "Flammable",
+		"precautions": "No flames or sparks. Keep containers closed.",
+		"exposure_risks": "Highly flammable vapour. Causes eye irritation and drowsiness.",
+		"first_aid": "Move to fresh air. Rinse eyes with water.",
+		"storage": "Flammables cabinet, below 25 °C.",
+		"required_ppe": ["Chemical splash goggles", "Nitrile gloves"],
+		"sds_review_in": 180,
+	},
+]
+
+PROFICIENCY = [("trainer", 7), ("reader", 4), ("author", 1)]
 
 PROCEDURES = [
 	{
@@ -402,6 +460,77 @@ PROCEDURES = [
 </ol>
 <blockquote><p><strong>Note</strong> — check this monthly and act on one row. A dashboard that nobody acts on is a slower way of doing nothing.</p></blockquote>"""
 	},
+	{
+		"slug": "receipt",
+		"title": "Purchase receipt handling",
+		"space": "SAFE",
+		"process": "Receiving",
+		"summary": "From the delivery van to the quarantine rack, without losing the paperwork.",
+		"state": "effective",
+		"effective_since": -60,
+		"tags": ["stores"],
+		"content": """<h2>Purpose</h2>
+<p>Every delivery is checked, recorded and kept apart until quality releases it.</p>
+<h2>Scope</h2>
+<p>All purchased materials received at the main dock.</p>
+<h2>Responsibilities</h2>
+<ul><li><p><strong>Stores operator</strong> — receives and moves the goods.</p></li></ul>
+<h2>Steps</h2>
+<ol>
+<li><p><strong>Take a box</strong> from the van — responsible: Stores operator · location: Dock 1.</p></li>
+<li><p><strong>Scan the barcode</strong> on the label — responsible: Stores operator · records: purchase receipt.</p></li>
+<li><p><strong>Open the box</strong> and check the contents against the delivery note — responsible: Stores operator.</p></li>
+<li><p><strong>Put it on the table</strong> — responsible: Stores operator · location: Room A.</p></li>
+<li><p><strong>Move it to quarantine</strong> — responsible: Stores operator · location: Quarantine warehouse, Rack B.</p></li>
+</ol>
+<blockquote><p><strong>Warning</strong> — chemicals go straight to the bunded store, never Rack B. See {sop:acid}.</p></blockquote>
+<h2>Records</h2>
+<p>The purchase receipt, with the delivery note attached.</p>""",
+	},
+	{
+		"slug": "acid",
+		"title": "Clean the acid dosing tank",
+		"space": "SAFE",
+		"process": "Cleaning",
+		"summary": "Monthly clean of the acid dosing tank, neutralised and rinsed before restart.",
+		"state": "effective",
+		"effective_since": -90,
+		"tags": ["chemicals", "cleaning"],
+		"content": """<h2>Purpose</h2>
+<p>Keeps the dosing accurate and stops scale building up in the tank.</p>
+<h2>Safety and PPE</h2>
+<p>The tank holds {chem:Sulphuric acid 98%}. Clean it with {chem:Sodium hypochlorite 12%} only after it has been neutralised and rinsed.</p>
+<p>Wear the {ppe:Half-face respirator} with a fresh {ppe:ABEK1 filter}.</p>
+<blockquote><p><strong>Warning</strong> — hypochlorite and acid together release chlorine gas. Rinse to a neutral pH first.</p></blockquote>
+<h2>Steps</h2>
+<ol>
+<li><p><strong>Isolate the dosing pump</strong> and lock it out — responsible: Process operator · location: Dosing room.</p></li>
+<li><p><strong>Drain the tank</strong> to the neutralisation pit — responsible: Process operator.</p></li>
+<li><p><strong>Rinse until the pH reads 6 to 8</strong> — responsible: Process operator · records: cleaning log.</p></li>
+<li><p><strong>Clean the walls</strong> with diluted hypochlorite, then rinse again — responsible: Process operator.</p></li>
+<li><p><strong>Remove the lock and restart</strong> — responsible: Shift lead · records: cleaning log signed.</p></li>
+</ol>""",
+	},
+	{
+		"slug": "ipa",
+		"title": "Dispense isopropyl alcohol",
+		"space": "SAFE",
+		"process": "Dispensing",
+		"summary": "Decanting IPA from the drum into labelled wash bottles.",
+		"state": "effective",
+		"effective_since": -30,
+		"tags": ["chemicals"],
+		"content": """<h2>Purpose</h2>
+<p>Gets {chem:Isopropyl alcohol} into wash bottles without spills or vapour build-up.</p>
+<h2>Safety and PPE</h2>
+<p>Wear {ppe:Nitrile gloves} and goggles. No hot work within 10 m.</p>
+<h2>Steps</h2>
+<ol>
+<li><p><strong>Earth the drum</strong> before opening it — responsible: Stores operator · location: Flammables store.</p></li>
+<li><p><strong>Fill each bottle</strong> to the line, no more — responsible: Stores operator.</p></li>
+<li><p><strong>Label and close</strong> every bottle — responsible: Stores operator · records: dispensing log.</p></li>
+</ol>""",
+	},
 ]
 
 SHAPES = {
@@ -423,7 +552,7 @@ def after_migrate():
 		return
 
 	result = install(force=1)
-	print(f"SOP demo data: created {len(result.get('procedures', []))} procedures in OPS and HR.")
+	print(f"SOP demo data: created {len(result.get('procedures', []))} procedures in OPS, HR and SAFE.")
 
 
 def seeded():
@@ -498,8 +627,16 @@ def install(force=0):
 		"HR": ensure_space(
 			manager, "People & Culture", "HR", "Onboarding, training and team practices."
 		),
+		"SAFE": ensure_space(
+			manager,
+			"Plant Safety",
+			"SAFE",
+			"Chemicals, PPE and stores: the Safety box, where-used and proficiency in action.",
+		),
 	}
 
+	seed_record_types()
+	ensure_safety_masters()
 	seed_app_processes(manager, spaces)
 
 	created = []
@@ -509,6 +646,7 @@ def install(force=0):
 	inject_mentions(created, people)
 
 	seed_training(spaces["OPS"], people)
+	seed_proficiency(created, people)
 	seed_session(people)
 	frappe.db.commit()
 
@@ -637,7 +775,7 @@ def build(definition, spaces, people):
 		space=space,
 		title=definition["title"],
 		summary=definition["summary"],
-		content=definition["content"],
+		content=with_safety_links(definition["content"]),
 		process=process,
 		risk_level="Medium",
 		is_controlled=1,
@@ -684,6 +822,74 @@ def inject_mentions(created, people):
 
 		if changed:
 			frappe.db.set_value("SOP", sop_name, "content", content, update_modified=False)
+
+
+def seed_record_types():
+	from sop.patches.seed_safety_record_types import execute
+
+	execute()
+
+
+def ensure_safety_masters():
+	for name, parent, is_group, standard, consumable, description in PPE_TREE:
+		if frappe.db.exists("SOP PPE", name):
+			continue
+		frappe.get_doc(
+			{
+				"doctype": "SOP PPE",
+				"ppe_name": name,
+				"parent_sop_ppe": parent,
+				"is_group": is_group,
+				"standard": standard,
+				"is_consumable": consumable,
+				"description": description,
+			}
+		).insert(ignore_permissions=True)
+
+	for row in CHEMICALS:
+		if frappe.db.exists("SOP Chemical", row["chemical_name"]):
+			continue
+		values = {key: value for key, value in row.items() if key not in ("required_ppe", "sds_review_in")}
+		frappe.get_doc(
+			{
+				"doctype": "SOP Chemical",
+				**values,
+				"sds_review_date": add_days(nowdate(), row["sds_review_in"]),
+				"required_ppe": [{"ppe": ppe} for ppe in row["required_ppe"]],
+			}
+		).insert(ignore_permissions=True)
+
+
+def with_safety_links(content):
+	for kind, doctype in (("chem", "SOP Chemical"), ("ppe", "SOP PPE")):
+		for name in re.findall(r"\{" + kind + r":([^}]+)\}", content):
+			content = content.replace(f"{{{kind}:{name}}}", f'<a href="#mention:{doctype}:{name}">{name}</a>')
+	return content
+
+
+def seed_proficiency(created, people):
+	slugs = {definition["slug"]: sop for definition, sop in zip(PROCEDURES, created, strict=True)}
+	sop = slugs.get("acid")
+	if not sop:
+		return
+
+	manager, author, trainer, reader = people
+	trainees = {"author": author, "trainer": trainer, "reader": reader}
+	doc = frappe.get_doc("SOP", sop)
+
+	for role, times in PROFICIENCY:
+		trainee = trainees[role]
+		assessor = manager if trainee == trainer else trainer
+		previous = None
+		for _attempt in range(times):
+			name = training.create_assignment(
+				doc, None, trainee, cause="Demo refresher", is_refresher=1, supersedes=previous
+			)
+			if not name:
+				break
+			as_user(trainee, training_api.complete_task, name, 1)
+			as_user(assessor, training_api.record_outcome, name, "Competent")
+			previous = name
 
 
 def add_tag(tag, doctype, name):
@@ -947,6 +1153,14 @@ def wipe_demo():
 
 	for name in spaces:
 		frappe.delete_doc("SOP Space", name, force=True, ignore_permissions=True)
+
+	for row in CHEMICALS:
+		if frappe.db.exists("SOP Chemical", row["chemical_name"]):
+			frappe.delete_doc("SOP Chemical", row["chemical_name"], force=True, ignore_permissions=True)
+
+	for name, *_rest in reversed(PPE_TREE):
+		if frappe.db.exists("SOP PPE", name):
+			frappe.delete_doc("SOP PPE", name, force=True, ignore_permissions=True)
 
 	frappe.db.commit()
 

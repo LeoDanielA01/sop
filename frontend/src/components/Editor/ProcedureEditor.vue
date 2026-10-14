@@ -40,7 +40,7 @@
 
 <script setup>
 import { onBeforeUnmount, onMounted, reactive, ref } from 'vue'
-import { useFileUpload } from 'frappe-ui'
+import { createResource, useFileUpload } from 'frappe-ui'
 import {
   EditorBubbleMenu,
   EditorContent,
@@ -105,6 +105,8 @@ function insertCallout(kind) {
     .run()
 }
 
+const authoring = createResource({ url: 'sop.api.settings.authoring', auto: true, cache: 'sop-authoring' })
+
 function mention(trigger) {
   editor.value?.chain().focus().insertContent(trigger).run()
 }
@@ -144,6 +146,10 @@ const api = {
   insertAsk,
   pickRecord: () => mention('#'),
   pickPerson: () => mention('@'),
+  pickType: (doctype) => mention(`#${doctype}:`),
+  get recordTypes() {
+    return authoring.data?.record_types || []
+  },
   insertLive: () => openLive('live'),
   insertCheck: () => openLive('check'),
 }

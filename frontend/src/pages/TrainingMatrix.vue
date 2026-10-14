@@ -108,12 +108,17 @@
               :key="procedure.name"
               class="px-2 py-2.5 text-center"
             >
-              <Tooltip :text="`${mark(person, procedure.name).label} · ${procedure.title}`">
-                <span
-                  class="inline-block size-4"
-                  :class="[mark(person, procedure.name).icon, mark(person, procedure.name).tone]"
-                  aria-hidden="true"
-                />
+              <Tooltip :text="tip(person, procedure)">
+                <span class="inline-flex flex-col items-center">
+                  <span
+                    class="inline-block size-4"
+                    :class="[mark(person, procedure.name).icon, mark(person, procedure.name).tone]"
+                    aria-hidden="true"
+                  />
+                  <span v-if="tier(person, procedure.name)" class="mt-0.5 text-[10px] font-medium text-ink-gray-5">
+                    {{ tier(person, procedure.name)[0] }}
+                  </span>
+                </span>
               </Tooltip>
             </td>
 
@@ -241,6 +246,20 @@ function cell(person, sop) {
 function mark(person, sop) {
   const row = cell(person, sop)
   return (row && MARK[row.status]) || MISSING
+}
+
+function tier(person, sop) {
+  const row = cell(person, sop)
+  return row?.completions ? row.tier : null
+}
+
+function tip(person, procedure) {
+  const row = cell(person, procedure.name)
+  const level = tier(person, procedure.name)
+  const parts = [mark(person, procedure.name).label]
+  if (level) parts.push(__('{0} · {1} completed').format(__(level), row.completions))
+  parts.push(procedure.title)
+  return parts.join(' · ')
 }
 
 function gaps(person) {
