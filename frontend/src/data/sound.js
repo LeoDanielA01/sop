@@ -83,7 +83,7 @@ export function notify(title, body, onClick) {
   if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return null
   if (document.visibilityState === 'visible' && document.hasFocus()) return null
 
-  const shown = new Notification(title, { body, icon: '/assets/sop/images/sop-mark.svg', tag: title })
+  const shown = new Notification(title, { body, icon: '/assets/sop/frontend/sop-mark.svg', tag: title })
   shown.onclick = () => {
     window.focus()
     onClick?.()
