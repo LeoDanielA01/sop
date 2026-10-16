@@ -1,24 +1,40 @@
 # Copyright (c) 2026, Leo Daniel and contributors
 # For license information, please see license.txt
 
+"""Issue any resource whose type can be issued: consumables come out of stock,
+anything a person keeps is handed over as an asset."""
+
 import frappe
 from frappe import _
 from frappe.utils import flt, get_url_to_form, now_datetime
 
 from sop.integrations.erpnext import ensure
+from sop.resources import DOCTYPE, TYPE_DOCTYPE
 
 
 @frappe.whitelist()
 def choices():
 	ensure()
-	return {
-		"ppe": frappe.get_list(
-			"SOP PPE",
-			filters={"is_group": 0},
-			fields=["name", "is_consumable", "item", "standard"],
-			order_by="lft asc",
+	issuable = frappe.get_all(TYPE_DOCTYPE, filters={"can_be_issued": 1}, fields=["name", "icon"], order_by="name asc")
+	fields = ["name", "resource_type", "is_consumable"]
+	if frappe.get_meta(DOCTYPE).has_field("item"):
+		fields.append("item")
+
+	resources = (
+		frappe.get_list(
+			DOCTYPE,
+			filters={"is_group": 0, "disabled": 0, "resource_type": ("in", [row.name for row in issuable])},
+			fields=fields,
+			order_by="resource_type asc, lft asc",
 			limit_page_length=0,
-		),
+		)
+		if issuable
+		else []
+	)
+
+	return {
+		"types": issuable,
+		"resources": resources,
 		"warehouses": frappe.get_list(
 			"Warehouse", filters={"is_group": 0, "disabled": 0}, pluck="name", limit_page_length=0
 		),
@@ -26,9 +42,13 @@ def choices():
 
 
 @frappe.whitelist()
-def issue(ppe, employee, qty=1, warehouse=None, asset=None):
+def issue(resource, employee, qty=1, warehouse=None, asset=None):
 	ensure()
-	row = frappe.get_doc("SOP PPE", ppe)
+	row = frappe.get_doc(DOCTYPE, resource)
+	row.check_permission("read")
+	if not frappe.db.get_value(TYPE_DOCTYPE, row.resource_type, "can_be_issued"):
+		frappe.throw(_("{0} resources aren't set to be issued.").format(frappe.bold(row.resource_type)))
+
 	person = frappe.get_doc("Employee", employee)
 	person.check_permission("read")
 
@@ -52,7 +72,9 @@ def issue_from_stock(row, person, qty, warehouse):
 			"stock_entry_type": "Material Issue",
 			"purpose": "Material Issue",
 			"company": person.company,
-			"remarks": _("PPE {0} issued to {1} ({2})").format(row.name, person.employee_name, person.name),
+			"remarks": _("{0} {1} issued to {2} ({3})").format(
+				row.resource_type, row.name, person.employee_name, person.name
+			),
 			"items": [{"item_code": row.item, "qty": qty, "s_warehouse": warehouse}],
 		}
 	)

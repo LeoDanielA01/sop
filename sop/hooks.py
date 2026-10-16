@@ -35,6 +35,11 @@ sop_mention_facts = {
 	"Warehouse": ["sop.mention_facts.warehouse"],
 	"SOP Space": ["sop.mention_facts.space"],
 	"Asset": ["sop.integrations.assets.maintenance"],
+	"SOP Resource": ["sop.resources.facts"],
+}
+
+sop_mention_resolvers = {
+	"SOP Resource": "sop.resources.resolve",
 }
 
 doc_events = {

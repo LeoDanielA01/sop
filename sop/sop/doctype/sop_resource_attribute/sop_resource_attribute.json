@@ -1,0 +1,60 @@
+{
+ "actions": [],
+ "creation": "2026-10-16 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "label",
+  "fieldtype",
+  "options",
+  "show_in_procedure"
+ ],
+ "fields": [
+  {
+   "fieldname": "label",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Label",
+   "reqd": 1,
+   "columns": 3
+  },
+  {
+   "fieldname": "fieldtype",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Type",
+   "options": "Data\nText\nSelect\nDate\nCheck",
+   "default": "Data",
+   "reqd": 1,
+   "columns": 2
+  },
+  {
+   "fieldname": "options",
+   "fieldtype": "Small Text",
+   "in_list_view": 1,
+   "label": "Options",
+   "description": "For Select: one choice per line.",
+   "columns": 3
+  },
+  {
+   "default": "1",
+   "fieldname": "show_in_procedure",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Show In Procedure",
+   "columns": 2
+  }
+ ],
+ "links": [],
+ "modified": "2026-10-16 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "SOP",
+ "name": "SOP Resource Attribute",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "istable": 1,
+ "editable_grid": 1
+}

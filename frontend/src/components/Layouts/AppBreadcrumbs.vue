@@ -32,7 +32,7 @@ const items = computed(() => {
   }
 
   if (section.value === 'safety') {
-    return [{ label: __('Safety'), route: '/where-used' }, ...props.tail]
+    return [{ label: __('Records'), route: '/where-used' }, ...props.tail]
   }
 
   if (section.value === 'training') {

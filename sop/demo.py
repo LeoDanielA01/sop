@@ -657,7 +657,8 @@ def ensure_people():
 	people = []
 
 	for email, first, last, roles in PEOPLE:
-		if not frappe.db.exists("User", email):
+		new = not frappe.db.exists("User", email)
+		if new:
 			user = frappe.get_doc(
 				{
 					"doctype": "User",
@@ -668,16 +669,18 @@ def ensure_people():
 					"user_type": "System User",
 				}
 			)
-			user.flags.ignore_permissions = True
-			user.insert(ignore_permissions=True)
 		else:
 			user = frappe.get_doc("User", email)
 
+		# Roles go on before the first insert, or Frappe warns the user has no roles.
 		for role in roles:
 			if frappe.db.exists("Role", role) and role not in [row.role for row in user.roles]:
 				user.append("roles", {"role": role})
 
-		user.save(ignore_permissions=True)
+		if new:
+			user.insert(ignore_permissions=True)
+		else:
+			user.save(ignore_permissions=True)
 		people.append(email)
 
 	return people
@@ -831,39 +834,48 @@ def seed_record_types():
 
 
 def ensure_safety_masters():
+	from sop.patches.migrate_to_resources import CHEMICAL_TYPE, CHEMICAL_VALUES, PPE_TYPE, ensure_type
+
+	ensure_type(PPE_TYPE)
+	ensure_type(CHEMICAL_TYPE)
+
 	for name, parent, is_group, standard, consumable, description in PPE_TREE:
-		if frappe.db.exists("SOP PPE", name):
+		if frappe.db.exists("SOP Resource", name):
 			continue
 		frappe.get_doc(
 			{
-				"doctype": "SOP PPE",
-				"ppe_name": name,
-				"parent_sop_ppe": parent,
+				"doctype": "SOP Resource",
+				"resource_name": name,
+				"resource_type": "PPE",
+				"parent_sop_resource": parent,
 				"is_group": is_group,
-				"standard": standard,
 				"is_consumable": consumable,
 				"description": description,
+				"values": [{"attribute": "Standard", "value": standard}],
 			}
 		).insert(ignore_permissions=True)
 
 	for row in CHEMICALS:
-		if frappe.db.exists("SOP Chemical", row["chemical_name"]):
+		if frappe.db.exists("SOP Resource", row["chemical_name"]):
 			continue
-		values = {key: value for key, value in row.items() if key not in ("required_ppe", "sds_review_in")}
 		frappe.get_doc(
 			{
-				"doctype": "SOP Chemical",
-				**values,
-				"sds_review_date": add_days(nowdate(), row["sds_review_in"]),
-				"required_ppe": [{"ppe": ppe} for ppe in row["required_ppe"]],
+				"doctype": "SOP Resource",
+				"resource_name": row["chemical_name"],
+				"resource_type": "Chemical",
+				"check_date": add_days(nowdate(), row["sds_review_in"]),
+				"values": [
+					{"attribute": label, "value": row.get(fieldname)} for fieldname, label in CHEMICAL_VALUES.items()
+				],
+				"requires": [{"resource": ppe} for ppe in row["required_ppe"]],
 			}
 		).insert(ignore_permissions=True)
 
 
 def with_safety_links(content):
-	for kind, doctype in (("chem", "SOP Chemical"), ("ppe", "SOP PPE")):
+	for kind in ("chem", "ppe"):
 		for name in re.findall(r"\{" + kind + r":([^}]+)\}", content):
-			content = content.replace(f"{{{kind}:{name}}}", f'<a href="#mention:{doctype}:{name}">{name}</a>')
+			content = content.replace(f"{{{kind}:{name}}}", f'<a href="#mention:SOP Resource:{name}">{name}</a>')
 	return content
 
 
@@ -1155,12 +1167,19 @@ def wipe_demo():
 		frappe.delete_doc("SOP Space", name, force=True, ignore_permissions=True)
 
 	for row in CHEMICALS:
-		if frappe.db.exists("SOP Chemical", row["chemical_name"]):
-			frappe.delete_doc("SOP Chemical", row["chemical_name"], force=True, ignore_permissions=True)
+		if frappe.db.exists("SOP Resource", row["chemical_name"]):
+			frappe.delete_doc("SOP Resource", row["chemical_name"], force=True, ignore_permissions=True)
 
 	for name, *_rest in reversed(PPE_TREE):
-		if frappe.db.exists("SOP PPE", name):
-			frappe.delete_doc("SOP PPE", name, force=True, ignore_permissions=True)
+		if frappe.db.exists("SOP Resource", name):
+			frappe.delete_doc("SOP Resource", name, force=True, ignore_permissions=True)
+
+	# The demo's types go too, unless the site has added resources of its own to them.
+	for resource_type in ("Chemical", "PPE"):
+		if frappe.db.exists("SOP Resource Type", resource_type) and not frappe.db.exists(
+			"SOP Resource", {"resource_type": resource_type}
+		):
+			frappe.delete_doc("SOP Resource Type", resource_type, force=True, ignore_permissions=True)
 
 	frappe.db.commit()
 

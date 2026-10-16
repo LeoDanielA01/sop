@@ -38,14 +38,14 @@ const { section, space } = useSection()
 const title = computed(() => {
   if (section.value === 'training') return 'Training'
   if (section.value === 'insights') return 'Insights'
-  if (section.value === 'safety') return 'Safety'
+  if (section.value === 'safety') return 'Records'
   return space.value?.title || 'Procedures'
 })
 
 const subtitle = computed(() => {
   if (section.value === 'training') return `${trainingCounts.data?.open || 0} outstanding`
   if (section.value === 'insights') return session.user.is_manager ? 'Across the organisation' : 'Procedures you own'
-  if (section.value === 'safety') return 'Chemicals, PPE and where they are used'
+  if (section.value === 'safety') return 'Linked records and where they are used'
   if (space.value) return `${space.value.total || 0} procedures`
 
   const total = spaces.value.reduce((sum, row) => sum + (row.total || 0), 0)

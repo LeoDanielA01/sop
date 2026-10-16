@@ -43,10 +43,15 @@ def wants_email(user, kind):
 
 
 def send(user, subject, doc, body=None):
+	# The user ID isn't always an email (e.g. "Administrator"), so mail the account's address.
+	email = frappe.db.get_value("User", user, "email")
+	if not email or not frappe.utils.validate_email_address(email):
+		return
+
 	link = frappe.utils.get_url(f"/sop/{doc.name}")
 
 	frappe.sendmail(
-		recipients=[user],
+		recipients=[email],
 		subject=subject,
 		message=body or f"<p>{frappe.utils.escape_html(subject)}</p><p><a href='{link}'>Open it</a></p>",
 		reference_doctype=doc.doctype,

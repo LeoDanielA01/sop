@@ -43,13 +43,14 @@ CUSTOM_FIELDS = {
 			"insert_after": "operation",
 		},
 	],
-	"SOP PPE": [
+	"SOP Resource": [
 		{
 			"fieldname": "item",
 			"fieldtype": "Link",
 			"label": "Stock Item",
 			"options": "Item",
-			"description": "The stock item issued for consumable PPE.",
+			"depends_on": "is_consumable",
+			"description": "The stock item issued when this consumable is handed out.",
 			"insert_after": "is_consumable",
 		},
 	],

@@ -721,6 +721,10 @@ def link_title(doctype, value):
 def table_facts(meta, name, limit=3):
 	facts = []
 
+	# Resources list their details and requirements as facts of their own.
+	if meta.name == "SOP Resource":
+		return facts
+
 	for df in [df for df in meta.get_table_fields() if not df.hidden][:limit]:
 		rows = frappe.db.count(
 			df.options, {"parent": name, "parenttype": meta.name, "parentfield": df.fieldname}

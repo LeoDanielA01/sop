@@ -1,25 +1,23 @@
 <template>
   <PageHeader>
-    <AppBreadcrumbs />
+    <AppBreadcrumbs :tail="[{ label: __('Where used') }]" />
   </PageHeader>
 
-  <div class="mx-auto w-full max-w-[1000px] px-3 pb-12 pt-4 sm:px-5">
+  <div class="mx-auto w-full max-w-[940px] px-3 pb-12 pt-4 sm:px-5">
     <h1 class="text-xl font-semibold text-ink-gray-9">{{ __('Where used') }}</h1>
     <p class="mt-1 text-base text-ink-gray-6">
-      {{ __('Pick a record to see every procedure that mentions it, for example before a chemical is replaced.') }}
+      {{ __('Pick any record to see every procedure that mentions it, for example before it is changed, replaced or retired.') }}
     </p>
 
-    <div class="mt-5 flex flex-wrap items-center gap-2">
+    <div class="mt-5 grid max-w-[640px] gap-2 sm:grid-cols-[14rem_minmax(0,1fr)]">
       <FormControl
         v-model="doctype"
         type="select"
-        class="w-56"
         :options="typeOptions"
         :placeholder="__('Record type')"
         :aria-label="__('Record type')"
       />
       <Combobox
-        class="w-80"
         :options="recordOptions"
         :modelValue="record"
         :loading="lookup.loading"

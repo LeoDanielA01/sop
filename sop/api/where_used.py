@@ -20,6 +20,7 @@ def types():
 			"value": doctype,
 			"label": type_label(doctype),
 			"icon": configured[doctype].icon if doctype in configured else None,
+			"configured": doctype in configured,
 			"count": counts.get(doctype, 0),
 		}
 		for doctype in doctypes

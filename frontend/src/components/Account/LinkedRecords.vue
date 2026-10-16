@@ -23,7 +23,7 @@
 
           <label class="ml-auto flex items-center gap-2 text-sm text-ink-gray-7">
             <Switch v-model="row.in_safety" />
-            {{ __('Safety box') }}
+            {{ __('Show in procedure') }}
           </label>
           <Button variant="ghost" icon="lucide-trash-2" :label="__('Remove')" @click="rows.splice(index, 1)" />
         </div>
@@ -56,7 +56,7 @@
     </div>
 
     <p v-if="!rows.length" class="py-6 text-center text-base text-ink-gray-5">
-      {{ __('No record types yet. Add the ones your procedures mention, like Chemical, PPE, Item or Asset.') }}
+      {{ __('No record types yet. Add the ones your procedures mention, like Resource, Item, BOM or Asset.') }}
     </p>
 
     <div class="mt-4 flex items-center gap-2">

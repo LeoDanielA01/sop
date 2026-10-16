@@ -16,7 +16,8 @@ const routes = [
   },
   { path: '/insights', name: 'Insights', component: () => import('@/pages/Insights.vue') },
   { path: '/where-used', name: 'WhereUsed', component: () => import('@/pages/WhereUsed.vue') },
-  { path: '/issue-ppe', name: 'IssuePpe', component: () => import('@/pages/IssuePpe.vue') },
+  { path: '/issue', name: 'IssueResource', component: () => import('@/pages/IssueResource.vue') },
+  { path: '/issue-ppe', redirect: '/issue' },
   {
     path: '/:name',
     name: 'Procedure',

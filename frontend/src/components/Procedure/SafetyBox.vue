@@ -1,29 +1,29 @@
 <template>
   <section
-    v-if="records.length || ppe.length"
+    v-if="records.length || related.length"
     class="mb-6 rounded-4 border border-outline-amber-2 bg-surface-amber-1"
-    :aria-label="__('Safety')"
+    :aria-label="__('Before you start')"
   >
     <header class="flex items-center gap-2 border-b border-outline-amber-2 px-4 py-2.5">
-      <span class="lucide-shield-alert size-4 shrink-0 text-ink-amber-6" aria-hidden="true" />
-      <h2 class="text-base font-semibold text-ink-gray-9">{{ __('Safety') }}</h2>
+      <span class="lucide-clipboard-list size-4 shrink-0 text-ink-amber-6" aria-hidden="true" />
+      <h2 class="text-base font-semibold text-ink-gray-9">{{ __('Before you start') }}</h2>
       <span class="text-sm text-ink-gray-6">{{ __('from the records this procedure uses') }}</span>
     </header>
 
-    <div v-if="ppe.length" class="border-b border-outline-amber-2 px-4 py-3">
-      <p class="mb-2 text-sm font-medium text-ink-gray-7">{{ __('Wear') }}</p>
+    <div v-if="related.length" class="border-b border-outline-amber-2 px-4 py-3">
+      <p class="mb-2 text-sm font-medium text-ink-gray-7">{{ __('Also needed') }}</p>
       <div class="flex flex-wrap gap-1.5">
         <a
-          v-for="item in ppe"
-          :key="item.name"
+          v-for="item in related"
+          :key="item.doctype + item.name"
           :href="item.url"
           target="_blank"
           class="inline-flex items-center gap-1.5 rounded-3 border border-outline-gray-2 bg-surface-base px-2 py-1 text-sm text-ink-gray-8 hover:border-outline-gray-3"
           :title="item.for.length ? __('Needed for {0}').format(item.for.join(', ')) : ''"
         >
-          <span class="lucide-hard-hat size-3.5 text-ink-gray-5" aria-hidden="true" />
+          <span :class="item.icon || 'lucide-box'" class="size-3.5 text-ink-gray-5" aria-hidden="true" />
           {{ item.path }}
-          <span v-if="item.standard" class="text-ink-gray-5">· {{ item.standard }}</span>
+          <span class="text-ink-gray-5">· {{ item.type_label }}</span>
         </a>
       </div>
     </div>
@@ -73,7 +73,7 @@ const props = defineProps({
 const safety = createResource({ url: 'sop.api.safety.for_sop' })
 
 const records = computed(() => safety.data?.records || [])
-const ppe = computed(() => safety.data?.ppe || [])
+const related = computed(() => safety.data?.related || [])
 
 function isFile(value) {
   return typeof value === 'string' && /^\/(private\/)?files\//.test(value)

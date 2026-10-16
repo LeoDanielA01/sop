@@ -4,5 +4,5 @@
 from frappe.model.document import Document
 
 
-class SOPChemicalPPE(Document):
+class SOPResourceRequirement(Document):
 	pass

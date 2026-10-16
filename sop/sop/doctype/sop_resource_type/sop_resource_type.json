@@ -1,0 +1,190 @@
+{
+ "actions": [],
+ "creation": "2026-10-16 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "type_name",
+  "icon",
+  "description",
+  "column_break_behaviour",
+  "is_tree",
+  "show_in_procedure",
+  "can_be_issued",
+  "section_break_document",
+  "document_label",
+  "column_break_document",
+  "review_label",
+  "section_break_attributes",
+  "attributes"
+ ],
+ "fields": [
+  {
+   "fieldname": "type_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Type Name",
+   "reqd": 1,
+   "unique": 1,
+   "description": "For example Chemical, PPE, Tool, Hazard or Spare Part."
+  },
+  {
+   "fieldname": "icon",
+   "fieldtype": "Data",
+   "label": "Icon",
+   "description": "A lucide icon name, for example lucide-flask-conical, lucide-hard-hat, lucide-wrench, lucide-flame, lucide-cog or lucide-package."
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Description"
+  },
+  {
+   "fieldname": "column_break_behaviour",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_tree",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Grouped In A Tree",
+   "description": "Resources nest, like PPE › Mask › Filter."
+  },
+  {
+   "default": "1",
+   "fieldname": "show_in_procedure",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Show In Procedure",
+   "description": "Procedures that mention these resources show them, and what they require, in the box at the top."
+  },
+  {
+   "default": "0",
+   "fieldname": "can_be_issued",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Can Be Issued To Employees",
+   "description": "Lists these resources on the Issue to employee page."
+  },
+  {
+   "fieldname": "section_break_document",
+   "fieldtype": "Section Break",
+   "label": "Document"
+  },
+  {
+   "fieldname": "document_label",
+   "fieldtype": "Data",
+   "label": "Document Label",
+   "description": "Set to give each resource a document, for example Safety Data Sheet, Manual or Certificate."
+  },
+  {
+   "fieldname": "column_break_document",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "review_label",
+   "fieldtype": "Data",
+   "label": "Review Date Label",
+   "description": "Set to give each resource a review date, for example SDS Review or Calibration Due."
+  },
+  {
+   "fieldname": "section_break_attributes",
+   "fieldtype": "Section Break",
+   "label": "Details"
+  },
+  {
+   "fieldname": "attributes",
+   "fieldtype": "Table",
+   "label": "Details To Record",
+   "options": "SOP Resource Attribute",
+   "description": "The fields every resource of this type has."
+  }
+ ],
+ "links": [],
+ "modified": "2026-10-16 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "SOP",
+ "name": "SOP Resource Type",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "SOP Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "SOP Author",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "SOP Reviewer",
+   "share": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "SOP Approver",
+   "share": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "SOP Trainer",
+   "share": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "SOP Reader",
+   "share": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "autoname": "field:type_name",
+ "allow_rename": 1,
+ "title_field": "type_name",
+ "track_changes": 1
+}

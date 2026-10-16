@@ -1,24 +1,42 @@
 <template>
   <PageHeader>
-    <AppBreadcrumbs :tail="[{ label: __('Issue PPE') }]" />
+    <AppBreadcrumbs :tail="[{ label: __('Issue to employee') }]" />
   </PageHeader>
 
-  <div class="mx-auto w-full max-w-[640px] px-3 pb-12 pt-4 sm:px-5">
-    <h1 class="text-xl font-semibold text-ink-gray-9">{{ __('Issue PPE') }}</h1>
+  <div class="mx-auto w-full max-w-[940px] px-3 pb-12 pt-4 sm:px-5">
+    <h1 class="text-xl font-semibold text-ink-gray-9">{{ __('Issue to employee') }}</h1>
     <p class="mt-1 text-base text-ink-gray-6">
-      {{ __('Consumable PPE is issued from stock. PPE a person keeps, like a respirator, is handed over as an asset.') }}
+      {{ __('Consumables are issued from stock. Anything a person keeps is handed over as an asset.') }}
     </p>
 
     <ErrorMessage :message="error" class="mt-4" />
 
-    <div class="mt-5 flex flex-col gap-4">
-      <FormControl
-        v-model="form.ppe"
-        type="select"
-        :label="__('PPE')"
-        :options="ppeOptions"
-        :placeholder="__('Pick the PPE')"
-      />
+    <p
+      v-if="choices.data && !choices.data.types.length"
+      class="mt-5 max-w-[640px] rounded-4 border border-outline-gray-2 px-4 py-6 text-base text-ink-gray-6"
+    >
+      {{ __('No resource type can be issued yet. Tick "Can Be Issued To Employees" on a resource type to list it here.') }}
+      <a href="/app/sop-resource-type" target="_blank" class="text-ink-blue-3 hover:underline">{{ __('Resource types') }}</a>
+    </p>
+
+    <div v-else class="mt-5 flex max-w-[640px] flex-col gap-4">
+      <div class="grid gap-3 sm:grid-cols-[12rem_minmax(0,1fr)]">
+        <FormControl
+          v-model="form.type"
+          type="select"
+          :label="__('Type')"
+          :options="typeOptions"
+          :placeholder="__('All types')"
+        />
+        <FormControl
+          v-model="form.resource"
+          type="select"
+          :label="__('Resource')"
+          :options="resourceOptions"
+          :placeholder="resourceOptions.length ? __('Pick what to issue') : __('Nothing to issue yet')"
+          :disabled="!resourceOptions.length"
+        />
+      </div>
 
       <div class="flex flex-col gap-1.5">
         <FormLabel :label="__('Employee')" />
@@ -34,7 +52,7 @@
 
       <template v-if="picked?.is_consumable">
         <p v-if="!picked.item" class="text-sm text-ink-amber-6">
-          {{ __('Set the Stock Item on this PPE in the desk before issuing it.') }}
+          {{ __('Set the Stock Item on this resource in the desk before issuing it.') }}
         </p>
         <div class="grid grid-cols-2 gap-3">
           <FormControl v-model="form.qty" type="number" :label="__('Quantity')" />
@@ -64,7 +82,7 @@
           variant="solid"
           :label="__('Issue')"
           :loading="issuing.loading"
-          :disabled="!form.ppe || !form.employee"
+          :disabled="!form.resource || !form.employee"
           @click="issue"
         />
       </div>
@@ -73,18 +91,18 @@
 </template>
 
 <script setup>
-import { computed, reactive } from 'vue'
+import { computed, reactive, watch } from 'vue'
 import { Button, Combobox, ErrorMessage, FormControl, FormLabel, PageHeader, createResource, toast } from 'frappe-ui'
 import AppBreadcrumbs from '@/components/Layouts/AppBreadcrumbs.vue'
 import { translate as __ } from '@/translation'
 
-const form = reactive({ ppe: '', employee: null, qty: 1, warehouse: '', asset: null })
+const form = reactive({ type: '', resource: '', employee: null, qty: 1, warehouse: '', asset: null })
 
-const choices = createResource({ url: 'sop.integrations.ppe.choices', auto: true })
+const choices = createResource({ url: 'sop.integrations.issue.choices', auto: true })
 const employees = createResource({ url: 'sop.api.mentions.find' })
 const assets = createResource({ url: 'sop.api.mentions.find' })
 const issuing = createResource({
-  url: 'sop.integrations.ppe.issue',
+  url: 'sop.integrations.issue.issue',
   onSuccess(data) {
     toast.success(__('Issued — {0} {1}').format(data.doctype, data.name))
     window.open(data.url, '_blank')
@@ -92,13 +110,28 @@ const issuing = createResource({
   },
 })
 
-const picked = computed(() => (choices.data?.ppe || []).find((row) => row.name === form.ppe))
+const resources = computed(() => choices.data?.resources || [])
+const picked = computed(() => resources.value.find((row) => row.name === form.resource))
 
-const ppeOptions = computed(() =>
-  (choices.data?.ppe || []).map((row) => ({
-    label: `${row.name}${row.standard ? ` · ${row.standard}` : ''}${row.is_consumable ? '' : ` · ${__('kept')}`}`,
-    value: row.name,
-  })),
+const typeOptions = computed(() => [
+  { label: __('All types'), value: '' },
+  ...(choices.data?.types || []).map((row) => ({ label: row.name, value: row.name })),
+])
+
+const resourceOptions = computed(() =>
+  resources.value
+    .filter((row) => !form.type || row.resource_type === form.type)
+    .map((row) => ({
+      label: `${row.name}${form.type ? '' : ` · ${row.resource_type}`}${row.is_consumable ? '' : ` · ${__('kept')}`}`,
+      value: row.name,
+    })),
+)
+
+watch(
+  () => form.type,
+  () => {
+    if (picked.value && form.type && picked.value.resource_type !== form.type) form.resource = ''
+  },
 )
 
 const asOptions = (resource) =>
@@ -111,7 +144,7 @@ const error = computed(() => choices.error?.messages?.[0] || issuing.error?.mess
 
 function issue() {
   issuing.submit({
-    ppe: form.ppe,
+    resource: form.resource,
     employee: form.employee,
     qty: form.qty,
     warehouse: form.warehouse || undefined,

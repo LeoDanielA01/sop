@@ -1,18 +1,24 @@
 {
  "actions": [],
- "allow_rename": 1,
- "autoname": "field:ppe_name",
- "creation": "2026-10-15 10:00:00.000000",
+ "creation": "2026-10-16 12:00:00.000000",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "ppe_name",
-  "parent_sop_ppe",
+  "resource_name",
+  "resource_type",
+  "parent_sop_resource",
   "is_group",
-  "column_break_details",
-  "standard",
+  "column_break_main",
   "is_consumable",
+  "disabled",
   "image",
+  "section_break_values",
+  "values",
+  "requires",
+  "section_break_document",
+  "document",
+  "column_break_document",
+  "check_date",
   "section_break_notes",
   "description",
   "lft",
@@ -21,7 +27,7 @@
  ],
  "fields": [
   {
-   "fieldname": "ppe_name",
+   "fieldname": "resource_name",
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Name",
@@ -29,12 +35,20 @@
    "unique": 1
   },
   {
-   "description": "For example Mask under PPE, FFP3 under Mask.",
-   "fieldname": "parent_sop_ppe",
+   "fieldname": "resource_type",
    "fieldtype": "Link",
    "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Type",
+   "options": "SOP Resource Type",
+   "reqd": 1
+  },
+  {
+   "fieldname": "parent_sop_resource",
+   "fieldtype": "Link",
    "label": "Parent",
-   "options": "SOP PPE"
+   "options": "SOP Resource",
+   "description": "For tree types, for example Mask under PPE."
   },
   {
    "default": "0",
@@ -43,28 +57,66 @@
    "label": "Is Group"
   },
   {
-   "fieldname": "column_break_details",
+   "fieldname": "column_break_main",
    "fieldtype": "Column Break"
   },
   {
-   "description": "For example EN 149 or EN 166.",
-   "fieldname": "standard",
-   "fieldtype": "Data",
-   "in_list_view": 1,
-   "label": "Standard"
+   "default": "0",
+   "fieldname": "is_consumable",
+   "fieldtype": "Check",
+   "label": "Consumable",
+   "description": "Used up and restocked, so it is issued from stock rather than handed over as an asset."
   },
   {
    "default": "0",
-   "description": "Used up and restocked, like disposable filters, rather than kept by one person.",
-   "fieldname": "is_consumable",
+   "fieldname": "disabled",
    "fieldtype": "Check",
-   "label": "Consumable"
+   "label": "Disabled"
   },
   {
    "fieldname": "image",
    "fieldtype": "Attach Image",
    "hidden": 1,
    "label": "Image"
+  },
+  {
+   "fieldname": "section_break_values",
+   "fieldtype": "Section Break",
+   "label": "Details"
+  },
+  {
+   "fieldname": "values",
+   "fieldtype": "Table",
+   "label": "Details",
+   "options": "SOP Resource Value",
+   "description": "Filled in from the details set on the type."
+  },
+  {
+   "fieldname": "requires",
+   "fieldtype": "Table MultiSelect",
+   "label": "Requires",
+   "options": "SOP Resource Requirement",
+   "description": "Other resources needed whenever this one is used, for example the PPE for a chemical."
+  },
+  {
+   "fieldname": "section_break_document",
+   "fieldtype": "Section Break",
+   "label": "Document"
+  },
+  {
+   "fieldname": "document",
+   "fieldtype": "Attach",
+   "label": "Document"
+  },
+  {
+   "fieldname": "column_break_document",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "The type names this date, for example SDS Review or Calibration Due.",
+   "fieldname": "check_date",
+   "fieldtype": "Date",
+   "label": "Check Date"
   },
   {
    "fieldname": "section_break_notes",
@@ -96,18 +148,15 @@
    "fieldtype": "Link",
    "hidden": 1,
    "label": "Old Parent",
-   "options": "SOP PPE",
+   "options": "SOP Resource",
    "read_only": 1
   }
  ],
- "image_field": "image",
- "is_tree": 1,
  "links": [],
- "modified": "2026-10-15 10:00:00.000000",
+ "modified": "2026-10-16 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "SOP",
- "name": "SOP PPE",
- "nsm_parent_field": "parent_sop_ppe",
+ "name": "SOP Resource",
  "owner": "Administrator",
  "permissions": [
   {
@@ -182,11 +231,16 @@
    "share": 1
   }
  ],
- "search_fields": "standard",
- "show_title_field_in_link": 0,
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],
- "title_field": "ppe_name",
+ "autoname": "field:resource_name",
+ "allow_rename": 1,
+ "title_field": "resource_name",
+ "is_tree": 1,
+ "nsm_parent_field": "parent_sop_resource",
+ "image_field": "image",
+ "search_fields": "resource_type",
+ "show_title_field_in_link": 0,
  "track_changes": 1
 }
