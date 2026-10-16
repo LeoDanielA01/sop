@@ -13,6 +13,8 @@ export default defineConfig(({ mode }) => ({
       lucideIcons: true,
       jinjaBootData: true,
       buildConfig: {
+        outDir: '../sop/public/frontend',
+        baseUrl: '/assets/sop/frontend/',
         indexHtmlPath: '../sop/www/sop.html',
         emptyOutDir: true,
       },
