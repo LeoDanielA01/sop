@@ -223,7 +223,7 @@ function isStep(block) {
 }
 
 function isWarning(block, rules) {
-  return Boolean(block?.quote && rules.warning.test(block.text))
+  return Boolean(block?.callout || (block?.quote && rules.warning.test(block.text)))
 }
 
 function hasPerson(block) {

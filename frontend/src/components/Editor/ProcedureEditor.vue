@@ -54,6 +54,7 @@ import MentionSuggest from './MentionSuggest.vue'
 import ToolPalette from './ToolPalette.vue'
 import { useUI } from '@/stores/ui'
 import { AskBlock, WhenBlock, asksOf } from './flow'
+import { CalloutBlock, StepBlock, StepMeta } from './blocks'
 import { nextAskId, onFlowEdit } from '@/data/flow'
 import { bubbleItems } from './tools'
 
@@ -76,7 +77,7 @@ const editor = useEditor({
   format: 'html',
   editable: () => props.editable,
   placeholder: props.placeholder,
-  extensions: [RichTextKit, WhenBlock, AskBlock],
+  extensions: [RichTextKit, WhenBlock, AskBlock, StepBlock, StepMeta, CalloutBlock],
   uploadFunction: (file) => fileUpload.upload(file, { private: false, folder: 'Home/SOP' }),
   onUpdate({ editor }) {
     content.value = editor.getHTML()
@@ -84,25 +85,19 @@ const editor = useEditor({
   },
 })
 
+const CALLOUTS = {
+  critical: ['CRITICAL – the hazard', 'What can go wrong, and the rule that prevents it.'],
+  warning: ['Warning', 'The hazard, and what it does if ignored.'],
+  note: ['Note', 'Worth knowing.'],
+}
+
 function insertStep() {
-  editor.value
-    ?.chain()
-    .focus()
-    .toggleOrderedList()
-    .insertContent('<strong>What is done</strong> — responsible: role · records: document')
-    .run()
+  editor.value?.chain().focus().insertSopStep().run()
 }
 
 function insertCallout(kind) {
-  const lead = kind === 'warning' ? 'Warning' : 'Note'
-  const body = kind === 'warning' ? 'the hazard, and what it does if ignored' : 'worth knowing'
-
-  editor.value
-    ?.chain()
-    .focus()
-    .toggleBlockquote()
-    .insertContent(`<strong>${lead}</strong> — ${body}`)
-    .run()
+  const [title, body] = CALLOUTS[kind] || CALLOUTS.warning
+  editor.value?.chain().focus().insertSopCallout(kind in CALLOUTS ? kind : 'warning', title, body).run()
 }
 
 const authoring = createResource({ url: 'sop.api.settings.authoring', auto: true, cache: 'sop-authoring' })

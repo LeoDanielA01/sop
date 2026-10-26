@@ -1,0 +1,202 @@
+{
+ "actions": [],
+ "creation": "2026-10-26 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "hazard_id",
+  "task",
+  "hazard",
+  "consequence",
+  "existing_controls",
+  "column_break_score",
+  "likelihood",
+  "severity",
+  "risk_score",
+  "risk_level",
+  "action_section",
+  "additional_actions",
+  "action_owner",
+  "action_due",
+  "action_status",
+  "column_break_residual",
+  "residual_likelihood",
+  "residual_severity",
+  "residual_score",
+  "residual_level",
+  "check_section",
+  "recurring_check",
+  "check_every",
+  "column_break_check",
+  "next_check",
+  "last_checked"
+ ],
+ "fields": [
+  {
+   "fieldname": "hazard_id",
+   "fieldtype": "Data",
+   "label": "ID",
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "task",
+   "fieldtype": "Data",
+   "label": "Task / phase",
+   "in_list_view": 1,
+   "columns": 2
+  },
+  {
+   "fieldname": "hazard",
+   "fieldtype": "Small Text",
+   "label": "Hazard",
+   "reqd": 1,
+   "in_list_view": 1,
+   "columns": 2
+  },
+  {
+   "fieldname": "consequence",
+   "fieldtype": "Small Text",
+   "label": "Consequence"
+  },
+  {
+   "fieldname": "existing_controls",
+   "fieldtype": "Small Text",
+   "label": "Existing controls"
+  },
+  {
+   "fieldname": "column_break_score",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "likelihood",
+   "fieldtype": "Int",
+   "label": "Likelihood (1-5)",
+   "default": "1"
+  },
+  {
+   "fieldname": "severity",
+   "fieldtype": "Int",
+   "label": "Severity (1-5)",
+   "default": "1"
+  },
+  {
+   "fieldname": "risk_score",
+   "fieldtype": "Int",
+   "label": "Risk",
+   "read_only": 1,
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "risk_level",
+   "fieldtype": "Select",
+   "label": "Risk level",
+   "options": "\nLow\nMedium\nHigh\nVery High",
+   "read_only": 1,
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "action_section",
+   "fieldtype": "Section Break",
+   "label": "Additional actions"
+  },
+  {
+   "fieldname": "additional_actions",
+   "fieldtype": "Small Text",
+   "label": "Additional actions"
+  },
+  {
+   "fieldname": "action_owner",
+   "fieldtype": "Link",
+   "label": "Action owner",
+   "options": "User"
+  },
+  {
+   "fieldname": "action_due",
+   "fieldtype": "Date",
+   "label": "Action due"
+  },
+  {
+   "fieldname": "action_status",
+   "fieldtype": "Select",
+   "label": "Action status",
+   "options": "Not needed\nOpen\nDone",
+   "default": "Not needed",
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "column_break_residual",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "residual_likelihood",
+   "fieldtype": "Int",
+   "label": "Residual likelihood"
+  },
+  {
+   "fieldname": "residual_severity",
+   "fieldtype": "Int",
+   "label": "Residual severity"
+  },
+  {
+   "fieldname": "residual_score",
+   "fieldtype": "Int",
+   "label": "Residual risk",
+   "read_only": 1
+  },
+  {
+   "fieldname": "residual_level",
+   "fieldtype": "Select",
+   "label": "Residual level",
+   "options": "\nLow\nMedium\nHigh\nVery High",
+   "read_only": 1
+  },
+  {
+   "fieldname": "check_section",
+   "fieldtype": "Section Break",
+   "label": "Recurring check"
+  },
+  {
+   "fieldname": "recurring_check",
+   "fieldtype": "Data",
+   "label": "Check to repeat"
+  },
+  {
+   "fieldname": "check_every",
+   "fieldtype": "Select",
+   "label": "Repeat",
+   "options": "\nDaily\nWeekly\nMonthly\nQuarterly\nYearly"
+  },
+  {
+   "fieldname": "column_break_check",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "next_check",
+   "fieldtype": "Date",
+   "label": "Next check due"
+  },
+  {
+   "fieldname": "last_checked",
+   "fieldtype": "Date",
+   "label": "Last checked",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-10-26 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "SOP",
+ "name": "SOP Risk Hazard",
+ "owner": "Administrator",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "istable": 1,
+ "editable_grid": 0,
+ "permissions": []
+}

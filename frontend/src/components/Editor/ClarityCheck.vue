@@ -182,11 +182,13 @@ function blocksOf(editor) {
     const $pos = doc.resolve(pos + 1)
     let ordered = false
     let quote = false
+    let callout = false
 
     for (let depth = $pos.depth; depth > 0; depth -= 1) {
       const name = $pos.node(depth).type.name
       if (name === 'orderedList') ordered = true
       if (name === 'blockquote') quote = true
+      if (name === 'sopCallout' && $pos.node(depth).attrs.tone !== 'note') callout = true
     }
 
     const mentions = []
@@ -205,6 +207,7 @@ function blocksOf(editor) {
       heading: node.type.name === 'heading',
       ordered,
       quote,
+      callout,
       mentions,
     })
 

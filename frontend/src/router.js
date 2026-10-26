@@ -5,6 +5,7 @@ const routes = [
   { path: '/', redirect: (to) => ({ path: '/procedures', query: to.query, hash: to.hash }) },
   { path: '/procedures', name: 'Procedures', component: () => import('@/pages/Procedures.vue') },
   { path: '/new', name: 'NewProcedure', component: () => import('@/pages/Editor.vue') },
+  { path: '/import', name: 'ImportProcedures', component: () => import('@/pages/Import.vue') },
   { path: '/training', name: 'Training', component: () => import('@/pages/Training.vue') },
   { path: '/training/matrix', name: 'TrainingMatrix', component: () => import('@/pages/TrainingMatrix.vue') },
   { path: '/training/sessions', name: 'TrainingSessions', component: () => import('@/pages/TrainingSessions.vue') },
@@ -26,6 +27,7 @@ const routes = [
   },
   { path: '/:name/edit', name: 'EditProcedure', component: () => import('@/pages/Editor.vue') },
   { path: '/:name/history', name: 'History', component: () => import('@/pages/History.vue') },
+  { path: '/:name/sign', name: 'Sign', component: () => import('@/pages/Sign.vue') },
 ]
 
 const router = createRouter({
@@ -34,7 +36,7 @@ const router = createRouter({
 })
 
 router.beforeEach((to) => {
-  if (to.name === 'NewProcedure' && !session.user.is_author) return { name: 'Procedures' }
+  if (['NewProcedure', 'ImportProcedures'].includes(to.name) && !session.user.is_author) return { name: 'Procedures' }
 })
 
 export default router

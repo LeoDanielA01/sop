@@ -12,7 +12,7 @@
             >
               <option :value="null">{{ __('Original / Initial') }}</option>
               <option v-for="rev in revisionsList" :key="`v1-${rev.version}`" :value="rev.version">
-                Rev {{ rev.version }}
+                v{{ rev.version }}.0
               </option>
             </select>
             <span class="text-ink-gray-4">➔</span>
@@ -22,7 +22,7 @@
               @change="fetchDiff"
             >
               <option v-for="rev in revisionsList" :key="`v2-${rev.version}`" :value="rev.version">
-                Rev {{ rev.version }}
+                v{{ rev.version }}.0
               </option>
             </select>
           </div>
@@ -90,7 +90,7 @@
 
           <div class="space-y-2 pl-1">
             <div class="text-xs font-semibold text-ink-gray-6 uppercase tracking-wider pb-2 border-b border-outline-gray-2">
-              Rev {{ selectedV2 }}
+              v{{ selectedV2 }}.0
             </div>
             <template v-for="(chunk, idx) in diffs" :key="`right-${idx}`">
               <div

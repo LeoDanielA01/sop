@@ -78,7 +78,7 @@
       <div v-if="detail" class="flex flex-col gap-4">
         <div class="flex flex-wrap items-center gap-2 text-sm text-ink-gray-5">
           <span class="font-mono">{{ detail.sop_no }}</span>
-          <span>Rev {{ detail.version }}</span>
+          <span>v{{ detail.version }}.0</span>
           <span>· {{ detail.method }}</span>
           <Badge :theme="TONE[detail.status]" variant="subtle" size="sm">{{ detail.status }}</Badge>
           <Badge :theme="OUTCOME_TONE[detail.outcome]" variant="subtle" size="sm">

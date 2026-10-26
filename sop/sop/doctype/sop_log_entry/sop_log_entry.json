@@ -1,0 +1,208 @@
+{
+ "actions": [],
+ "creation": "2026-10-26 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "log_type",
+  "logged_at",
+  "sop",
+  "location",
+  "location_text",
+  "column_break_main",
+  "cleaning_type",
+  "reason",
+  "service_type",
+  "product_before",
+  "room_status",
+  "people_section",
+  "done_by",
+  "column_break_people",
+  "checked_by",
+  "risk_assessment",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "log_type",
+   "fieldtype": "Select",
+   "label": "Log",
+   "options": "Cleaning\nService",
+   "default": "Cleaning",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "logged_at",
+   "fieldtype": "Datetime",
+   "label": "When",
+   "default": "Now",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "sop",
+   "fieldtype": "Link",
+   "label": "Procedure",
+   "options": "SOP",
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "location",
+   "fieldtype": "Link",
+   "label": "Room / machine",
+   "options": "SOP Resource",
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "location_text",
+   "fieldtype": "Data",
+   "label": "Room / machine (if not listed)"
+  },
+  {
+   "fieldname": "column_break_main",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "cleaning_type",
+   "fieldtype": "Select",
+   "label": "Cleaning",
+   "options": "\nMinor\nMajor",
+   "depends_on": "eval:doc.log_type=='Cleaning'",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "reason",
+   "fieldtype": "Select",
+   "label": "Reason",
+   "options": "\nSKU change\nLast batch of the day\nWeekly\nNot clean on arrival\nOther",
+   "depends_on": "eval:doc.log_type=='Cleaning'"
+  },
+  {
+   "fieldname": "service_type",
+   "fieldtype": "Select",
+   "label": "Service",
+   "options": "\nInspection\nFunction test\nMaintenance\nRepair\nFilter change",
+   "depends_on": "eval:doc.log_type=='Service'"
+  },
+  {
+   "fieldname": "product_before",
+   "fieldtype": "Data",
+   "label": "Product before (SKU / lot)"
+  },
+  {
+   "fieldname": "room_status",
+   "fieldtype": "Select",
+   "label": "Room status set to",
+   "options": "\nProduction\nMinor cleaned\nMajor cleaned\nOut of service"
+  },
+  {
+   "fieldname": "people_section",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "done_by",
+   "fieldtype": "Link",
+   "label": "Done by",
+   "options": "User",
+   "default": "__user",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_people",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "checked_by",
+   "fieldtype": "Link",
+   "label": "Checked by",
+   "options": "User"
+  },
+  {
+   "fieldname": "risk_assessment",
+   "fieldtype": "Link",
+   "label": "Risk assessment check",
+   "options": "SOP Risk Assessment",
+   "read_only": 1
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-10-26 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "SOP",
+ "name": "SOP Log Entry",
+ "owner": "Administrator",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "autoname": "format:LOG-{YYYY}-{#####}",
+ "naming_rule": "Expression",
+ "track_changes": 1,
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "SOP Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "SOP Author",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "SOP Reviewer",
+   "share": 1,
+   "create": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "SOP Approver",
+   "share": 1,
+   "create": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "SOP Reader",
+   "share": 1,
+   "create": 1,
+   "write": 1
+  }
+ ]
+}

@@ -250,6 +250,7 @@ def get_procedure(name, revision=None):
 		"process": doc.sop_process,
 		"process_trail": process_trail(doc.sop_process),
 		"risk_level": doc.risk_level,
+		"document_type": doc.get("document_type"),
 		"is_controlled": doc.is_controlled,
 		"content": content,
 		"tags": [tag for tag in (doc._user_tags or "").split(",") if tag],

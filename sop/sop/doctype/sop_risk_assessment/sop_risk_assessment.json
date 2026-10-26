@@ -1,0 +1,228 @@
+{
+ "actions": [],
+ "creation": "2026-10-26 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "ra_no",
+  "title",
+  "space",
+  "column_break_main",
+  "status",
+  "version_label",
+  "assessed_by",
+  "assessed_on",
+  "review_due",
+  "summary_section",
+  "highest_risk",
+  "highest_level",
+  "column_break_summary",
+  "open_actions",
+  "checks_due",
+  "procedures_section",
+  "applies_to",
+  "hazards_section",
+  "hazards",
+  "scoring_note",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "ra_no",
+   "fieldtype": "Data",
+   "label": "Document ID",
+   "reqd": 1,
+   "unique": 1,
+   "in_list_view": 1,
+   "bold": 1
+  },
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "label": "Title",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "space",
+   "fieldtype": "Link",
+   "label": "Space",
+   "options": "SOP Space",
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "column_break_main",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Draft\nApproved\nRetired",
+   "default": "Draft",
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "version_label",
+   "fieldtype": "Data",
+   "label": "Version",
+   "default": "1.0"
+  },
+  {
+   "fieldname": "assessed_by",
+   "fieldtype": "Link",
+   "label": "Assessed by",
+   "options": "User"
+  },
+  {
+   "fieldname": "assessed_on",
+   "fieldtype": "Date",
+   "label": "Assessed on"
+  },
+  {
+   "fieldname": "review_due",
+   "fieldtype": "Date",
+   "label": "Review due"
+  },
+  {
+   "fieldname": "summary_section",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "highest_risk",
+   "fieldtype": "Int",
+   "label": "Highest risk",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "highest_level",
+   "fieldtype": "Select",
+   "label": "Highest level",
+   "options": "\nLow\nMedium\nHigh\nVery High",
+   "read_only": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "column_break_summary",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "open_actions",
+   "fieldtype": "Int",
+   "label": "Open actions",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "checks_due",
+   "fieldtype": "Int",
+   "label": "Checks due",
+   "read_only": 1
+  },
+  {
+   "fieldname": "procedures_section",
+   "fieldtype": "Section Break",
+   "label": "Applies to"
+  },
+  {
+   "fieldname": "applies_to",
+   "fieldtype": "Table",
+   "label": "Procedures",
+   "options": "SOP Risk Procedure"
+  },
+  {
+   "fieldname": "hazards_section",
+   "fieldtype": "Section Break",
+   "label": "Hazards"
+  },
+  {
+   "fieldname": "hazards",
+   "fieldtype": "Table",
+   "label": "Hazards",
+   "options": "SOP Risk Hazard"
+  },
+  {
+   "fieldname": "scoring_note",
+   "fieldtype": "Small Text",
+   "label": "Scoring",
+   "default": "L = Likelihood 1-5 (1 rare ... 5 almost certain), S = Severity 1-5 (1 no injury ... 5 permanent injury / death). Risk = L x S: 1-4 Low, 5-9 Medium, 10-16 High, 20-25 Very high.",
+   "read_only": 1
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Text Editor",
+   "label": "Notes"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-10-26 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "SOP",
+ "name": "SOP Risk Assessment",
+ "owner": "Administrator",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "autoname": "field:ra_no",
+ "naming_rule": "By fieldname",
+ "title_field": "title",
+ "show_title_field_in_link": 1,
+ "search_fields": "title,status",
+ "track_changes": 1,
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "SOP Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "SOP Author",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "SOP Reviewer",
+   "share": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "SOP Approver",
+   "share": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "SOP Reader",
+   "share": 1
+  }
+ ]
+}

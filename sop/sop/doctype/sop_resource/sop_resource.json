@@ -23,7 +23,12 @@
   "description",
   "lft",
   "rgt",
-  "old_parent"
+  "old_parent",
+  "status_section",
+  "room_status",
+  "column_break_status",
+  "room_status_on",
+  "room_status_by"
  ],
  "fields": [
   {
@@ -150,10 +155,41 @@
    "label": "Old Parent",
    "options": "SOP Resource",
    "read_only": 1
+  },
+  {
+   "fieldname": "status_section",
+   "fieldtype": "Section Break",
+   "label": "Room / machine status",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "room_status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "\nProduction\nMinor cleaned\nMajor cleaned\nOut of service",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "column_break_status",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "room_status_on",
+   "fieldtype": "Datetime",
+   "label": "Since",
+   "read_only": 1
+  },
+  {
+   "fieldname": "room_status_by",
+   "fieldtype": "Link",
+   "label": "Set by",
+   "options": "User",
+   "read_only": 1
   }
  ],
  "links": [],
- "modified": "2026-10-16 12:00:00.000000",
+ "modified": "2026-10-26 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "SOP",
  "name": "SOP Resource",

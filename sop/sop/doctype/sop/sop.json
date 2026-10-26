@@ -11,6 +11,7 @@
   "sop_no",
   "space",
   "sop_process",
+  "document_type",
   "column_break_head",
   "status",
   "version",
@@ -69,6 +70,16 @@
    "label": "Process",
    "options": "SOP Process",
    "depends_on": "space"
+  },
+  {
+   "default": "Process SOP",
+   "description": "Process SOPs describe the steps of a process and refer to Equipment SOPs for running a machine. Appendices hold risk assessments, logs and other supporting documents.",
+   "fieldname": "document_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Document Type",
+   "options": "Process SOP\nEquipment SOP\nAppendix"
   },
   {
    "fieldname": "column_break_head",
@@ -215,7 +226,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-09-22 10:00:00.000000",
+ "modified": "2026-10-26 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "SOP",
  "name": "SOP",

@@ -15,7 +15,7 @@
     <List class="-mx-3 sm:list-gap-4">
       <ListRow v-for="row in rows" :key="row.name" class="h-15">
         <ListCell>
-          <Badge variant="subtle" size="sm">Rev {{ row.version }}</Badge>
+          <Badge variant="subtle" size="sm">v{{ row.version }}.0</Badge>
         </ListCell>
 
         <ListCell>

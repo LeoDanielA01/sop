@@ -5,14 +5,15 @@
       <Badge :theme="STATUS_THEME[doc.status]" variant="subtle" size="sm">
         {{ doc.status }}
       </Badge>
-      <Badge v-if="doc.version" variant="subtle" size="sm">Rev {{ doc.version }}</Badge>
+      <Badge v-if="doc.version" variant="subtle" size="sm">v{{ doc.version }}.0</Badge>
+      <Badge v-if="doc.document_type" variant="outline" size="sm">{{ doc.document_type }}</Badge>
     </div>
 
     <div class="flex items-center gap-2">
       <Select
         v-if="isDesktop && doc.revisions?.length > 1"
         v-model="revision"
-        :options="doc.revisions.map((r) => ({ label: `Rev ${r.version}`, value: r.version }))"
+        :options="doc.revisions.map((r) => ({ label: `v${r.version}.0`, value: r.version }))"
       />
 
       <Button
@@ -164,6 +165,8 @@
 
     <SafetyBox :sop="doc.name" :version="doc.version" />
 
+    <RiskPanel :sop="doc.name" class="sop-no-print" />
+
     <article
       ref="body"
       class="prose-sop max-w-[68ch] text-base leading-relaxed text-ink-gray-8 lg:max-w-none"
@@ -178,6 +181,8 @@
     />
 
     <LiveBlocks :root="body" :sop="doc.name" :revision="revision" :content="doc.content" />
+
+    <LogPanel v-if="doc.name" :sop="doc.name" class="sop-no-print mt-8" />
 
     <ControlledCopy v-if="doc.name" :doc="doc" :body="body" />
 
@@ -276,7 +281,7 @@
   >
     <div class="mx-auto flex max-w-[1400px] items-center justify-between gap-4">
       <p class="text-sm text-ink-gray-6">
-        {{ __('Confirm you have read and understood') }} <b>Rev {{ doc.version }}</b>{{ __('. You will be asked again when a new revision comes into force.') }}
+        {{ __('Confirm you have read and understood') }} <b>v{{ doc.version }}.0</b>{{ __('. You will be asked again when a new revision comes into force.') }}
       </p>
       <Button
         variant="solid"
@@ -291,7 +296,7 @@
     v-else-if="isEffective && doc.acknowledged_on"
     class="mx-auto max-w-[1400px] px-3 pb-10 text-sm text-ink-gray-5 sm:px-5"
   >
-    You signed off Rev {{ doc.acknowledged_version }} on {{ shortDate(doc.acknowledged_on) }}. The
+    You signed off v{{ doc.acknowledged_version }}.0 on {{ shortDate(doc.acknowledged_on) }}. The
     next revision will ask again.
   </div>
 
@@ -327,7 +332,7 @@
       <div class="flex justify-end gap-2">
         <Button
           variant="solid"
-          :label="`Publish Rev ${(doc.version || 0) + 1}`"
+          :label="`Publish v${(doc.version || 0) + 1}.0`"
           :loading="release.loading"
           @click="publish"
         />
@@ -422,6 +427,8 @@ import ReviewRouteDialog from '@/components/Procedure/ReviewRouteDialog.vue'
 import MentionChip from '@/components/Procedure/MentionChip.vue'
 import LiveBlocks from '@/components/Procedure/LiveBlocks.vue'
 import SafetyBox from '@/components/Procedure/SafetyBox.vue'
+import RiskPanel from '@/components/Procedure/RiskPanel.vue'
+import LogPanel from '@/components/Procedure/LogPanel.vue'
 import ControlledCopy from '@/components/Procedure/ControlledCopy.vue'
 import RevisionHistory from '@/components/Procedure/RevisionHistory.vue'
 import QuizEditor from '@/components/Training/QuizEditor.vue'
@@ -559,11 +566,11 @@ const facts = computed(() => {
       label: __('Last reviewed'),
       value: `${shortDate(doc.value.last_reviewed_on)} · ${doc.value.last_reviewed_by}`,
     },
-    { label: __('Version'), value: `Rev ${doc.value.version || 1}` },
+    { label: __('Version'), value: `v${doc.value.version || 1}.0` },
     {
       label: __('Read & understood'),
       value: doc.value.acknowledged_on
-        ? `Rev ${doc.value.acknowledged_version} · ${shortDate(doc.value.acknowledged_on)}`
+        ? `v${doc.value.acknowledged_version}.0 · ${shortDate(doc.value.acknowledged_on)}`
         : isEffective.value
           ? 'Not signed off'
           : '—',
@@ -719,6 +726,11 @@ const actions = computed(() =>
       onClick: () => (reviewed.open = true),
     },
     { label: __('Print controlled copy'), icon: 'lucide-printer', onClick: () => window.print() },
+    {
+      label: __('Print sign with QR code'),
+      icon: 'lucide-qr-code',
+      onClick: () => router.push(`/${route.params.name}/sign`),
+    },
     doc.value.actions?.retire && {
       label: __('Retire'),
       icon: 'lucide-archive',

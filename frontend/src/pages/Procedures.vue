@@ -3,6 +3,13 @@
     <AppBreadcrumbs />
     <Button
       v-if="spaces.length && session.user.is_author"
+      variant="subtle"
+      :label="__('Import')"
+      icon-left="lucide-file-up"
+      @click="router.push('/import')"
+    />
+    <Button
+      v-if="spaces.length && session.user.is_author"
       variant="solid"
       :label="__('New procedure')"
       icon-left="lucide-plus"
@@ -49,7 +56,7 @@
             </div>
             <div class="mt-1.5 flex min-w-0 items-center text-base text-ink-gray-5">
               <span class="shrink-0 font-mono text-sm">{{ procedure.sop_no }}</span>
-              <span class="shrink-0">&nbsp;·&nbsp;Rev {{ procedure.version }}&nbsp;·&nbsp;</span>
+              <span class="shrink-0">&nbsp;·&nbsp;v{{ procedure.version }}.0&nbsp;·&nbsp;</span>
               <span class="truncate">{{ procedure.summary }}</span>
             </div>
           </div>

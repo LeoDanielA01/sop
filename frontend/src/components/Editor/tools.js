@@ -62,6 +62,11 @@ function procedureItems(api) {
       label: __('Step'),
       action: () => api.insertStep(),
     },
+    critical: {
+      icon: 'lucide-octagon-alert',
+      label: __('Critical'),
+      action: () => api.insertCallout('critical'),
+    },
     warning: {
       icon: 'lucide-triangle-alert',
       label: __('Warning'),
@@ -130,6 +135,7 @@ export function fixedItems(api) {
     InsertImage,
     Separator,
     sop.step,
+    sop.critical,
     sop.warning,
     sop.note,
     sop.record,
@@ -327,8 +333,15 @@ function insertGroup(api) {
       key: 'step',
       icon: 'lucide-list-checks',
       label: 'Step',
-      hint: 'Numbered, with owner and record',
+      hint: 'Numbered, with phase, why, actions and equipment',
       run: () => api.insertStep(),
+    },
+    {
+      key: 'critical',
+      icon: 'lucide-octagon-alert',
+      label: 'Critical',
+      hint: 'A life-safety rule, shown in red',
+      run: () => api.insertCallout('critical'),
     },
     {
       key: 'warning',
