@@ -29,6 +29,12 @@
           </template>
           {{ __('Spaces') }}
         </SettingsNavItem>
+        <SettingsNavItem v-if="session.user.is_manager" value="teams">
+          <template #prefix>
+            <span class="lucide-users size-4 shrink-0 text-ink-gray-6" />
+          </template>
+          {{ __('Teams') }}
+        </SettingsNavItem>
         <SettingsNavItem v-if="session.user.is_manager" value="organisation">
           <template #prefix>
             <span class="lucide-building-2 size-4 shrink-0 text-ink-gray-6" />
@@ -226,11 +232,12 @@
           <List
             v-if="spaces.length"
             class="-mx-3 pt-4"
-            :columns="['minmax(0,1fr)', '8rem', '8rem', '3rem']"
+            :columns="['minmax(0,1fr)', '11rem', '8rem', '8rem', '3rem']"
             :row-height="56"
           >
             <ListHeader>
               <ListHeaderCell>{{ __('Space') }}</ListHeaderCell>
+              <ListHeaderCell>{{ __('Approving team') }}</ListHeaderCell>
               <ListHeaderCell>{{ __('Visibility') }}</ListHeaderCell>
               <ListHeaderCell>{{ __('Needs review') }}</ListHeaderCell>
               <ListHeaderCell />
@@ -245,6 +252,17 @@
                       {{ space.space_code }} · {{ space.total }} procedures
                     </div>
                   </div>
+                </ListCell>
+                <ListCell>
+                  <Select
+                    v-if="session.user.is_manager"
+                    :modelValue="space.team || ''"
+                    :options="teamOptions"
+                    size="sm"
+                    class="w-40"
+                    @update:modelValue="(team) => pickTeam(space, team)"
+                  />
+                  <span v-else class="truncate text-base text-ink-gray-7">{{ space.team || __('Approver role') }}</span>
                 </ListCell>
                 <ListCell>
                   <span class="text-base text-ink-gray-7">{{ space.visibility }}</span>
@@ -271,6 +289,16 @@
           <p v-else class="px-3 py-10 text-center text-base text-ink-gray-5">
             {{ __('No spaces yet. Create one and its code — QA, PROD, HR — becomes the procedure number.') }}
           </p>
+        </SettingsBody>
+      </SettingsPanel>
+
+      <SettingsPanel value="teams">
+        <SettingsHeader
+          :title="__('Teams')"
+          :description="__('Who reviews and approves. Each space has one team; its Reviewers and Approvers sign off every procedure in it.')"
+        />
+        <SettingsBody>
+          <TeamsPanel @changed="teamList.reload()" />
         </SettingsBody>
       </SettingsPanel>
 
@@ -519,16 +547,18 @@ import {
   Switch,
   TabButtons,
   createResource,
+  toast,
   useColorScheme,
 } from 'frappe-ui'
 
 import { List, ListCell, ListHeader, ListHeaderCell, ListRow, ListRows } from 'frappe-ui/list'
-import { spaces } from '@/data/navigation'
+import { spaces, spacesResource } from '@/data/navigation'
 import { session } from '@/data/session'
 import { useUI } from '@/stores/ui'
 import { preferences, preferencesError, setPreference } from '@/data/preferences'
 import { SHORTCUTS } from '@/composables/useShortcuts'
 import LinkedRecords from './LinkedRecords.vue'
+import TeamsPanel from './TeamsPanel.vue'
 
 const open = defineModel('open', { type: Boolean, default: false })
 const ui = useUI()
@@ -631,7 +661,10 @@ watch(open, (value) => {
   appLanguages.reload()
   appLanguage.reload()
 
-  if (session.user.is_manager) organisation.reload()
+  if (session.user.is_manager) {
+    organisation.reload()
+    teamList.reload()
+  }
   if (session.user.is_admin) demoOverview.reload()
 })
 
@@ -654,6 +687,25 @@ const groups = computed(() => {
 })
 
 const { colorScheme, setColorScheme } = useColorScheme()
+
+const teamList = createResource({ url: 'sop.api.teams.teams' })
+
+const teamOptions = computed(() => [
+  { label: __('No team (Approver role)'), value: '' },
+  ...(teamList.data || []).map((team) => ({ label: team.team_name, value: team.name })),
+])
+
+const settingTeam = createResource({
+  url: 'sop.api.teams.set_space_team',
+  onSuccess: () => spacesResource.reload(),
+  onError: (error) => toast.error(error.messages?.[0] || error.message),
+})
+
+function pickTeam(space, team) {
+  if ((team || '') === (space.team || '')) return
+  space.team = team || null
+  settingTeam.submit({ space: space.name, team: team || null })
+}
 
 function newSpace() {
   open.value = false

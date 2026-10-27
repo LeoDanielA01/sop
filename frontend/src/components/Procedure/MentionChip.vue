@@ -1,5 +1,5 @@
 <template>
-  <Teleport v-if="target" :to="target">
+  <Teleport v-for="(target, index) in targets" :key="index" :to="target">
     <HoverCard :hover-delay="0.25" :leave-delay="0.2" @update:open="(value) => value && load()">
       <template #trigger>
         <a
@@ -172,7 +172,7 @@ function follow(event) {
   router.push(props.reference.url.slice('/sop'.length))
 }
 
-const target = shallowRef(null)
+const targets = shallowRef([])
 
 watch(
   () => props.root,
@@ -183,16 +183,19 @@ watch(
 
     const escaped = CSS.escape ? CSS.escape(name) : name
 
-    const found =
-      root.querySelector(`a[href="#mention:${doctype}:${name}"]`) ||
-      root.querySelector(`span[data-type="mention"][data-id="${escaped}"]`) ||
-      root.querySelector(`[data-mention][data-doctype="${doctype}"][data-name="${name}"]`)
+    const found = root.querySelectorAll(
+      [
+        `a[href="#mention:${doctype}:${name}"]`,
+        `span[data-type="mention"][data-id="${escaped}"]`,
+        `[data-mention][data-doctype="${doctype}"][data-name="${name}"]`,
+      ].join(', '),
+    )
 
-    if (!found) return
-
-    const host = document.createElement('span')
-    found.replaceWith(host)
-    target.value = host
+    targets.value = [...found].map((element) => {
+      const host = document.createElement('span')
+      element.replaceWith(host)
+      return host
+    })
   },
   { immediate: true },
 )

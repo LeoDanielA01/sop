@@ -18,7 +18,7 @@ from sop.api.review import review_rights
 def spaces():
 	rows = frappe.get_list(
 		"SOP Space",
-		fields=["name", "title", "space_code", "visibility", "icon"],
+		fields=["name", "title", "space_code", "visibility", "icon", "team"],
 		order_by="title asc",
 		limit_page_length=0,
 	)

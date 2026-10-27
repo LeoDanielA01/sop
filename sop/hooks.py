@@ -10,7 +10,7 @@ app_license = "mit"
 add_to_apps_screen = [
 	{
 		"name": "sop",
-		"logo": "/assets/sop/frontend/sop-mark.svg",
+		"logo": "/assets/sop/images/sop-mark.svg",
 		"title": "Procedures",
 		"route": "/sop",
 		"has_permission": "sop.api.session.can_use_app",

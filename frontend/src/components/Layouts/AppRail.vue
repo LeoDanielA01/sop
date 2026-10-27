@@ -13,7 +13,7 @@
         :active="section === item.key"
         :badge="badges[item.key]"
         badge-style="count"
-        @click="router.push(item.route)"
+        @click="router.push(section === item.key ? item.route : lastVisited[item.key] || item.route)"
       />
 
       <SidebarRailItem
@@ -82,8 +82,8 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, reactive, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { Avatar, Dropdown, SidebarRail, SidebarRailItem } from 'frappe-ui'
 import mark from '@/assets/sop-mark.svg'
 import { useCreateOptions } from '@/composables/useCreateOptions'
@@ -96,9 +96,18 @@ import { trainingCounts } from '@/data/training'
 import { useUI } from '@/stores/ui'
 import { translate as __ } from '@/translation'
 
+const route = useRoute()
 const router = useRouter()
 const ui = useUI()
 const { section } = useSection()
+
+const lastVisited = reactive({})
+
+watch(
+  () => route.fullPath,
+  (path) => (lastVisited[section.value] = path),
+  { immediate: true },
+)
 
 const badges = computed(() => ({
   procedures: attention.value || undefined,

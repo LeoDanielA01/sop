@@ -1,6 +1,6 @@
 <template>
-  <Dialog v-model="show" :options="{ size: '4xl', title: __('Compare Revisions') }">
-    <template #body-content>
+  <Dialog v-model:open="show" :title="__('Compare Revisions')" size="4xl">
+    <template #default>
       <div class="space-y-4 py-2">
         <div class="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-outline-gray-2 bg-surface-gray-2 p-3 text-sm">
           <div class="flex items-center gap-2">

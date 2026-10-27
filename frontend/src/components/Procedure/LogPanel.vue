@@ -33,8 +33,8 @@
     </ul>
     <p v-else class="px-4 py-3 text-sm text-ink-gray-5">{{ __('Nothing logged for this procedure yet.') }}</p>
 
-    <Dialog v-model="show" :options="{ title: entry.log_type === 'Cleaning' ? __('Log cleaning') : __('Log service') }">
-      <template #body-content>
+    <Dialog v-model:open="show" :title="entry.log_type === 'Cleaning' ? __('Log cleaning') : __('Log service')" size="xl">
+      <template #default>
         <div class="grid gap-3 sm:grid-cols-2">
           <FormControl
             v-if="(places.data || []).length"

@@ -18,7 +18,7 @@
   </PageHeader>
 
   <div class="mx-auto flex min-h-full w-full max-w-[940px] flex-col px-3 pb-4 pt-5 sm:px-5">
-    <div class="mb-4 flex items-center justify-between">
+    <div class="mb-4 flex items-center justify-between gap-3">
       <TabButtons
         v-model="scope"
         :options="[
@@ -26,7 +26,28 @@
           { label: 'All', value: 'All' },
         ]"
       />
-      <span class="text-sm text-ink-gray-5">
+      <TextInput
+        v-model="query"
+        class="min-w-0 max-w-xs flex-1"
+        type="text"
+        :placeholder="__('Search title, number or content...')"
+        autocomplete="off"
+      >
+        <template #prefix>
+          <span class="lucide-search size-4 text-ink-gray-5" aria-hidden="true" />
+        </template>
+        <template v-if="query" #suffix>
+          <button
+            type="button"
+            class="flex text-ink-gray-5 hover:text-ink-gray-8"
+            :aria-label="__('Clear search')"
+            @click="query = ''"
+          >
+            <span class="lucide-x size-4" aria-hidden="true" />
+          </button>
+        </template>
+      </TextInput>
+      <span class="shrink-0 text-sm text-ink-gray-5">
         {{ total }} {{ total === 1 ? 'procedure' : 'procedures' }}
       </span>
     </div>
@@ -106,7 +127,8 @@
       v-if="!procedures.loading && !rows.length"
       class="mt-16 flex flex-col items-center gap-3 px-6 text-center text-base text-ink-gray-5"
     >
-      <template v-if="spaces.length">
+      <span v-if="search">{{ __('No procedures match "{0}".').format(search) }}</span>
+      <template v-else-if="spaces.length">
         <span v-if="activeProcess">{{ __('Nothing filed under this process yet.') }}</span>
         <span v-else>{{ __('Nothing here yet.') }}</span>
         <Button
@@ -141,14 +163,16 @@ import {
   Button,
   PageHeader,
   TabButtons,
+  TextInput,
   Tooltip,
   createResource,
+  debounce,
 } from 'frappe-ui'
 import { List, ListCell, ListRow } from 'frappe-ui/list'
 import AppBreadcrumbs from '@/components/Layouts/AppBreadcrumbs.vue'
 import ListSkeleton from '@/components/Common/ListSkeleton.vue'
 import Pagination from '@/components/Common/Pagination.vue'
-import { procedures, page, pageLength, reloadProcedures, view } from '@/data/procedures'
+import { procedures, page, pageLength, reloadProcedures, search, view } from '@/data/procedures'
 import { activeSpace, setSpace, spaces } from '@/data/navigation'
 import { preferences } from '@/data/preferences'
 import { activeProcess, setProcess } from '@/data/processes'
@@ -163,6 +187,11 @@ const router = useRouter()
 const ui = useUI()
 
 const scope = ref('All')
+const query = ref(search.value)
+
+const applySearch = debounce((value) => (search.value = value.trim()), 300)
+
+watch(query, applySearch)
 const space = computed(() => spaces.value.find((s) => s.name === activeSpace.value))
 
 watch(
