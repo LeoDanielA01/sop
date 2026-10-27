@@ -1,537 +1,46 @@
 # Copyright (c) 2026, Leo Daniel and contributors
 # For license information, please see license.txt
 
+import json
 import re
 
 import frappe
 from frappe.utils import add_days, nowdate
 
 from sop import training
+from sop.api import chat as chat_api
+from sop.api import clarity as clarity_api
 from sop.api import lifecycle
+from sop.api import logs as logs_api
 from sop.api import procedures as procedures_api
 from sop.api import processes as processes_api
+from sop.api import quiz as quiz_api
 from sop.api import requirements as requirements_api
 from sop.api import review as review_api
+from sop.api import risks as risks_api
 from sop.api import sessions as sessions_api
+from sop.api import teams as teams_api
 from sop.api import training as training_api
-
-PEOPLE = [
-	("sara.james@example.com", "Sara", "James", ["SOP Manager", "SOP Approver"]),
-	("dan.walsh@example.com", "Dan", "Walsh", ["SOP Author"]),
-	("leila.k@example.com", "Leila", "Karimian", ["SOP Approver", "SOP Trainer"]),
-	("tom.r@example.com", "Tom", "Rivera", ["SOP Reader"]),
-]
-
-TEAM = "All Staff"
-
-DEMO_CODES = ("OPS", "HR", "SAFE")
-
-APP_PROCESSES = [
-	("OPS", "Writing Procedures", ["Drafting", "Review & Approval", "Publishing"]),
-	("OPS", "Running the app", ["Spaces & processes", "Insights & admin"]),
-	("HR", "Training", ["Assigning training", "Recording outcomes"]),
-	("SAFE", "Chemical handling", ["Cleaning", "Dispensing"]),
-	("SAFE", "Stores", ["Receiving"]),
-]
-
-PPE_TREE = [
-	("Respiratory protection", None, 1, "", 0, "Anything worn to keep fumes, vapours and dust out of the lungs."),
-	("Half-face respirator", "Respiratory protection", 1, "EN 140", 0, "Kept by one person. Check the seal before every use."),
-	("ABEK1 filter", "Half-face respirator", 0, "EN 14387", 1, "Swap after every eight hours of use, or sooner if you smell anything."),
-	("Eye protection", None, 1, "", 0, "Goggles and face shields."),
-	("Chemical splash goggles", "Eye protection", 0, "EN 166", 0, "Indirect vents. Not safety glasses."),
-	("Hand protection", None, 1, "", 0, "Gloves, chosen for the chemical."),
-	("Nitrile gloves", "Hand protection", 0, "EN 374", 1, "Single use. Change when torn or splashed."),
-	("Body protection", None, 1, "", 0, "Aprons and suits."),
-	("Chemical apron", "Body protection", 0, "EN 14605", 0, "Wipe down and hang to dry after use."),
-]
-
-CHEMICALS = [
-	{
-		"chemical_name": "Sulphuric acid 98%",
-		"cas_number": "7664-93-9",
-		"signal_word": "Danger",
-		"hazard_class": "Corrosive",
-		"precautions": "Always add acid to water, never water to acid. Work at the tank with the extraction running.",
-		"exposure_risks": "Severe skin burns and eye damage. Mist irritates the airways.",
-		"first_aid": "Rinse skin or eyes with water for at least 15 minutes. Get medical help.",
-		"storage": "Bunded store, away from bases and metals. Neutralise spills with soda ash.",
-		"required_ppe": ["ABEK1 filter", "Chemical splash goggles", "Nitrile gloves", "Chemical apron"],
-		"sds_review_in": 20,
-	},
-	{
-		"chemical_name": "Sodium hypochlorite 12%",
-		"cas_number": "7681-52-9",
-		"signal_word": "Danger",
-		"hazard_class": "Corrosive",
-		"precautions": "Never mix with acids: it releases chlorine gas.",
-		"exposure_risks": "Burns skin and eyes. Chlorine gas if it meets acid.",
-		"first_aid": "Rinse with water for 15 minutes. Move to fresh air if gas is released.",
-		"storage": "Cool, dark, away from acids.",
-		"required_ppe": ["Chemical splash goggles", "Nitrile gloves"],
-		"sds_review_in": -5,
-	},
-	{
-		"chemical_name": "Isopropyl alcohol",
-		"cas_number": "67-63-0",
-		"signal_word": "Danger",
-		"hazard_class": "Flammable",
-		"precautions": "No flames or sparks. Keep containers closed.",
-		"exposure_risks": "Highly flammable vapour. Causes eye irritation and drowsiness.",
-		"first_aid": "Move to fresh air. Rinse eyes with water.",
-		"storage": "Flammables cabinet, below 25 °C.",
-		"required_ppe": ["Chemical splash goggles", "Nitrile gloves"],
-		"sds_review_in": 180,
-	},
-]
-
-PROFICIENCY = [("trainer", 7), ("reader", 4), ("author", 1)]
-
-PROCEDURES = [
-	{
-		"slug": "write",
-		"title": "How to write a procedure in this app",
-		"space": "OPS",
-		"process": "Drafting",
-		"summary": "From a blank page to a document your team can follow, in about five minutes.",
-		"state": "effective",
-		"effective_since": -120,
-		"tags": ["getting-started"],
-		"content": """<h2>Purpose</h2>
-<p>Anyone with the Author role can write a procedure. This walks you from an empty page to a draft that is ready for review.</p>
-<h2>Scope</h2>
-<p>Covers writing and saving a draft. Sending it out for approval is {sop:review}; publishing it is {sop:publish}.</p>
-<h2>Responsibilities</h2>
-<ul>
-<li><strong>Author</strong> — writes the draft and keeps it current. {user:author} wrote this one.</li>
-<li><strong>Process owner</strong> — decides the procedure is needed and is accurate.</li>
-</ul>
-<h2>Procedure</h2>
-<ol>
-<li><strong>Open the space you are writing for</strong> — responsible: Author · records: none. Spaces sit in the left sidebar. The space code becomes the procedure number, so a procedure in OPS is numbered OPS-0001.</li>
-<li><strong>Click New procedure</strong> — responsible: Author. Give it a title that answers "what does this make happen?" — "Release a batch", not "Batch release notes".</li>
-<li><strong>Fill in the summary</strong> — responsible: Author. One line. It is what people see in search results and in the procedures list, so make it say who it is for.</li>
-<li><strong>File it under a process</strong> — responsible: Author. Processes group related procedures inside a space. See {sop:spaces} for setting them up.</li>
-<li><strong>Write the body</strong> — responsible: Author. Right-click anywhere in the editor for the full tool palette, or pin the toolbar. Every block you can use is listed in {sop:blocks}.</li>
-<li><strong>Watch the clarity check</strong> — responsible: Author. The bar under the editor counts reading time and flags steps with no owner, vague words like "as required", and hazards with no warning next to them.</li>
-<li><strong>Save</strong> — responsible: Author · records: draft. Ctrl S saves at any time. With "Save as you type" on in Settings, your draft is saved a couple of seconds after you stop typing.</li>
-</ol>
-<blockquote><p><strong>Note</strong> — a draft is only visible to you and to managers until you send it for review. Save as often as you like.</p></blockquote>
-<h2>Records</h2>
-<p>The draft itself. Nothing is issued to readers until it is published.</p>"""
-	},
-	{
-		"slug": "blocks",
-		"title": "Every block you can put in a procedure",
-		"space": "OPS",
-		"process": "Drafting",
-		"summary": "Steps, warnings, record mentions, live values, checks, questions and branches — what each one is for.",
-		"state": "effective",
-		"effective_since": -110,
-		"tags": ["getting-started", "reference"],
-		"content": """<h2>Purpose</h2>
-<p>The editor has blocks that do more than format text. This is the reference for all of them. Right-click in the editor to bring up the palette, or pin the toolbar from the same menu.</p>
-<h2>Writing blocks</h2>
-<ol>
-<li><strong>Step</strong> — a numbered action. One action per step, with the person responsible and the record it produces.</li>
-<li><strong>Warning</strong> — a hazard someone could be hurt by, or a mistake that ruins the batch. Put it immediately before the step it applies to, never after.</li>
-<li><strong>Note</strong> — worth knowing, but nothing goes wrong if it is missed.</li>
-<li><strong>Checklist</strong> — for things to tick off in any order, where a numbered step would imply a sequence that does not exist.</li>
-<li><strong>Table</strong> — for limits, tolerances and settings. Far easier to check against than the same numbers buried in a sentence.</li>
-</ol>
-<blockquote><p><strong>Warning</strong> — a warning placed after its step has already been missed. The reader acts first and reads second.</p></blockquote>
-<h2>Blocks that stay current</h2>
-<ol>
-<li><strong>Mention a record</strong> — type # to link a live record: another procedure, an item, a supplier, a form. The link shows the record's current title and status, so a renamed record does not leave a stale name behind. {sop:publish} above is a mention.</li>
-<li><strong>Mention a person</strong> — type @ to name someone. {user:manager} is a person mention; it stays right when someone changes their name.</li>
-<li><strong>Live value</strong> — a number or date pulled from a record each time the procedure is opened. Use it for a limit that is maintained somewhere else, so it can never drift out of date here.</li>
-<li><strong>Check</strong> — the same idea, but it shows a green tick or a red cross: "stock is at least 50", "the calibration date has not passed". The reader sees the answer, not the raw number.</li>
-</ol>
-<h2>Blocks that change what is shown</h2>
-<ol>
-<li><strong>Question</strong> — asks the reader something and offers a set of answers.</li>
-<li><strong>Branch</strong> — a section that only appears when a condition holds: an answer to a question, or a value on a record. Everyone else sees one line explaining why it does not apply to them.</li>
-</ol>
-<p>{sop:branches} shows both of these working, with a question you can answer.</p>
-<blockquote><p><strong>Note</strong> — the clarity check also reviews your branches: an answer with nothing behind it, a branch whose question was deleted, or an empty branch all show up in the Procedure list under the editor.</p></blockquote>"""
-	},
-	{
-		"slug": "branches",
-		"title": "Make a procedure follow the situation",
-		"space": "OPS",
-		"process": "Drafting",
-		"summary": "One procedure that shows each reader only the part that applies to them.",
-		"state": "effective",
-		"effective_since": -20,
-		"tags": ["getting-started", "reference"],
-		"content": """<h2>Purpose</h2>
-<p>Most procedures have a "but if…" in them. Written flat, every reader has to work out which paragraphs are theirs. A branch does that for them: the parts that do not apply collapse to a single line saying why.</p>
-<h2>Scope</h2>
-<p>Covers questions and branches in the editor. The blocks themselves are listed in {sop:blocks}.</p>
-<h2>Try it</h2>
-<p>Answer the question below and watch the rest of this section change.</p>
-<div data-sop-ask="q1" data-sop-options="Damaged|Wrong item|Nothing arrived">What was wrong with the delivery?</div>
-<div data-sop-when="ask:q1:is:Damaged" data-sop-label="What was wrong with the delivery? — is &#8220;Damaged&#8221;">
-<h3>Damaged goods</h3>
-<ol>
-<li><strong>Photograph the damage before anything is moved</strong> — responsible: Receiver · records: photographs.</li>
-<li><strong>Quarantine the pallet</strong> — responsible: Receiver · records: quarantine label.</li>
-<li><strong>Raise a supplier claim the same day</strong> — responsible: {user:manager} · records: claim reference.</li>
-</ol>
-</div>
-<div data-sop-when="ask:q1:is:Wrong%20item" data-sop-label="What was wrong with the delivery? — is &#8220;Wrong item&#8221;">
-<h3>Wrong item delivered</h3>
-<ol>
-<li><strong>Do not put it away</strong> — responsible: Receiver. Stock that is put away is very hard to send back.</li>
-<li><strong>Check the order against the delivery note</strong> — responsible: Receiver · records: annotated delivery note.</li>
-<li><strong>Arrange collection with the supplier</strong> — responsible: {user:manager} · records: collection reference.</li>
-</ol>
-</div>
-<div data-sop-when="ask:q1:is:Nothing%20arrived" data-sop-label="What was wrong with the delivery? — is &#8220;Nothing arrived&#8221;">
-<h3>Delivery did not arrive</h3>
-<ol>
-<li><strong>Confirm the delivery was dispatched</strong> — responsible: Receiver · records: carrier reference.</li>
-<li><strong>Tell the line before the shortage bites</strong> — responsible: {user:manager}.</li>
-</ol>
-</div>
-<h2>How to build one</h2>
-<ol>
-<li><strong>Add the question first</strong> — responsible: Author. Insert a Question block and type the answers into it. Each answer becomes a chip.</li>
-<li><strong>Select the section that belongs to one answer</strong> — responsible: Author. Then choose Branch. The selected text is wrapped, and the header bar shows the condition in plain words.</li>
-<li><strong>Pick the condition</strong> — responsible: Author. Either an answer to a question, or a value on a record — "only when the order is over 50,000", "only when the certificate has expired".</li>
-<li><strong>Check every answer has somewhere to go</strong> — responsible: Author. The clarity check lists any answer with no branch behind it.</li>
-</ol>
-<blockquote><p><strong>Warning</strong> — branches hide text on screen, never on paper. A printed controlled copy always contains every branch, so an auditor reads the whole procedure.</p></blockquote>
-<blockquote><p><strong>Note</strong> — when a branch depends on a record and that record cannot be read, the section is shown rather than hidden, with an amber line explaining why. Nothing disappears quietly.</p></blockquote>"""
-	},
-	{
-		"slug": "review",
-		"title": "How to send a procedure for review",
-		"space": "OPS",
-		"process": "Review & Approval",
-		"summary": "When the draft is ready, one click puts it in front of the right approvers.",
-		"state": "effective",
-		"effective_since": -90,
-		"tags": ["getting-started", "review"],
-		"content": """<h2>Purpose</h2>
-<p>Sending for review moves a draft out of your hands and routes it to the people who have to sign it off. It is the step that turns private writing into a controlled document.</p>
-<h2>Before you send</h2>
-<ul>
-<li>Every step names who does it.</li>
-<li>The clarity check is clear, or you can say why each remaining flag is fine.</li>
-<li>Limits and tolerances are numbers, not "as appropriate".</li>
-<li>Records the procedure produces are named.</li>
-</ul>
-<h2>Procedure</h2>
-<ol>
-<li><strong>Open the draft</strong> — responsible: Author. From your space, or from Waiting on you on your profile.</li>
-<li><strong>Click Send for review</strong> — responsible: Author · records: review request. The status changes to In Review and the content is locked while approvers read it.</li>
-<li><strong>Choose the approval route</strong> — responsible: Author. The dialog shows who will be asked and in what order. A route with two approvers asks the second only after the first has signed.</li>
-<li><strong>Approvers are notified</strong> — responsible: System · records: notification. Each one can comment on the exact sentence they are questioning. {sop:approve} is what they do next.</li>
-<li><strong>Answer the comments</strong> — responsible: Author. Reply in the thread, or edit and reply. Resolve each one so the approver can see it has been dealt with.</li>
-<li><strong>Send again if it comes back</strong> — responsible: Author. Requested changes return the procedure to Draft with the comments still attached.</li>
-</ol>
-<blockquote><p><strong>Note</strong> — you can see the whole approval chain, and where it has got to, in the Reviewers panel while the procedure is open.</p></blockquote>
-<h2>Records</h2>
-<p>The review request, every comment and every decision stay on the procedure permanently, including for versions that were never published.</p>"""
-	},
-	{
-		"slug": "approve",
-		"title": "How to approve a procedure",
-		"space": "OPS",
-		"process": "Review & Approval",
-		"summary": "Approvers read, comment, and either sign it off or send it back.",
-		"state": "in_review",
-		"tags": ["review"],
-		"content": """<h2>Purpose</h2>
-<p>An approval is a signature. It says the procedure is accurate, safe to follow, and something you are willing to have your name against.</p>
-<h2>Responsibilities</h2>
-<p>{user:trainer} and {user:manager} approve in this demo. An approver must not be the person who wrote the draft.</p>
-<h2>Procedure</h2>
-<ol>
-<li><strong>Open the request</strong> — responsible: Approver. From the notification, or from Waiting on you.</li>
-<li><strong>Read it as the person who has to do the job</strong> — responsible: Approver. Could someone on their first week follow this without asking anyone?</li>
-<li><strong>Comment on the exact words</strong> — responsible: Approver · records: review comment. Select the text and comment. A comment pinned to a sentence is acted on; "paragraph 3 is unclear" in an email is not.</li>
-<li><strong>Check the branches</strong> — responsible: Approver. Answer each question and read what appears. A branch nobody can reach is a gap in the procedure.</li>
-<li><strong>Approve, or request changes</strong> — responsible: Approver · records: approval decision. Both sit at the bottom of the page. Requesting changes sends it back to the author with your comments.</li>
-</ol>
-<blockquote><p><strong>Warning</strong> — approving is a signature against your name and it stays in the record. Only approve when you have actually read it.</p></blockquote>
-<p>Once everyone has signed, a manager brings it into force — see {sop:publish}.</p>"""
-	},
-	{
-		"slug": "publish",
-		"title": "How to bring a procedure into force",
-		"space": "OPS",
-		"process": "Publishing",
-		"summary": "Publishing sets the effective date, stamps a revision number, and starts training.",
-		"state": "approved",
-		"tags": ["getting-started"],
-		"content": """<h2>Purpose</h2>
-<p>Publishing is the moment a document becomes the official way of working. It fixes a revision number, sets the date it applies from, and hands the new version to everyone who has to be trained on it.</p>
-<h2>Responsibilities</h2>
-<p>Managers only. {user:manager} publishes in this demo.</p>
-<h2>Procedure</h2>
-<ol>
-<li><strong>Open the approved procedure</strong> — responsible: Manager. The header badge reads Approved.</li>
-<li><strong>Click Bring into force</strong> — responsible: Manager · records: revision.</li>
-<li><strong>Set the effective date</strong> — responsible: Manager. Today, or a date in the future when the change needs a new form printed or a machine setting changed first.</li>
-<li><strong>Write the change summary</strong> — responsible: Manager · records: revision note. Say what changed and why, in a sentence someone can read a year later.</li>
-<li><strong>Decide whether the change is material</strong> — responsible: Manager. Material means everyone is trained again. Not material means only people who have never been trained pick it up.</li>
-<li><strong>Confirm</strong> — responsible: Manager · records: revision, training assignments. Training rules fire immediately — see {sop:training}.</li>
-</ol>
-<blockquote><p><strong>Warning</strong> — marking a real change as not material is how people end up working to a version they have never read. If in doubt, material.</p></blockquote>
-<blockquote><p><strong>Note</strong> — readers who owe an acknowledgement see a banner the next time they open the procedure. Changing it later means a new revision — see {sop:revise}.</p></blockquote>"""
-	},
-	{
-		"slug": "revise",
-		"title": "How to revise a procedure that is already in force",
-		"space": "OPS",
-		"process": "Publishing",
-		"summary": "Change a live procedure without anyone working to a half-edited copy.",
-		"state": "effective",
-		"effective_since": -45,
-		"tags": ["review"],
-		"content": """<h2>Purpose</h2>
-<p>A procedure in force cannot be edited in place — people are following it right now. A revision gives you a private copy to work on while the current version stays live, then swaps them over on approval.</p>
-<h2>Procedure</h2>
-<ol>
-<li><strong>Open the effective procedure and choose Start a revision</strong> — responsible: Author · records: draft revision. The version in force keeps being served to readers.</li>
-<li><strong>Make the changes</strong> — responsible: Author. Same editor, same blocks as {sop:write}.</li>
-<li><strong>Compare against what is live</strong> — responsible: Author. Revision history shows the two versions side by side with the changes marked, so you can check you changed what you meant to and nothing else.</li>
-<li><strong>Write the change summary as you go</strong> — responsible: Author. Easier now than after review, when you have forgotten the small edits.</li>
-<li><strong>Send for review</strong> — responsible: Author. Same route as {sop:review}. Approvers see the comparison, not just the new text.</li>
-<li><strong>Publish</strong> — responsible: Manager · records: revision. The new revision number takes over on its effective date and the old version moves into history.</li>
-</ol>
-<blockquote><p><strong>Note</strong> — every superseded version stays readable, with the acknowledgements that were signed against it. That is what makes the history worth anything in an audit.</p></blockquote>
-<p>When a procedure should not come back at all, retire it instead — {sop:retire}.</p>"""
-	},
-	{
-		"slug": "retire",
-		"title": "How to retire a procedure that is no longer used",
-		"space": "OPS",
-		"process": "Publishing",
-		"summary": "Take a procedure out of use without losing its history.",
-		"state": "retired",
-		"tags": ["admin"],
-		"content": """<h2>Purpose</h2>
-<p>When a procedure has been replaced or the work has stopped, retire it. It stops being issued and stops generating training, but every version and every signature stays readable.</p>
-<h2>Procedure</h2>
-<ol>
-<li><strong>Check what points at it</strong> — responsible: Manager. Other procedures may mention it. Fix those first or you leave readers at a dead end.</li>
-<li><strong>Open the effective procedure</strong> — responsible: Manager. Only a procedure in force can be retired.</li>
-<li><strong>Choose Retire from the menu</strong> — responsible: Manager · records: retirement note. Say what replaces it, or why the work stopped.</li>
-<li><strong>Confirm</strong> — responsible: Manager. It moves to Retired at once and stops creating training assignments.</li>
-</ol>
-<blockquote><p><strong>Warning</strong> — retiring is not editing. If the work still happens and the method has just changed, start a revision instead — see {sop:revise}.</p></blockquote>"""
-	},
-	{
-		"slug": "training",
-		"title": "How to assign and track training",
-		"space": "HR",
-		"process": "Assigning training",
-		"summary": "Rules that put the right procedures in front of the right people, without anyone keeping a list.",
-		"state": "effective",
-		"effective_since": -75,
-		"tags": ["training", "getting-started"],
-		"content": """<h2>Purpose</h2>
-<p>A training rule connects a group of people to a set of procedures. Publish a procedure the rule covers and the assignments appear by themselves — nobody maintains a spreadsheet of who owes what.</p>
-<h2>Procedure</h2>
-<ol>
-<li><strong>Open Training rules</strong> — responsible: {user:trainer}. Under Training in the left navigation.</li>
-<li><strong>Choose what the rule covers</strong> — responsible: Trainer. A whole space, or one process inside it. Covering a space means future procedures are included automatically.</li>
-<li><strong>Choose who it applies to</strong> — responsible: Trainer. A team, one person, or everyone.</li>
-<li><strong>Pick the method</strong> — responsible: Trainer. Read and understand means the person reads it and signs. On the job means a trainer watches them do it and signs. Classroom is a booked session — see {sop:sessions}.</li>
-<li><strong>Set the due days and refresher</strong> — responsible: Trainer. Due days counts from the day the assignment is created. A refresher of twelve months brings it back round every year.</li>
-<li><strong>Save and let it run</strong> — responsible: Trainer · records: training assignments. Assignments are created for everyone the rule covers.</li>
-</ol>
-<h2>Tracking it</h2>
-<ol>
-<li><strong>Open the Training matrix</strong> — responsible: Trainer. People down the side, procedures across the top, one cell per assignment.</li>
-<li><strong>Work the red cells first</strong> — responsible: Trainer. Red is overdue: someone is doing the work without having read the current version.</li>
-<li><strong>Check after every publish</strong> — responsible: Trainer. A material change in {sop:publish} reassigns everyone, and the matrix turns amber until they sign.</li>
-</ol>
-<blockquote><p><strong>Note</strong> — if someone has no assignments, check the team they are in and whether a rule covers their space. That is nearly always the reason.</p></blockquote>"""
-	},
-	{
-		"slug": "quiz",
-		"title": "How to check understanding with a quiz",
-		"space": "HR",
-		"process": "Recording outcomes",
-		"summary": "A few questions that prove the procedure was read, not just opened.",
-		"state": "effective",
-		"effective_since": -30,
-		"tags": ["training"],
-		"content": """<h2>Purpose</h2>
-<p>An acknowledgement proves someone clicked. A quiz proves they took something in. Attach one to a procedure where getting it wrong matters.</p>
-<h2>Procedure</h2>
-<ol>
-<li><strong>Open the procedure and choose Quiz</strong> — responsible: {user:trainer} · records: quiz.</li>
-<li><strong>Write questions about decisions, not trivia</strong> — responsible: Trainer. "The seal is cracked — what do you do?" teaches. "How many bolts are there?" does not.</li>
-<li><strong>Give each question one clearly right answer</strong> — responsible: Trainer. Wrong answers should be things people actually do by mistake.</li>
-<li><strong>Set the pass mark</strong> — responsible: Trainer. Below it, the assignment stays open and they can take it again.</li>
-<li><strong>Attach it to the training method</strong> — responsible: Trainer. Read and understand assignments then end with the quiz instead of a plain signature.</li>
-</ol>
-<h2>After the quiz</h2>
-<p>A pass records the outcome against the assignment and, where the rule asks for one, produces a certificate the person can open from their profile. Results show up in the matrix alongside everything else — see {sop:training}.</p>
-<blockquote><p><strong>Note</strong> — if nearly everyone misses the same question, the procedure is usually at fault rather than the people. Check the wording of that step.</p></blockquote>"""
-	},
-	{
-		"slug": "sessions",
-		"title": "How to run a classroom or on-the-job session",
-		"space": "HR",
-		"process": "Recording outcomes",
-		"summary": "Book a session, record who came, and sign off the training in one go.",
-		"state": "effective",
-		"effective_since": -25,
-		"tags": ["training"],
-		"content": """<h2>Purpose</h2>
-<p>Some procedures cannot be learned by reading. A session books the time, covers several procedures at once, and turns attendance into signed-off training.</p>
-<h2>Procedure</h2>
-<ol>
-<li><strong>Open Training sessions and create one</strong> — responsible: {user:trainer} · records: session.</li>
-<li><strong>Add the procedures it covers</strong> — responsible: Trainer. A session can cover several; each attendee's assignments for those procedures are closed together.</li>
-<li><strong>Invite the attendees</strong> — responsible: Trainer. Pick people, or pull in everyone with an open assignment on those procedures.</li>
-<li><strong>Set when and where</strong> — responsible: Trainer. Attendees see it on their profile.</li>
-<li><strong>Mark attendance on the day</strong> — responsible: Trainer · records: attendance. Only those actually present.</li>
-<li><strong>Record the outcome</strong> — responsible: Trainer · records: training outcome. Competent closes the assignment. Not yet competent leaves it open with a note.</li>
-</ol>
-<blockquote><p><strong>Warning</strong> — do not sign for someone who left early. The signature says they can do the job, and it is your name on it.</p></blockquote>"""
-	},
-	{
-		"slug": "onboard",
-		"title": "Onboarding a new team member",
-		"space": "HR",
-		"process": "Recording outcomes",
-		"summary": "What to do before someone's first day so their training is waiting for them.",
-		"state": "draft",
-		"tags": ["onboarding"],
-		"content": """<h2>Purpose</h2>
-<p>A new person should log in on day one and find their reading already queued. That only happens if the account, the role and the team are set up beforehand.</p>
-<h2>Procedure</h2>
-<ol>
-<li><strong>Create the account</strong> — responsible: {user:manager} · records: user account. Do this a day early so the welcome email is not their first-morning problem.</li>
-<li><strong>Give them a role</strong> — responsible: Manager. Reader to read and sign. Author to write. Approver to sign off. Trainer to run training. Start at Reader and add more later.</li>
-<li><strong>Put them in a team</strong> — responsible: Manager · records: team membership. This is what training rules match on, so a person in no team gets no training.</li>
-<li><strong>Check their queue</strong> — responsible: {user:trainer}. Open the Training matrix and filter to their name. Empty means a rule does not cover them — see {sop:training}.</li>
-<li><strong>Point them at the basics</strong> — responsible: Manager. {sop:write} for writing, {sop:blocks} for the editor.</li>
-</ol>
-<blockquote><p><strong>Note</strong> — this procedure is still a draft. It is here to show what a draft looks like next to published ones.</p></blockquote>"""
-	},
-	{
-		"slug": "spaces",
-		"title": "How to set up spaces and processes",
-		"space": "OPS",
-		"process": "Spaces & processes",
-		"summary": "The structure everything else hangs off — get it roughly right and leave it alone.",
-		"state": "effective",
-		"effective_since": -100,
-		"tags": ["admin", "getting-started"],
-		"content": """<h2>Purpose</h2>
-<p>A space is a body of procedures with an owner and a code. A process is a folder inside it. Together they decide procedure numbers, who can see what, and how training rules are scoped.</p>
-<h2>Procedure</h2>
-<ol>
-<li><strong>Create a space per area of work</strong> — responsible: {user:manager} · records: space. Operations, Quality, People. Not one per department that might be reorganised next year.</li>
-<li><strong>Choose the code carefully</strong> — responsible: Manager. Two to four letters. It becomes the procedure number — OPS-0001 — and those numbers get printed, quoted and filed, so changing it later is painful.</li>
-<li><strong>Set the visibility and the team</strong> — responsible: Manager. The team decides who reads, writes and approves in that space.</li>
-<li><strong>Start from a template if one fits</strong> — responsible: Manager. Templates lay out a ready-made process tree — manufacturing, service, office — which you can then prune.</li>
-<li><strong>Build the process tree</strong> — responsible: Manager · records: processes. Follow the work in the order it happens. Two levels is usually enough; three is a filing system nobody browses.</li>
-<li><strong>Check it against the sidebar</strong> — responsible: Manager. If you cannot guess where a new procedure belongs, neither can anyone else.</li>
-</ol>
-<blockquote><p><strong>Warning</strong> — deleting a space deletes every procedure in it, with its history. Retire the procedures instead — see {sop:retire}.</p></blockquote>"""
-	},
-	{
-		"slug": "insights",
-		"title": "How to read the insights",
-		"space": "OPS",
-		"process": "Insights & admin",
-		"summary": "Which procedures are stale, which are ignored, and which are confusing people.",
-		"state": "effective",
-		"effective_since": -15,
-		"tags": ["admin"],
-		"content": """<h2>Purpose</h2>
-<p>Insights answers the question a manager actually has: is any of this being used, and where is it going wrong?</p>
-<h2>What to look at</h2>
-<ol>
-<li><strong>Overdue reviews</strong> — responsible: {user:manager}. A procedure past its review date is a procedure nobody has checked against reality. Start with the oldest.</li>
-<li><strong>Acknowledgement rate</strong> — responsible: Manager. Published but unsigned means people are working to a version they have not read. Chase it through the matrix in {sop:training}.</li>
-<li><strong>Never opened</strong> — responsible: Manager. Either the work is not happening, or people have a better way they are not writing down. Both are worth a conversation.</li>
-<li><strong>Clarity feedback</strong> — responsible: Manager. Readers can flag a procedure as unclear from the bottom of the page. A cluster of flags is a rewrite, not a training problem.</li>
-<li><strong>Training compliance</strong> — responsible: {user:trainer}. By space and by team, so you can see whether a gap is one person or one department.</li>
-</ol>
-<blockquote><p><strong>Note</strong> — check this monthly and act on one row. A dashboard that nobody acts on is a slower way of doing nothing.</p></blockquote>"""
-	},
-	{
-		"slug": "receipt",
-		"title": "Purchase receipt handling",
-		"space": "SAFE",
-		"process": "Receiving",
-		"summary": "From the delivery van to the quarantine rack, without losing the paperwork.",
-		"state": "effective",
-		"effective_since": -60,
-		"tags": ["stores"],
-		"content": """<h2>Purpose</h2>
-<p>Every delivery is checked, recorded and kept apart until quality releases it.</p>
-<h2>Scope</h2>
-<p>All purchased materials received at the main dock.</p>
-<h2>Responsibilities</h2>
-<ul><li><p><strong>Stores operator</strong> — receives and moves the goods.</p></li></ul>
-<h2>Steps</h2>
-<ol>
-<li><p><strong>Take a box</strong> from the van — responsible: Stores operator · location: Dock 1.</p></li>
-<li><p><strong>Scan the barcode</strong> on the label — responsible: Stores operator · records: purchase receipt.</p></li>
-<li><p><strong>Open the box</strong> and check the contents against the delivery note — responsible: Stores operator.</p></li>
-<li><p><strong>Put it on the table</strong> — responsible: Stores operator · location: Room A.</p></li>
-<li><p><strong>Move it to quarantine</strong> — responsible: Stores operator · location: Quarantine warehouse, Rack B.</p></li>
-</ol>
-<blockquote><p><strong>Warning</strong> — chemicals go straight to the bunded store, never Rack B. See {sop:acid}.</p></blockquote>
-<h2>Records</h2>
-<p>The purchase receipt, with the delivery note attached.</p>""",
-	},
-	{
-		"slug": "acid",
-		"title": "Clean the acid dosing tank",
-		"space": "SAFE",
-		"process": "Cleaning",
-		"summary": "Monthly clean of the acid dosing tank, neutralised and rinsed before restart.",
-		"state": "effective",
-		"effective_since": -90,
-		"tags": ["chemicals", "cleaning"],
-		"content": """<h2>Purpose</h2>
-<p>Keeps the dosing accurate and stops scale building up in the tank.</p>
-<h2>Safety and PPE</h2>
-<p>The tank holds {chem:Sulphuric acid 98%}. Clean it with {chem:Sodium hypochlorite 12%} only after it has been neutralised and rinsed.</p>
-<p>Wear the {ppe:Half-face respirator} with a fresh {ppe:ABEK1 filter}.</p>
-<blockquote><p><strong>Warning</strong> — hypochlorite and acid together release chlorine gas. Rinse to a neutral pH first.</p></blockquote>
-<h2>Steps</h2>
-<ol>
-<li><p><strong>Isolate the dosing pump</strong> and lock it out — responsible: Process operator · location: Dosing room.</p></li>
-<li><p><strong>Drain the tank</strong> to the neutralisation pit — responsible: Process operator.</p></li>
-<li><p><strong>Rinse until the pH reads 6 to 8</strong> — responsible: Process operator · records: cleaning log.</p></li>
-<li><p><strong>Clean the walls</strong> with diluted hypochlorite, then rinse again — responsible: Process operator.</p></li>
-<li><p><strong>Remove the lock and restart</strong> — responsible: Shift lead · records: cleaning log signed.</p></li>
-</ol>""",
-	},
-	{
-		"slug": "ipa",
-		"title": "Dispense isopropyl alcohol",
-		"space": "SAFE",
-		"process": "Dispensing",
-		"summary": "Decanting IPA from the drum into labelled wash bottles.",
-		"state": "effective",
-		"effective_since": -30,
-		"tags": ["chemicals"],
-		"content": """<h2>Purpose</h2>
-<p>Gets {chem:Isopropyl alcohol} into wash bottles without spills or vapour build-up.</p>
-<h2>Safety and PPE</h2>
-<p>Wear {ppe:Nitrile gloves} and goggles. No hot work within 10 m.</p>
-<h2>Steps</h2>
-<ol>
-<li><p><strong>Earth the drum</strong> before opening it — responsible: Stores operator · location: Flammables store.</p></li>
-<li><p><strong>Fill each bottle</strong> to the line, no more — responsible: Stores operator.</p></li>
-<li><p><strong>Label and close</strong> every bottle — responsible: Stores operator · records: dispensing log.</p></li>
-</ol>""",
-	},
-]
+from sop.demo_content import (
+	CHAT,
+	CLARITY,
+	DEMO_CODES,
+	LOGS,
+	PEOPLE,
+	PROCEDURES,
+	PROCESSES,
+	QUIZ,
+	RESOURCE_TYPES,
+	RESOURCES,
+	REVIEW_COMMENTS,
+	REVISION,
+	RISKS,
+	RULES,
+	SESSIONS,
+	SPACES,
+	TEAMS,
+	TRAINING,
+)
 
 SHAPES = {
 	"Completed": {"method": "Read & Understand", "due": -6, "outcome": "Competent", "done": 1},
@@ -539,8 +48,7 @@ SHAPES = {
 	"Assigned": {"method": "Read & Understand", "due": 12, "outcome": "Pending", "done": 0},
 	"Overdue": {"method": "Read & Understand", "due": -9, "outcome": "Pending", "done": 0},
 }
-
-
+PROFICIENCY = [("trainer", 5), ("storekeeper", 3), ("manager", 1)]
 
 
 def after_migrate():
@@ -552,7 +60,7 @@ def after_migrate():
 		return
 
 	result = install(force=1)
-	print(f"SOP demo data: created {len(result.get('procedures', []))} procedures in OPS, HR and SAFE.")
+	print(f"SOP demo data: created {len(result.get('procedures', []))} procedures in {', '.join(DEMO_CODES)}.")
 
 
 def seeded():
@@ -576,7 +84,6 @@ def summary():
 		limit_page_length=0,
 	)
 	names = [row.name for row in spaces]
-
 	procedures = (
 		frappe.get_all("SOP", filters={"space": ("in", names)}, pluck="name", limit_page_length=0)
 		if names
@@ -584,11 +91,8 @@ def summary():
 	)
 
 	counts = {}
-	if procedures:
-		for state in frappe.get_all(
-			"SOP", filters={"name": ("in", procedures)}, pluck="status", limit_page_length=0
-		):
-			counts[state] = counts.get(state, 0) + 1
+	for state in frappe.get_all("SOP", filters={"name": ("in", procedures or [""])}, pluck="status", limit_page_length=0):
+		counts[state] = counts.get(state, 0) + 1
 
 	return {
 		"installed": bool(names),
@@ -596,10 +100,8 @@ def summary():
 		"procedures": len(procedures),
 		"by_status": counts,
 		"processes": frappe.db.count("SOP Process", {"space": ("in", names)}) if names else 0,
-		"assignments": frappe.db.count("SOP Training Assignment", {"sop": ("in", procedures)})
-		if procedures
-		else 0,
-		"people": [email for email, *_rest in PEOPLE],
+		"assignments": frappe.db.count("SOP Training Assignment", {"sop": ("in", procedures)}) if procedures else 0,
+		"people": [person["email"] for person in PEOPLE.values()],
 		"other_spaces": frappe.db.count("SOP Space") - len(names),
 	}
 
@@ -614,217 +116,60 @@ def install(force=0):
 		return {"skipped": "procedures already exist"}
 
 	people = ensure_people()
-	ensure_team(people)
-	manager = people[0]
-
-	spaces = {
-		"OPS": ensure_space(
-			manager,
-			"Operations",
-			"OPS",
-			"How the team gets things done — the official way of working.",
-		),
-		"HR": ensure_space(
-			manager, "People & Culture", "HR", "Onboarding, training and team practices."
-		),
-		"SAFE": ensure_space(
-			manager,
-			"Plant Safety",
-			"SAFE",
-			"Chemicals, PPE and stores: the Safety box, where-used and proficiency in action.",
-		),
-	}
-
 	seed_record_types()
-	ensure_safety_masters()
-	seed_app_processes(manager, spaces)
+	ensure_resources()
+	ensure_teams(people)
+	spaces = ensure_spaces(people)
+	ensure_processes(people, spaces)
 
-	created = []
+	created = {}
 	for definition in PROCEDURES:
-		created.append(build(definition, spaces, people))
+		created[definition["slug"]] = build(definition, spaces, people)
+	link_mentions(created, people)
+	for definition in PROCEDURES:
+		advance(created[definition["slug"]], definition, people)
 
-	inject_mentions(created, people)
-
-	seed_training(spaces["OPS"], people)
+	revise(created, people)
+	seed_rules(created, spaces, people)
+	seed_training(created, people)
+	seed_quiz(created, people)
+	seed_sessions(created, people)
 	seed_proficiency(created, people)
-	seed_session(people)
+	seed_risks(created, spaces, people)
+	seed_logs(created, people)
+	seed_review_comments(created, people)
+	seed_clarity(created, people)
+	seed_chat(created, people)
 	frappe.db.commit()
 
-	return {"space": list(spaces.values()), "procedures": created, "people": [p[0] for p in PEOPLE]}
+	return {"spaces": list(spaces.values()), "procedures": list(created.values()), "people": list(people.values())}
 
 
 def ensure_people():
-	people = []
-
-	for email, first, last, roles in PEOPLE:
+	people = {}
+	for key, person in PEOPLE.items():
+		email = person["email"]
 		new = not frappe.db.exists("User", email)
-		if new:
-			user = frappe.get_doc(
+		user = (
+			frappe.get_doc(
 				{
 					"doctype": "User",
 					"email": email,
-					"first_name": first,
-					"last_name": last,
+					"first_name": person["first"],
+					"last_name": person["last"],
 					"send_welcome_email": 0,
 					"user_type": "System User",
 				}
 			)
-		else:
-			user = frappe.get_doc("User", email)
-
-		# Roles go on before the first insert, or Frappe warns the user has no roles.
-		for role in roles:
+			if new
+			else frappe.get_doc("User", email)
+		)
+		for role in person["roles"]:
 			if frappe.db.exists("Role", role) and role not in [row.role for row in user.roles]:
 				user.append("roles", {"role": role})
-
-		if new:
-			user.insert(ignore_permissions=True)
-		else:
-			user.save(ignore_permissions=True)
-		people.append(email)
-
+		user.insert(ignore_permissions=True) if new else user.save(ignore_permissions=True)
+		people[key] = email
 	return people
-
-
-def ensure_team(people):
-	wanted = [
-		(people[0], "Approver"),
-		(frappe.session.user, "Approver"),
-		(people[2], "Reviewer"),
-		(people[1], "Author"),
-		(people[3], "Reader"),
-	]
-
-	if frappe.db.exists("SOP Team", TEAM):
-		doc = frappe.get_doc("SOP Team", TEAM)
-	else:
-		doc = frappe.get_doc(
-			{
-				"doctype": "SOP Team",
-				"team_name": TEAM,
-				"description": "Everyone who works a line, plus the supervisors who sign for them.",
-			}
-		)
-
-	present = {row.user for row in doc.members}
-	for user, role in wanted:
-		if user not in present:
-			doc.append("members", {"user": user, "team_role": role})
-			present.add(user)
-
-	if doc.is_new():
-		doc.insert(ignore_permissions=True)
-	else:
-		doc.save(ignore_permissions=True)
-
-	return doc.name
-
-
-def ensure_space(manager, title, code, description, template=None):
-	existing = frappe.db.get_value("SOP Space", {"space_code": code}, "name")
-	if existing:
-		return existing
-
-	space = as_user(
-		manager,
-		procedures_api.create_space,
-		title=title,
-		space_code=code,
-		description=description,
-		template=template,
-		team=TEAM,
-	)
-
-	return space["name"]
-
-
-def seed_app_processes(manager, spaces):
-	for index, (code, group, children) in enumerate(APP_PROCESSES, start=1):
-		space = spaces[code]
-		parent = ensure_process(manager, space, group, None, index * 10)
-
-		for position, child in enumerate(children, start=1):
-			ensure_process(manager, space, child, parent, position * 10)
-
-
-def ensure_process(manager, space, title, parent, sequence):
-	existing = frappe.db.get_value(
-		"SOP Process", {"space": space, "title": title, "parent_process": parent}, "name"
-	)
-	if existing:
-		return existing
-
-	process = as_user(
-		manager,
-		processes_api.create_process,
-		title=title,
-		space=space,
-		parent=parent,
-		sequence=sequence,
-	)
-
-	return process["name"]
-
-
-def build(definition, spaces, people):
-	space = spaces[definition["space"]]
-	process = frappe.db.get_value(
-		"SOP Process", {"space": space, "title": definition["process"]}, "name"
-	)
-
-	draft = as_user(
-		people[1],
-		procedures_api.save_draft,
-		space=space,
-		title=definition["title"],
-		summary=definition["summary"],
-		content=with_safety_links(definition["content"]),
-		process=process,
-		risk_level="Medium",
-		is_controlled=1,
-	)
-
-	for tag in definition["tags"]:
-		add_tag(tag, "SOP", draft["name"])
-
-	advance(draft["name"], definition["state"], people, definition.get("effective_since", -40))
-
-	return draft["name"]
-
-
-def inject_mentions(created, people):
-	slug_to_name = {d["slug"]: sop for d, sop in zip(PROCEDURES, created)}
-
-	user_map = {
-		"manager": people[0],
-		"author":  people[1],
-		"trainer": people[2],
-		"reader":  people[3],
-	}
-
-	for sop_name in created:
-		doc = frappe.get_doc("SOP", sop_name)
-		content = doc.content or ""
-		changed = False
-
-		for slug, target_name in slug_to_name.items():
-			placeholder = f"{{sop:{slug}}}"
-			if placeholder in content:
-				title = frappe.db.get_value("SOP", target_name, "title")
-				link = f'<a href="#mention:SOP:{target_name}">{title}</a>'
-				content = content.replace(placeholder, link)
-				changed = True
-
-		for role, email in user_map.items():
-			placeholder = f"{{user:{role}}}"
-			if placeholder in content:
-				full_name = frappe.db.get_value("User", email, "full_name") or email
-				link = f'<a href="#mention:User:{email}">{full_name}</a>'
-				content = content.replace(placeholder, link)
-				changed = True
-
-		if changed:
-			frappe.db.set_value("SOP", sop_name, "content", content, update_modified=False)
 
 
 def seed_record_types():
@@ -833,96 +178,131 @@ def seed_record_types():
 	execute()
 
 
-def ensure_safety_masters():
-	from sop.patches.migrate_to_resources import CHEMICAL_TYPE, CHEMICAL_VALUES, PPE_TYPE, ensure_type
+def ensure_resources():
+	from sop.patches.migrate_to_resources import ensure_type
 
-	ensure_type(PPE_TYPE)
-	ensure_type(CHEMICAL_TYPE)
+	for definition in RESOURCE_TYPES:
+		ensure_type(definition)
 
-	for name, parent, is_group, standard, consumable, description in PPE_TREE:
-		if frappe.db.exists("SOP Resource", name):
+	for row in RESOURCES:
+		if frappe.db.exists("SOP Resource", row["resource_name"]):
 			continue
-		frappe.get_doc(
-			{
-				"doctype": "SOP Resource",
-				"resource_name": name,
-				"resource_type": "PPE",
-				"parent_sop_resource": parent,
-				"is_group": is_group,
-				"is_consumable": consumable,
-				"description": description,
-				"values": [{"attribute": "Standard", "value": standard}],
-			}
-		).insert(ignore_permissions=True)
-
-	for row in CHEMICALS:
-		if frappe.db.exists("SOP Resource", row["chemical_name"]):
-			continue
-		frappe.get_doc(
-			{
-				"doctype": "SOP Resource",
-				"resource_name": row["chemical_name"],
-				"resource_type": "Chemical",
-				"check_date": add_days(nowdate(), row["sds_review_in"]),
-				"values": [
-					{"attribute": label, "value": row.get(fieldname)} for fieldname, label in CHEMICAL_VALUES.items()
-				],
-				"requires": [{"resource": ppe} for ppe in row["required_ppe"]],
-			}
-		).insert(ignore_permissions=True)
+		doc = {"doctype": "SOP Resource", **{k: v for k, v in row.items() if k != "check_in"}}
+		if "check_in" in row:
+			doc["check_date"] = add_days(nowdate(), row["check_in"])
+		frappe.get_doc(doc).insert(ignore_permissions=True)
 
 
-def with_safety_links(content):
-	for kind in ("chem", "ppe"):
-		for name in re.findall(r"\{" + kind + r":([^}]+)\}", content):
-			content = content.replace(f"{{{kind}:{name}}}", f'<a href="#mention:SOP Resource:{name}">{name}</a>')
-	return content
+def ensure_teams(people):
+	for team in TEAMS:
+		members = [{"user": people[key], "team_role": role} for key, role in team["members"]]
+		existing = frappe.db.exists("SOP Team", team["name"])
+		as_user(
+			people["manager"],
+			teams_api.save_team,
+			team_name=team["name"],
+			members=members,
+			description=team["description"],
+			name=team["name"] if existing else None,
+		)
 
 
-def seed_proficiency(created, people):
-	slugs = {definition["slug"]: sop for definition, sop in zip(PROCEDURES, created, strict=True)}
-	sop = slugs.get("acid")
-	if not sop:
-		return
-
-	manager, author, trainer, reader = people
-	trainees = {"author": author, "trainer": trainer, "reader": reader}
-	doc = frappe.get_doc("SOP", sop)
-
-	for role, times in PROFICIENCY:
-		trainee = trainees[role]
-		assessor = manager if trainee == trainer else trainer
-		previous = None
-		for _attempt in range(times):
-			name = training.create_assignment(
-				doc, None, trainee, cause="Demo refresher", is_refresher=1, supersedes=previous
-			)
-			if not name:
-				break
-			as_user(trainee, training_api.complete_task, name, 1)
-			as_user(assessor, training_api.record_outcome, name, "Competent")
-			previous = name
+def ensure_spaces(people):
+	spaces = {}
+	for space in SPACES:
+		existing = frappe.db.get_value("SOP Space", {"space_code": space["code"]}, "name")
+		if not existing:
+			existing = as_user(
+				people["manager"],
+				procedures_api.create_space,
+				title=space["title"],
+				space_code=space["code"],
+				description=space["description"],
+				team=space["team"],
+				visibility=space.get("visibility", "Public"),
+			)["name"]
+		spaces[space["code"]] = existing
+	return spaces
 
 
-def add_tag(tag, doctype, name):
-	from frappe.desk.doctype.tag.tag import add_tag as tag_it
+def ensure_processes(people, spaces):
+	for code, tree in PROCESSES.items():
+		for index, (group, children) in enumerate(tree, start=1):
+			parent = ensure_process(people["manager"], spaces[code], group, None, index * 10)
+			for position, child in enumerate(children, start=1):
+				ensure_process(people["manager"], spaces[code], child, parent, position * 10)
 
-	tag_it(tag, doctype, name)
+
+def ensure_process(manager, space, title, parent, sequence):
+	existing = frappe.db.get_value("SOP Process", {"space": space, "title": title, "parent_process": parent}, "name")
+	if existing:
+		return existing
+	return as_user(
+		manager, processes_api.create_process, title=title, space=space, parent=parent, sequence=sequence
+	)["name"]
 
 
-def advance(sop, state, people, since=-40):
+def build(definition, spaces, people):
+	space = spaces[definition["space"]]
+	process = frappe.db.get_value("SOP Process", {"space": space, "title": definition["process"]}, "name")
+	draft = as_user(
+		people[definition.get("author", "author")],
+		procedures_api.save_draft,
+		space=space,
+		title=definition["title"],
+		summary=definition["summary"],
+		content=definition["content"],
+		process=process,
+		risk_level=definition.get("risk_level", "Medium"),
+		is_controlled=1,
+	)
+	if definition.get("document_type"):
+		frappe.db.set_value("SOP", draft["name"], "document_type", definition["document_type"], update_modified=False)
+	for tag in definition.get("tags", []):
+		add_tag(tag, "SOP", draft["name"])
+	return draft["name"]
+
+
+def link_mentions(created, people):
+	for definition in PROCEDURES:
+		name = created[definition["slug"]]
+		doc = frappe.get_doc("SOP", name)
+		content = linked(doc.content or "", created, people)
+		if content != doc.content:
+			doc.content = content
+			doc.save(ignore_permissions=True)
+
+
+def linked(content, created, people):
+	def sop(match):
+		target = created.get(match.group(1))
+		if not target:
+			return match.group(0)
+		title = frappe.db.get_value("SOP", target, "title")
+		return f'<a href="#mention:SOP:{target}">{title}</a>'
+
+	def user(match):
+		email = people.get(match.group(1))
+		if not email:
+			return match.group(0)
+		full_name = frappe.db.get_value("User", email, "full_name") or email
+		return f'<a href="#mention:User:{email}">{full_name}</a>'
+
+	def resource(match):
+		return f'<a href="#mention:SOP Resource:{match.group(1)}">{match.group(1)}</a>'
+
+	content = re.sub(r"\{sop:([a-z0-9-]+)\}", sop, content)
+	content = re.sub(r"\{user:([a-z]+)\}", user, content)
+	return re.sub(r"\{res:([^}]+)\}", resource, content)
+
+
+def advance(sop, definition, people):
+	state = definition["state"]
 	if state == "draft":
 		return
 
-	as_user(people[1], lifecycle.send_for_approval, sop)
-
+	as_user(people[definition.get("author", "author")], lifecycle.send_for_approval, sop)
 	if state == "in_review":
-		as_user(
-			people[2],
-			review_api.add_comment,
-			sop,
-			"Name the form this produces — an operator should not have to guess.",
-		)
 		return
 
 	for approver in frappe.get_all(
@@ -933,140 +313,293 @@ def advance(sop, state, people, since=-40):
 		limit_page_length=0,
 	):
 		as_user(approver, lifecycle.decide, sop, "Approved", "Reads correctly.")
-
 	if state == "approved":
 		return
 
 	as_user(
-		people[0],
+		people["manager"],
 		lifecycle.publish,
 		sop,
-		effective_from=add_days(nowdate(), since),
+		effective_from=add_days(nowdate(), definition.get("effective_since", -40)),
 		change_summary="First controlled issue.",
 		is_material=1,
 	)
-
 	if state == "retired":
-		as_user(
-			people[0],
-			lifecycle.retire,
-			sop,
-			"Superseded by the plant-wide sampling procedure.",
-		)
+		as_user(people["manager"], lifecycle.retire, sop, definition.get("retire_reason") or "No longer used.")
 		return
 
-	sign(sop, people[2:])
+	sign(sop, [people[key] for key in definition.get("signed_by", [])])
+
+
+def revise(created, people):
+	sop = created[REVISION["slug"]]
+	as_user(people["author"], lifecycle.start_revision, sop)
+	doc = frappe.get_doc("SOP", sop)
+	content = doc.content
+	for old, new in REVISION["changes"]:
+		content = content.replace(old, new)
+	as_user(
+		people["author"],
+		procedures_api.save_draft,
+		space=doc.space,
+		title=doc.title,
+		name=sop,
+		summary=doc.summary,
+		content=content,
+		process=doc.sop_process,
+	)
+	as_user(people["author"], lifecycle.send_for_approval, sop)
+	for approver in frappe.get_all("SOP Approval", filters={"parent": sop, "parenttype": "SOP"}, pluck="approver"):
+		as_user(approver, lifecycle.decide, sop, "Approved", REVISION["approval_note"])
+	as_user(
+		people["manager"],
+		lifecycle.publish,
+		sop,
+		effective_from=add_days(nowdate(), -3),
+		change_summary=REVISION["change_summary"],
+		is_material=1,
+	)
 
 
 def as_user(user, fn, *args, **kwargs):
 	original = frappe.session.user
 	frappe.set_user(user)
-
 	try:
 		return fn(*args, **kwargs)
 	finally:
 		frappe.set_user(original)
 
 
+def add_tag(tag, doctype, name):
+	from frappe.desk.doctype.tag.tag import add_tag as tag_it
+
+	tag_it(tag, doctype, name)
+
+
 def sign(sop, users):
 	version = frappe.db.get_value("SOP", sop, "version")
-
 	for user in users:
 		as_user(user, procedures_api.acknowledge, sop, version)
 
 
-def seed_training(space, people):
-	manager, author, trainer, reader = people
-	requirement = ensure_requirement(manager, space)
-
-	effective = frappe.get_all(
-		"SOP", filters={"space": space, "status": "Effective"}, pluck="name",
-		order_by="creation asc", limit_page_length=5,
-	)
-	if not effective:
-		return
-
-	trainees = [frappe.session.user, author, trainer, reader]
-
-	for index, sop in enumerate(effective):
-		for position, trainee in enumerate(trainees):
-			state = ("Completed", "In Progress", "Assigned", "Overdue")[(index + position) % 4]
-			assign(manager, trainer, sop, trainee, state)
-
-	as_user(manager, requirements_api.run_requirement, requirement)
+def seed_rules(created, spaces, people):
+	for rule in RULES:
+		values = {k: v for k, v in rule.items() if k not in ("space_code", "slug", "team_key", "user_key")}
+		if rule.get("space_code"):
+			values["space"] = spaces[rule["space_code"]]
+		if rule.get("slug"):
+			values["sop"] = created[rule["slug"]]
+		if rule.get("user_key"):
+			values["user"] = people[rule["user_key"]]
+		name = as_user(people["trainer"], requirements_api.save_requirement, enabled=1, **values)["name"]
+		as_user(people["trainer"], requirements_api.run_requirement, name)
 
 
-def ensure_requirement(manager, space):
-	existing = frappe.db.get_value(
-		"SOP Training Requirement", {"scope": "Space", "space": space, "applies_to": "Team"}, "name"
-	)
-	if existing:
-		return existing
-
-	requirement = as_user(
-		manager,
-		requirements_api.save_requirement,
-		enabled=1,
-		applies_to="Team",
-		team=TEAM,
-		scope="Space",
-		space=space,
-		method="Read & Understand",
-		due_days=14,
-		refresher_months=12,
-	)
-
-	return requirement["name"]
+def seed_training(created, people):
+	for slug, trainee, state in TRAINING:
+		assign(people, created[slug], people[trainee], state)
 
 
-def assign(manager, trainer, sop, trainee, state):
+def assign(people, sop, trainee, state):
 	shape = SHAPES[state]
-
-	created = as_user(
-		manager,
-		training_api.assign,
-		sop=sop,
-		trainees=[trainee],
-		method=shape["method"],
-		due_days=shape["due"],
+	open_one = frappe.db.get_value(
+		"SOP Training Assignment", {"sop": sop, "trainee": trainee, "status": ("in", training.OPEN_STATES)}, "name"
 	)
-	if not created:
-		return None
-
-	name = created[0]
+	if open_one:
+		name = open_one
+		frappe.db.set_value(
+			"SOP Training Assignment", name, "due_on", add_days(nowdate(), shape["due"]), update_modified=False
+		)
+	else:
+		created = as_user(
+			people["trainer"], training_api.assign, sop=sop, trainees=[trainee], method=shape["method"], due_days=shape["due"]
+		)
+		if not created:
+			return None
+		name = created[0]
 
 	for idx in range(1, shape["done"] + 1):
 		as_user(trainee, training_api.complete_task, name, idx)
-
 	if shape["outcome"] != "Pending":
-		assessor = manager if trainee == trainer else trainer
+		assessor = people["manager"] if trainee == people["trainer"] else people["trainer"]
 		as_user(assessor, training_api.record_outcome, name, shape["outcome"])
-
+	if state == "Overdue":
+		frappe.db.set_value("SOP Training Assignment", name, "status", "Overdue", update_modified=False)
 	return name
 
 
-def seed_session(people):
-	manager, author, trainer, reader = people
+def seed_quiz(created, people):
+	for slug, questions in QUIZ["questions"].items():
+		for row in questions:
+			as_user(
+				people["trainer"],
+				quiz_api.save_question,
+				created[slug],
+				row["question"],
+				[{"option": option, "correct": int(index in row["correct"])} for index, option in enumerate(row["options"])],
+				kind="Several answers" if len(row["correct"]) > 1 else "One answer",
+				explanation=row.get("explanation"),
+			)
 
-	covered = frappe.get_all(
-		"SOP", filters={"status": "Effective"}, pluck="name", order_by="creation asc",
-		limit_page_length=2,
-	)
-	if not covered or frappe.db.count("SOP Training Session"):
-		return
+	for slug, trainee, outcomes in QUIZ["attempts"]:
+		assignment = frappe.db.get_value(
+			"SOP Training Assignment",
+			{"sop": created[slug], "trainee": people[trainee], "status": ("in", training.OPEN_STATES)},
+			"name",
+		)
+		if not assignment:
+			continue
+		for passed in outcomes:
+			take_quiz(people[trainee], assignment, passed)
 
-	as_user(
-		trainer,
-		sessions_api.save_session,
-		title="Line clearance refresher",
-		trainer=trainer,
-		scheduled_on=f"{add_days(nowdate(), 5)} 09:30:00",
-		location="Training room, block B",
-		method="Classroom",
-		procedures=covered,
-		attendees=[author, reader],
-		notes="Walk the line after the classroom half. Bring a spare clearance record.",
-	)
+
+def take_quiz(trainee, assignment, passed):
+	doc = frappe.get_doc("SOP Training Assignment", assignment)
+	for row in doc.tasks:
+		if row.task_type != "Assessment" and not row.completed:
+			as_user(trainee, training_api.complete_task, assignment, row.idx)
+	started = as_user(trainee, quiz_api.start, assignment)
+	attempt = frappe.get_doc("SOP Quiz Attempt", started["attempt"])
+	paper = json.loads(attempt.paper or "[]")
+	questions = {row["name"]: row for row in quiz_api.bank(attempt.sop)}
+	answers = {}
+	for position, sheet in enumerate(paper):
+		options = questions[sheet["question"]]["options"]
+		right = [shown for shown, index in enumerate(sheet["order"]) if options[index]["correct"]]
+		wrong = [shown for shown, index in enumerate(sheet["order"]) if not options[index]["correct"]]
+		answers[str(position)] = right if passed or position % 2 else wrong[:1]
+	as_user(trainee, quiz_api.submit, attempt.name, answers)
+
+
+def seed_sessions(created, people):
+	for session in SESSIONS:
+		procedures = [created[slug] for slug in session["procedures"]]
+		attendees = [people[key] for key in session["attendees"]]
+		for trainee in attendees:
+			for sop in procedures:
+				if not frappe.db.exists("SOP Training Assignment", {"sop": sop, "trainee": trainee}):
+					as_user(
+						people["trainer"], training_api.assign, sop=sop, trainees=[trainee], method=session["method"], due_days=10
+					)
+		name = as_user(
+			people["trainer"],
+			sessions_api.save_session,
+			title=session["title"],
+			trainer=people["trainer"],
+			scheduled_on=f"{add_days(nowdate(), session['in_days'])} {session['time']}",
+			location=session["location"],
+			method=session["method"],
+			procedures=procedures,
+			attendees=attendees,
+			notes=session["notes"],
+		)["name"]
+		if session.get("outcomes"):
+			rows = [
+				{
+					"user": people[key],
+					"attended": outcome != "Absent",
+					"outcome": "Pending" if outcome == "Absent" else outcome,
+					"score": 90 if outcome == "Competent" else (60 if outcome != "Absent" else None),
+					"remarks": remark,
+				}
+				for key, outcome, remark in session["outcomes"]
+			]
+			as_user(people["trainer"], sessions_api.record_attendance, name, rows)
+
+
+def seed_proficiency(created, people):
+	doc = frappe.get_doc("SOP", created[QUIZ["proficiency_slug"]])
+	for key, times in PROFICIENCY:
+		trainee = people[key]
+		previous = None
+		for _attempt in range(times):
+			name = training.create_assignment(doc, None, trainee, cause="Demo refresher", is_refresher=1, supersedes=previous)
+			if not name:
+				break
+			assignment = frappe.get_doc("SOP Training Assignment", name)
+			for row in assignment.tasks:
+				if row.task_type != "Assessment":
+					as_user(trainee, training_api.complete_task, name, row.idx)
+			assessor = people["manager"] if trainee == people["trainer"] else people["trainer"]
+			as_user(assessor, training_api.record_outcome, name, "Competent")
+			previous = name
+
+
+def seed_risks(created, spaces, people):
+	for risk in RISKS:
+		hazards = []
+		for row in risk["hazards"]:
+			hazard = {k: v for k, v in row.items() if k not in ("owner", "due_in", "checked_in")}
+			if row.get("owner"):
+				hazard["action_owner"] = people[row["owner"]]
+			if row.get("due_in") is not None:
+				hazard["action_due"] = add_days(nowdate(), row["due_in"])
+			if row.get("checked_in") is not None:
+				hazard["next_check"] = add_days(nowdate(), row["checked_in"])
+			hazards.append(hazard)
+		doc = frappe.get_doc(
+			{
+				"doctype": "SOP Risk Assessment",
+				"ra_no": risk["ra_no"],
+				"title": risk["title"],
+				"space": spaces[risk["space"]],
+				"status": risk["status"],
+				"version_label": risk.get("version", "1.0"),
+				"assessed_by": people[risk["assessed_by"]],
+				"assessed_on": add_days(nowdate(), risk.get("assessed_in", -30)),
+				"review_due": add_days(nowdate(), risk.get("review_in", 335)),
+				"scoring_note": risk.get("scoring_note"),
+				"notes": risk.get("notes"),
+				"applies_to": [{"sop": created[slug]} for slug in risk["applies_to"]],
+				"hazards": hazards,
+			}
+		)
+		doc.insert(ignore_permissions=True)
+		for hazard_id in risk.get("complete_checks", []):
+			row = next(item for item in doc.hazards if item.hazard_id == hazard_id)
+			as_user(
+				people["operator"],
+				risks_api.complete_check,
+				doc.name,
+				row.name,
+				notes="Checked during the demo walk-round. All fine.",
+				sop=created[risk["applies_to"][0]],
+			)
+
+
+def seed_logs(created, people):
+	for entry in LOGS:
+		values = {k: v for k, v in entry.items() if k not in ("slug", "by", "checker", "days_ago")}
+		if entry.get("checker"):
+			values["checked_by"] = people[entry["checker"]]
+		name = as_user(people[entry["by"]], logs_api.create, created[entry["slug"]], values)["name"]
+		frappe.db.set_value(
+			"SOP Log Entry",
+			name,
+			"logged_at",
+			f"{add_days(nowdate(), -entry['days_ago'])} {entry.get('time', '08:00:00')}",
+			update_modified=False,
+		)
+
+
+def seed_review_comments(created, people):
+	for slug, key, comment, quote, resolved in REVIEW_COMMENTS:
+		result = as_user(people[key], review_api.add_comment, created[slug], comment, quote=quote)
+		name = result.get("name") if isinstance(result, dict) else result
+		if resolved and name:
+			as_user(people["author"], review_api.resolve_comment, name)
+
+
+def seed_clarity(created, people):
+	for slug, key, clear, note in CLARITY:
+		as_user(people[key], clarity_api.vote, created[slug], clear, note)
+
+
+def seed_chat(created, people):
+	for slug, key, text in CHAT["room"]:
+		as_user(people[key], chat_api.send, content=text, sop=created[slug], room=1)
+	for sender, recipient, slug, text in CHAT["direct"]:
+		as_user(people[sender], chat_api.send, content=text, to=people[recipient], sop=created.get(slug))
 
 
 def status():
@@ -1088,9 +621,8 @@ def status():
 
 def by_status():
 	counts = {}
-	for status in frappe.get_all("SOP", pluck="status", limit_page_length=0):
-		counts[status] = counts.get(status, 0) + 1
-
+	for state in frappe.get_all("SOP", pluck="status", limit_page_length=0):
+		counts[state] = counts.get(state, 0) + 1
 	return counts
 
 
@@ -1104,17 +636,20 @@ def last_error():
 	)
 	if not rows:
 		return None
-
 	return {"at": str(rows[0].creation), "tail": (rows[0].error or "").strip().splitlines()[-6:]}
 
 
 def clear():
 	frappe.flags.sop_removal = True
-
 	try:
 		return wipe_demo()
 	finally:
 		frappe.flags.sop_removal = False
+
+
+def drop(doctype, filters):
+	for name in frappe.get_all(doctype, filters=filters, pluck="name", limit_page_length=0):
+		frappe.delete_doc(doctype, name, force=True, ignore_permissions=True)
 
 
 def wipe_demo():
@@ -1123,80 +658,62 @@ def wipe_demo():
 		return {"cleared": 0, "spaces": []}
 
 	procedures = frappe.get_all("SOP", filters={"space": ("in", spaces)}, pluck="name", limit_page_length=0)
+	scope = procedures or [""]
+	assessments = frappe.get_all("SOP Risk Assessment", filters={"space": ("in", spaces)}, pluck="name", limit_page_length=0)
+	assignments = frappe.get_all("SOP Training Assignment", filters={"sop": ("in", scope)}, pluck="name", limit_page_length=0)
 
-	assignments = frappe.get_all(
-		"SOP Training Assignment",
-		filters={"sop": ("in", procedures or [""])},
-		pluck="name",
-		limit_page_length=0,
-	)
-
-	for doctype, field in (
-		("SOP Training Assignment", "sop"),
-		("SOP Acknowledgement", "sop"),
-		("SOP Revision", "sop"),
-		("SOP Review Comment", "sop"),
-	):
-		for name in frappe.get_all(doctype, filters={field: ("in", procedures or [""])}, pluck="name", limit_page_length=0):
-			frappe.delete_doc(doctype, name, force=True, ignore_permissions=True)
-
-	for name in procedures:
-		frappe.delete_doc("SOP", name, force=True, ignore_permissions=True)
-
-	for name in frappe.get_all(
-		"SOP Training Requirement", filters={"space": ("in", spaces)}, pluck="name",
-		limit_page_length=0,
-	):
-		frappe.delete_doc("SOP Training Requirement", name, force=True, ignore_permissions=True)
-
-	for name in deepest_first(spaces):
-		frappe.delete_doc("SOP Process", name, force=True, ignore_permissions=True)
-
-	frappe.db.delete(
-		"Notification Log",
-		{
-			"document_type": ("in", ["SOP", "SOP Training Assignment"]),
-			"document_name": ("in", (procedures + assignments) or [""]),
-		},
-	)
-
+	drop("SOP Log Entry", {"sop": ("in", scope)})
+	drop("SOP Log Entry", {"risk_assessment": ("in", assessments or [""])})
+	for name in assessments:
+		frappe.delete_doc("SOP Risk Assessment", name, force=True, ignore_permissions=True)
+	drop("SOP Quiz Attempt", {"sop": ("in", scope)})
+	drop("SOP Quiz Question", {"sop": ("in", scope)})
+	for doctype in ("SOP Clarity Vote", "SOP Message", "SOP Chat Seen"):
+		frappe.db.delete(doctype, {"sop": ("in", scope)})
+	for doctype in ("SOP Training Assignment", "SOP Acknowledgement", "SOP Revision", "SOP Review Comment"):
+		drop(doctype, {"sop": ("in", scope)})
 	for name in sessions_covering(procedures):
 		frappe.delete_doc("SOP Training Session", name, force=True, ignore_permissions=True)
-
+	drop("SOP Training Requirement", {"space": ("in", spaces)})
+	drop("SOP Training Requirement", {"sop": ("in", scope)})
+	for name in procedures:
+		frappe.delete_doc("SOP", name, force=True, ignore_permissions=True)
+	for name in deepest_first(spaces):
+		frappe.delete_doc("SOP Process", name, force=True, ignore_permissions=True)
+	frappe.db.delete(
+		"Notification Log",
+		{"document_type": ("in", ["SOP", "SOP Training Assignment", "SOP Risk Assessment"]), "document_name": ("in", (procedures + assignments + assessments) or [""])},
+	)
 	for name in spaces:
 		frappe.delete_doc("SOP Space", name, force=True, ignore_permissions=True)
 
-	for row in CHEMICALS:
-		if frappe.db.exists("SOP Resource", row["chemical_name"]):
-			frappe.delete_doc("SOP Resource", row["chemical_name"], force=True, ignore_permissions=True)
+	people = [person["email"] for person in PEOPLE.values()]
+	frappe.db.delete("SOP Message", {"sender": ("in", people), "recipient": ("in", people)})
+	for team in TEAMS:
+		if frappe.db.exists("SOP Team", team["name"]) and not frappe.db.exists("SOP Space", {"team": team["name"]}):
+			frappe.delete_doc("SOP Team", team["name"], force=True, ignore_permissions=True)
 
-	for name, *_rest in reversed(PPE_TREE):
-		if frappe.db.exists("SOP Resource", name):
-			frappe.delete_doc("SOP Resource", name, force=True, ignore_permissions=True)
-
-	# The demo's types go too, unless the site has added resources of its own to them.
-	for resource_type in ("Chemical", "PPE"):
-		if frappe.db.exists("SOP Resource Type", resource_type) and not frappe.db.exists(
-			"SOP Resource", {"resource_type": resource_type}
-		):
-			frappe.delete_doc("SOP Resource Type", resource_type, force=True, ignore_permissions=True)
+	for row in reversed(RESOURCES):
+		if frappe.db.exists("SOP Resource", row["resource_name"]):
+			frappe.delete_doc("SOP Resource", row["resource_name"], force=True, ignore_permissions=True)
+	for definition in RESOURCE_TYPES:
+		name = definition["type_name"]
+		if frappe.db.exists("SOP Resource Type", name) and not frappe.db.exists("SOP Resource", {"resource_type": name}):
+			frappe.delete_doc("SOP Resource Type", name, force=True, ignore_permissions=True)
 
 	frappe.db.commit()
-
 	return {"cleared": len(procedures), "spaces": spaces}
 
 
 def reset():
 	cleared = clear()
 	seeded = install(force=1)
-
 	return {"cleared": cleared, "seeded": seeded, "status": status()}
 
 
 def sessions_covering(procedures):
 	if not procedures:
 		return []
-
 	return list(
 		set(
 			frappe.get_all(
@@ -1211,16 +728,13 @@ def sessions_covering(procedures):
 
 def deepest_first(spaces):
 	rows = frappe.get_all(
-		"SOP Process", filters={"space": ("in", spaces)}, fields=["name", "parent_process"],
-		limit_page_length=0,
+		"SOP Process", filters={"space": ("in", spaces)}, fields=["name", "parent_process"], limit_page_length=0
 	)
 	depth = {row.name: 0 for row in rows}
 	parents = {row.name: row.parent_process for row in rows}
-
 	for name in depth:
 		current = parents.get(name)
 		while current in parents:
 			depth[name] += 1
 			current = parents.get(current)
-
 	return sorted(depth, key=lambda name: -depth[name])
