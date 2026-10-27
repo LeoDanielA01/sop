@@ -5,6 +5,8 @@ from sop.demo_guide import GUIDE_PROCEDURES, callout, step
 from sop.patches.migrate_to_resources import CHEMICAL_TYPE, PPE_TYPE
 
 DEMO_CODES = ("GUIDE", "PLANT")
+LEGACY_CODES = ("OPS", "HR", "SAFE")
+LEGACY_RESOURCES = ("Sulphuric acid 98%", "Chemical apron")
 
 PEOPLE = {
 	"manager": {"email": "sara.james@example.com", "first": "Sara", "last": "James", "roles": ["SOP Manager", "SOP Approver"]},

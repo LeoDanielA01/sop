@@ -25,6 +25,8 @@ from sop.demo_content import (
 	CHAT,
 	CLARITY,
 	DEMO_CODES,
+	LEGACY_CODES,
+	LEGACY_RESOURCES,
 	LOGS,
 	PEOPLE,
 	PROCEDURES,
@@ -68,12 +70,25 @@ def seeded():
 
 
 def demo_spaces():
-	return frappe.get_all(
+	spaces = frappe.get_all(
 		"SOP Space",
 		filters={"space_code": ("in", list(DEMO_CODES))},
 		pluck="name",
 		limit_page_length=0,
 	)
+	return spaces + legacy_spaces()
+
+
+def legacy_spaces():
+	people = [person["email"] for person in PEOPLE.values()]
+	spaces = []
+	for name in frappe.get_all(
+		"SOP Space", filters={"space_code": ("in", list(LEGACY_CODES))}, pluck="name", limit_page_length=0
+	):
+		owners = set(frappe.get_all("SOP", filters={"space": name}, pluck="owner", limit_page_length=0))
+		if owners and owners <= set(people):
+			spaces.append(name)
+	return spaces
 
 
 def summary():
@@ -693,9 +708,13 @@ def wipe_demo():
 		if frappe.db.exists("SOP Team", team["name"]) and not frappe.db.exists("SOP Space", {"team": team["name"]}):
 			frappe.delete_doc("SOP Team", team["name"], force=True, ignore_permissions=True)
 
+	for name in LEGACY_RESOURCES:
+		if frappe.db.exists("SOP Resource", name):
+			frappe.delete_doc("SOP Resource", name, force=True, ignore_permissions=True)
 	for row in reversed(RESOURCES):
-		if frappe.db.exists("SOP Resource", row["resource_name"]):
-			frappe.delete_doc("SOP Resource", row["resource_name"], force=True, ignore_permissions=True)
+		name = row["resource_name"]
+		if frappe.db.exists("SOP Resource", name) and not frappe.db.exists("SOP Resource", {"parent_sop_resource": name}):
+			frappe.delete_doc("SOP Resource", name, force=True, ignore_permissions=True)
 	for definition in RESOURCE_TYPES:
 		name = definition["type_name"]
 		if frappe.db.exists("SOP Resource Type", name) and not frappe.db.exists("SOP Resource", {"resource_type": name}):
