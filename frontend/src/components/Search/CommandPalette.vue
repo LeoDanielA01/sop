@@ -21,6 +21,10 @@
         </div>
 
         <ScrollArea viewport-class="max-h-96 px-2 py-2">
+          <p v-if="query && search.data?.corrected" class="px-2 pb-2 text-sm text-ink-gray-5">
+            {{ __('Showing results for') }}
+            <span class="font-medium text-ink-gray-8">{{ Object.values(search.data.corrected).join(' ') }}</span>
+          </p>
           <div v-for="group in groups" :key="group.title" class="mt-3 first:mt-0">
             <div class="px-2 pb-1 text-sm text-ink-gray-5">{{ group.title }}</div>
 
@@ -37,8 +41,14 @@
 
               <span class="min-w-0 flex-1">
                 <span class="block truncate text-base text-ink-gray-8">{{ item.label }}</span>
-                <span v-if="item.description" class="block truncate text-sm text-ink-gray-5">
+                <span v-if="item.description || item.excerpt" class="block truncate text-sm text-ink-gray-5">
                   {{ item.description }}
+                  <template v-if="item.description && item.excerpt"> · </template>
+                  <span
+                    v-if="item.excerpt"
+                    class="[&_mark]:rounded-3 [&_mark]:bg-surface-amber-2 [&_mark]:px-0.5 [&_mark]:text-ink-gray-8"
+                    v-html="item.excerpt"
+                  />
                 </span>
               </span>
 
@@ -115,7 +125,7 @@ const TONE = {
 
 const search = createResource({
   url: 'sop.api.search.query',
-  makeParams: () => ({ text: query.value, space: activeSpace.value }),
+  makeParams: () => ({ text: query.value }),
   onSuccess() {
     cursor.value = 0
   },

@@ -364,6 +364,17 @@
               </div>
             </SettingsRow>
             <SettingsRow
+              :title="__('Search index')"
+              :description="__('Rebuilt every night. Rebuild now if search misses recent changes.')"
+            >
+              <Button
+                icon-left="lucide-refresh-cw"
+                :label="__('Rebuild')"
+                :loading="rebuildingIndex.loading"
+                @click="rebuildingIndex.submit()"
+              />
+            </SettingsRow>
+            <SettingsRow
               :title="__('Proficiency levels')"
               :description="__('Completed trainings needed for Intermediate and for Expert. Fewer is Beginner.')"
             >
@@ -687,6 +698,12 @@ const groups = computed(() => {
 })
 
 const { colorScheme, setColorScheme } = useColorScheme()
+
+const rebuildingIndex = createResource({
+  url: 'sop.api.search.rebuild_index',
+  onSuccess: () => toast.success(__('Search index is rebuilding. It takes a minute or two.')),
+  onError: (error) => toast.error(error.messages?.[0] || error.message),
+})
 
 const teamList = createResource({ url: 'sop.api.teams.teams' })
 

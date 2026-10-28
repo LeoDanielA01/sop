@@ -6,3 +6,4 @@ sop.patches.drop_sop_steps
 sop.patches.drop_mention_config
 sop.patches.seed_safety_record_types
 sop.patches.migrate_to_resources
+sop.patches.rebuild_search_text

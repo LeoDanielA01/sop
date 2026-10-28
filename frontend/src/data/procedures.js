@@ -1,5 +1,5 @@
 import { createResource, debounce } from 'frappe-ui'
-import { computed, ref, watch } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { activeSpace } from '@/data/navigation'
 import { activeProcess } from '@/data/processes'
 import { preferences } from '@/data/preferences'
@@ -14,6 +14,16 @@ watch(
 )
 export const view = ref('all')
 export const search = ref('')
+export const sort = ref('')
+export const filters = reactive({})
+
+export const facets = createResource({ url: 'sop.api.search.facets', cache: 'sop-search-facets' })
+
+function chosenFilters() {
+  const out = {}
+  for (const [field, values] of Object.entries(filters)) if (values?.length) out[field] = values
+  return Object.keys(out).length ? JSON.stringify(out) : undefined
+}
 
 export const procedures = createRetryingResource({
   url: 'sop.api.procedures.list_procedures',
@@ -23,6 +33,8 @@ export const procedures = createRetryingResource({
     process: activeProcess.value || undefined,
     view: view.value,
     search: search.value || undefined,
+    filters: chosenFilters(),
+    sort: sort.value || undefined,
     start: (page.value - 1) * pageLength.value,
     page_length: pageLength.value,
   }),
@@ -34,6 +46,8 @@ function snapshot() {
     activeProcess.value,
     view.value,
     search.value,
+    chosenFilters(),
+    sort.value,
     page.value,
     pageLength.value,
   ])
@@ -52,7 +66,7 @@ export function reloadProcedures() {
 
 watch([page, pageLength], refresh)
 
-watch([activeSpace, activeProcess, view, search], () => {
+watch([activeSpace, activeProcess, view, search, sort, () => chosenFilters()], () => {
   page.value = 1
   refresh()
 })

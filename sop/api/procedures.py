@@ -88,6 +88,13 @@ def unacknowledged_count(user, space=None):
 	return len([row for row in effective if (row.name, row.version) not in signed])
 
 
+SORT_ORDER = {
+	"modified": "modified desc",
+	"number": "sop_no asc",
+	"title": "title asc",
+	"review": "review_due asc",
+}
+
 LIST_FIELDS = [
 	"name",
 	"sop_no",
@@ -105,24 +112,34 @@ LIST_FIELDS = [
 
 
 @frappe.whitelist()
-def list_procedures(space=None, view="all", process=None, search=None, start=0, page_length=20):
-	filters = view_filters(space, view)
+def list_procedures(
+	space=None, view="all", process=None, search=None, filters=None, sort=None, start=0, page_length=20
+):
+	from sop.api.search import body_of, excerpt, find, matching_rows
 
-	if process:
-		filters["sop_process"] = ("in", process_scope(process))
+	start, page_length = cint(start), cint(page_length)
+	found = find(search, filters)
 
-	if search:
-		filters["search_text"] = ("like", f"%{search}%")
+	if found.active:
+		base = [[field, *value] if isinstance(value, tuple) else [field, "=", value] for field, value in view_filters(None, view).items()]
+		rows = matching_rows(
+			found, page_length, base=base, sort=sort or "relevance", start=start, fields=LIST_FIELDS + ["search_text"]
+		)
+		total = rows.total
+	else:
+		filters = view_filters(space, view)
+		if process:
+			filters["sop_process"] = ("in", process_scope(process))
 
-	total = frappe.db.count("SOP", filters)
-	rows = frappe.get_list(
-		"SOP",
-		filters=filters,
-		fields=LIST_FIELDS,
-		order_by="modified desc",
-		limit_start=frappe.utils.cint(start),
-		limit_page_length=frappe.utils.cint(page_length),
-	)
+		total = frappe.db.count("SOP", filters)
+		rows = frappe.get_list(
+			"SOP",
+			filters=filters,
+			fields=LIST_FIELDS,
+			order_by=SORT_ORDER.get(sort) or "modified desc",
+			limit_start=start,
+			limit_page_length=page_length,
+		)
 
 	names = user_names({row.process_owner for row in rows if row.process_owner})
 	for row in rows:
@@ -130,7 +147,27 @@ def list_procedures(space=None, view="all", process=None, search=None, start=0, 
 		row.owner_image = names.get(row.process_owner, {}).get("user_image")
 		row.is_mine = row.process_owner == frappe.session.user
 
-	return {"rows": rows, "total": total, "start": frappe.utils.cint(start)}
+	if found.active:
+		titles = dict(
+			frappe.get_all(
+				"SOP Space",
+				filters={"name": ("in", list({row.space for row in rows}) or [""])},
+				fields=["name", "title"],
+				as_list=True,
+			)
+		)
+		for row in rows:
+			row.excerpt = excerpt(body_of(row), found.terms, fallback=row.summary) if found.terms else None
+			row.space_title = titles.get(row.space) or row.space
+			row.pop("search_text", None)
+
+	return {
+		"rows": list(rows),
+		"total": total,
+		"start": start,
+		"finding": found.active,
+		"corrected": found.corrected,
+	}
 
 
 def process_scope(process):

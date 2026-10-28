@@ -53,5 +53,6 @@ scheduler_events = {
 		"sop.training.sync_requirements",
 		"sop.training.remind",
 		"sop.api.risks.remind",
+		"sop.api.search.rebuild_nightly",
 	]
 }

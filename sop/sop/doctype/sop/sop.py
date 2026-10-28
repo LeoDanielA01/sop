@@ -8,7 +8,9 @@ import frappe
 from frappe import _
 from frappe.model.document import Document
 from frappe.model.naming import make_autoname
-from frappe.utils import add_months, cint, getdate, strip_html
+from frappe.utils import add_months, cint, getdate
+
+from sop.sop.doctype.sop.sop_sqlite_search import plain
 
 EDITABLE_STATES = ("Draft", "In Review", "Under Revision")
 
@@ -83,7 +85,7 @@ class SOP(Document):
 		self.review_due = add_months(since, cint(self.review_interval_months))
 
 	def build_search_text(self):
-		parts = [self.sop_no, self.title, self.summary, strip_html(self.content or "")]
+		parts = [self.sop_no, self.title, self.summary, plain(self.content)]
 		parts.append((getattr(self, "_user_tags", None) or "").replace(",", " "))
 
 		text = " ".join(part for part in parts if part)

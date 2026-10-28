@@ -1,0 +1,130 @@
+{
+ "actions": [],
+ "autoname": "format:BULK-{YYYY}-{#####}",
+ "naming_rule": "Expression",
+ "creation": "2026-10-28 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "kind",
+  "status",
+  "description",
+  "spec",
+  "column_break_undo",
+  "undone_by",
+  "undone_on",
+  "changes_section",
+  "changes"
+ ],
+ "fields": [
+  {
+   "fieldname": "kind",
+   "fieldtype": "Select",
+   "label": "Kind",
+   "options": "Text\nRecord",
+   "default": "Text",
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Applied\nUndone",
+   "default": "Applied",
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "What changed",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "spec",
+   "fieldtype": "Code",
+   "label": "Rules",
+   "options": "JSON",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_undo",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "undone_by",
+   "fieldtype": "Link",
+   "label": "Undone by",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "undone_on",
+   "fieldtype": "Datetime",
+   "label": "Undone on",
+   "read_only": 1
+  },
+  {
+   "fieldname": "changes_section",
+   "fieldtype": "Section Break",
+   "label": "Procedures"
+  },
+  {
+   "fieldname": "changes",
+   "fieldtype": "Table",
+   "label": "Changes",
+   "options": "SOP Bulk Change Item"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-10-28 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "SOP",
+ "name": "SOP Bulk Change",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "SOP Manager",
+   "share": 0,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "SOP Author",
+   "share": 0,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 0,
+   "write": 1
+  }
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "description",
+ "track_changes": 0
+}
