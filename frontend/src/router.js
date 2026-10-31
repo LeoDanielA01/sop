@@ -19,6 +19,8 @@ const routes = [
   { path: '/where-used', name: 'WhereUsed', component: () => import('@/pages/WhereUsed.vue') },
   { path: '/issue', name: 'IssueResource', component: () => import('@/pages/IssueResource.vue') },
   { path: '/issue-ppe', redirect: '/issue' },
+  { path: '/records/:doctype', name: 'RecordList', component: () => import('@/pages/RecordList.vue') },
+  { path: '/records/:doctype/:name(.*)', name: 'Record', component: () => import('@/pages/Record.vue') },
   {
     path: '/:name',
     name: 'Procedure',

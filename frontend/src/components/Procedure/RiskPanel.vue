@@ -8,9 +8,9 @@
     <header class="flex flex-wrap items-center gap-2 border-b border-outline-gray-1 px-4 py-2.5">
       <span class="lucide-shield-alert size-4 shrink-0 text-ink-gray-5" aria-hidden="true" />
       <h2 class="text-base font-semibold text-ink-gray-9">{{ __('Risk assessment') }}</h2>
-      <a :href="`/app/sop-risk-assessment/${encodeURIComponent(assessment.name)}`" target="_blank" class="text-sm text-ink-gray-6 hover:underline">
+      <router-link :to="recordPath('SOP Risk Assessment', assessment.name)" class="text-sm text-ink-gray-6 hover:underline">
         {{ assessment.name }} · v{{ assessment.version }}
-      </a>
+      </router-link>
       <span class="flex-1" />
       <span v-if="assessment.open_actions" class="text-sm text-ink-amber-6">
         {{ __('{0} open actions').format(assessment.open_actions) }}
@@ -63,6 +63,7 @@
 <script setup>
 import { reactive, watch } from 'vue'
 import { Badge, Button, createResource, toast } from 'frappe-ui'
+import { recordPath } from '@/utils/records'
 import { translate as __ } from '@/translation'
 
 const props = defineProps({ sop: { type: String, default: '' } })

@@ -16,7 +16,7 @@
       class="mt-5 max-w-[640px] rounded-4 border border-outline-gray-2 px-4 py-6 text-base text-ink-gray-6"
     >
       {{ __('No resource type can be issued yet. Tick "Can Be Issued To Employees" on a resource type to list it here.') }}
-      <a href="/app/sop-resource-type" target="_blank" class="text-ink-blue-3 hover:underline">{{ __('Resource types') }}</a>
+      <router-link :to="listPath('SOP Resource Type')" class="text-ink-blue-3 hover:underline">{{ __('Resource types') }}</router-link>
     </p>
 
     <div v-else class="mt-5 flex max-w-[640px] flex-col gap-4">
@@ -93,8 +93,12 @@
 <script setup>
 import { computed, reactive, watch } from 'vue'
 import { Button, Combobox, ErrorMessage, FormControl, FormLabel, PageHeader, createResource, toast } from 'frappe-ui'
+import { useRouter } from 'vue-router'
 import AppBreadcrumbs from '@/components/Layouts/AppBreadcrumbs.vue'
+import { appPath, listPath } from '@/utils/records'
 import { translate as __ } from '@/translation'
+
+const router = useRouter()
 
 const form = reactive({ type: '', resource: '', employee: null, qty: 1, warehouse: '', asset: null })
 
@@ -105,7 +109,7 @@ const issuing = createResource({
   url: 'sop.integrations.issue.issue',
   onSuccess(data) {
     toast.success(__('Issued — {0} {1}').format(data.doctype, data.name))
-    window.open(data.url, '_blank')
+    router.push(appPath(data.url))
     Object.assign(form, { employee: null, qty: 1, asset: null })
   },
 })

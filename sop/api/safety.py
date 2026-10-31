@@ -8,7 +8,7 @@ import frappe
 from frappe.model import table_fields
 from frappe.utils import cint
 
-from sop.api.mentions import card, type_label
+from sop.api.mentions import card, record_url, type_label
 from sop.api.settings import record_types
 from sop.resources import DOCTYPE as RESOURCE, settings_of
 
@@ -93,7 +93,7 @@ def related(mentioned, types):
 				"type_label": label_of(doctype, name),
 				"icon": icon_of(doctype, name, types[doctype].icon if doctype in types else None),
 				"for": sources,
-				"url": frappe.utils.get_url_to_form(doctype, name),
+				"url": record_url(doctype, name),
 			}
 		)
 

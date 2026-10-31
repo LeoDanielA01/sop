@@ -93,11 +93,15 @@
 
 <script setup>
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { Badge, Button, ScrollArea, createResource, debounce } from 'frappe-ui'
+import { recordPath } from '@/utils/records'
 import { translate as __ } from '@/translation'
 import { session } from '@/data/session'
 import { analyse, rulesFor } from './clarity'
 import { flowIssues } from './flow'
+
+const router = useRouter()
 
 const props = defineProps({
   editor: { type: Object, default: null },
@@ -330,8 +334,7 @@ function fix(issue) {
   }
 
   if (issue.kind === 'mention') {
-    const slug = issue.doctype.toLowerCase().replace(/\s+/g, '-')
-    window.open(`/app/${slug}/${encodeURIComponent(issue.name)}`, '_blank')
+    window.open(router.resolve(recordPath(issue.doctype, issue.name)).href, '_blank')
   }
 }
 

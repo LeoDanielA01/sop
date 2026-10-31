@@ -25,6 +25,10 @@
             <Switch v-model="row.in_safety" />
             {{ __('Show in procedure') }}
           </label>
+          <label v-if="row.reference_doctype === 'Item'" class="flex items-center gap-2 text-sm text-ink-gray-7">
+            <Switch v-model="row.show_stock_by_warehouse" />
+            {{ __('Stock by warehouse') }}
+          </label>
           <Button variant="ghost" icon="lucide-trash-2" :label="__('Remove')" @click="rows.splice(index, 1)" />
         </div>
 
@@ -104,8 +108,13 @@ const typeOptions = computed(() =>
 
 const error = computed(() => failed.value || saving.error?.messages?.[0])
 
-const snapshot = (list) =>
-  JSON.stringify(list.map((row) => ({ ...row, in_safety: row.in_safety ? 1 : 0 })))
+const flags = (row) => ({
+  ...row,
+  in_safety: row.in_safety ? 1 : 0,
+  show_stock_by_warehouse: row.show_stock_by_warehouse ? 1 : 0,
+})
+
+const snapshot = (list) => JSON.stringify(list.map(flags))
 
 const dirty = computed(() => snapshot(rows.value) !== snapshot(normalise(props.value)))
 
@@ -116,6 +125,7 @@ function normalise(list) {
     icon: row.icon || '',
     fields_to_show: [...(row.fields_to_show || [])],
     in_safety: !!row.in_safety,
+    show_stock_by_warehouse: row.show_stock_by_warehouse === undefined || row.show_stock_by_warehouse === null ? true : !!row.show_stock_by_warehouse,
   }))
 }
 
@@ -142,7 +152,7 @@ function toggle(row, fieldname) {
 }
 
 function add() {
-  rows.value.push({ reference_doctype: '', label: '', icon: '', fields_to_show: [], in_safety: false })
+  rows.value.push({ reference_doctype: '', label: '', icon: '', fields_to_show: [], in_safety: false, show_stock_by_warehouse: true })
   types.submit({ limit: 20 })
 }
 
@@ -150,9 +160,7 @@ function save() {
   failed.value = ''
   saving.submit({
     values: {
-      record_types: rows.value
-        .filter((row) => row.reference_doctype)
-        .map((row) => ({ ...row, in_safety: row.in_safety ? 1 : 0 })),
+      record_types: rows.value.filter((row) => row.reference_doctype).map(flags),
     },
   })
 }

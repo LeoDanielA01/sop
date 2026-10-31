@@ -330,6 +330,7 @@ def card(doctype, name):
 		"status": status,
 		"status_tone": tone_of(status),
 		"facts": extras_for(doctype, name) + times + values + table_facts(meta, name),
+		"sections": extra_sections(doctype, name),
 		"url": record_url(doctype, name),
 	}
 
@@ -785,6 +786,12 @@ def chip(doctype, name, label, badges, url=...):
 	}
 
 
+def extra_sections(doctype, name):
+	from sop.api.records import extra_sections as sections
+
+	return sections(doctype, name)
+
+
 def record_url(doctype, name):
 	if doctype == "SOP":
 		return f"/sop/{quote(str(name))}"
@@ -792,7 +799,7 @@ def record_url(doctype, name):
 	if doctype == "User":
 		return None
 
-	return frappe.utils.get_url_to_form(doctype, name)
+	return f"/sop/records/{quote(str(doctype))}/{quote(str(name))}"
 
 
 def cache_key(kind, doctype, name):

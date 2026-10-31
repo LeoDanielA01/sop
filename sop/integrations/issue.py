@@ -6,8 +6,9 @@ anything a person keeps is handed over as an asset."""
 
 import frappe
 from frappe import _
-from frappe.utils import flt, get_url_to_form, now_datetime
+from frappe.utils import flt, now_datetime
 
+from sop.api.mentions import record_url
 from sop.integrations.erpnext import ensure
 from sop.resources import DOCTYPE, TYPE_DOCTYPE
 
@@ -81,7 +82,7 @@ def issue_from_stock(row, person, qty, warehouse):
 	entry.insert()
 	entry.submit()
 
-	return {"doctype": "Stock Entry", "name": entry.name, "url": get_url_to_form("Stock Entry", entry.name)}
+	return {"doctype": "Stock Entry", "name": entry.name, "url": record_url("Stock Entry", entry.name)}
 
 
 def hand_over_asset(row, person, asset):
@@ -111,5 +112,5 @@ def hand_over_asset(row, person, asset):
 	return {
 		"doctype": "Asset Movement",
 		"name": movement.name,
-		"url": get_url_to_form("Asset Movement", movement.name),
+		"url": record_url("Asset Movement", movement.name),
 	}

@@ -113,7 +113,7 @@ def resolved():
 	}
 
 
-RECORD_TYPE_FIELDS = ("reference_doctype", "label", "icon", "fields_to_show", "in_safety")
+RECORD_TYPE_FIELDS = ("reference_doctype", "label", "icon", "fields_to_show", "in_safety", "show_stock_by_warehouse")
 
 
 def record_types():
@@ -177,6 +177,7 @@ def save_record_types(doc, rows):
 				"icon": row.get("icon"),
 				"fields_to_show": "\n".join(fields) if isinstance(fields, list) else fields,
 				"in_safety": cint(row.get("in_safety")),
+				"show_stock_by_warehouse": cint(row.get("show_stock_by_warehouse", 1)),
 			},
 		)
 	frappe.local.cache.pop("sop_record_types", None)

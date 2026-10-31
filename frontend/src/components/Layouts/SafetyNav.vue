@@ -17,7 +17,7 @@
     <template v-if="resourceTypes.length || session.user.is_manager">
       <p class="px-2 pb-1 pt-4 text-xs font-medium text-ink-gray-5">{{ __('Resources') }}</p>
 
-      <SidebarItem v-for="item in resourceTypes" :key="item.name" @click="open(item.url)">
+      <SidebarItem v-for="item in resourceTypes" :key="item.name" :active="isActive(item.url)" @click="router.push(item.url)">
         <template #prefix>
           <span :class="item.icon" class="size-4" aria-hidden="true" />
         </template>
@@ -25,24 +25,22 @@
         <span class="text-xs tabular-nums text-ink-gray-5">{{ item.count }}</span>
       </SidebarItem>
 
-      <SidebarItem v-if="session.user.is_manager" @click="open('/app/sop-resource-type')">
+      <SidebarItem v-if="session.user.is_manager" :active="isActive(typesUrl)" @click="router.push(typesUrl)">
         <template #prefix>
           <span class="lucide-shapes size-4" aria-hidden="true" />
         </template>
         <span class="flex-1 truncate text-sm">{{ resourceTypes.length ? __('Resource types') : __('Add a resource type') }}</span>
-        <span class="lucide-external-link size-3.5 text-ink-gray-4" aria-hidden="true" />
       </SidebarItem>
     </template>
 
     <template v-if="linked.length">
       <p class="px-2 pb-1 pt-4 text-xs font-medium text-ink-gray-5">{{ __('Other records') }}</p>
 
-      <SidebarItem v-for="item in linked" :key="item.value" @click="open(item.url)">
+      <SidebarItem v-for="item in linked" :key="item.value" :active="isActive(item.url)" @click="router.push(item.url)">
         <template #prefix>
           <span :class="item.icon" class="size-4" aria-hidden="true" />
         </template>
         <span class="flex-1 truncate text-sm">{{ item.label }}</span>
-        <span class="lucide-external-link size-3.5 text-ink-gray-4" aria-hidden="true" />
       </SidebarItem>
     </template>
 
@@ -61,6 +59,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { SidebarItem, createResource } from 'frappe-ui'
 import { session } from '@/data/session'
 import { useUI } from '@/stores/ui'
+import { listPath } from '@/utils/records'
 import { translate as __ } from '@/translation'
 
 const RESOURCE = 'SOP Resource'
@@ -72,16 +71,16 @@ const authoring = createResource({ url: 'sop.api.settings.authoring', auto: true
 const types = createResource({ url: 'sop.api.where_used.types', auto: true, cache: 'sop-where-used-types' })
 const resources = createResource({ url: 'sop.resources.nav_types', auto: true, cache: 'sop-resource-types' })
 
-// Each resource type opens its own filtered list in the desk.
+const typesUrl = listPath('SOP Resource Type')
+
 const resourceTypes = computed(() =>
   (resources.data || []).map((row) => ({
     ...row,
     icon: row.icon || 'lucide-box',
-    url: `/app/sop-resource?resource_type=${encodeURIComponent(row.name)}`,
+    url: listPath(RESOURCE, { resource_type: row.name }),
   })),
 )
 
-// Every other record type set up under "Set up linked records".
 const linked = computed(() =>
   (types.data || [])
     .filter((row) => row.configured && row.value !== RESOURCE)
@@ -89,11 +88,11 @@ const linked = computed(() =>
       value: row.value,
       label: row.label,
       icon: row.icon || 'lucide-link',
-      url: `/app/${row.value.toLowerCase().replace(/ /g, '-')}`,
+      url: listPath(row.value),
     })),
 )
 
-function open(url) {
-  window.open(url, '_blank')
+function isActive(url) {
+  return router.resolve(url).fullPath === route.fullPath
 }
 </script>

@@ -89,42 +89,7 @@
           </div>
         </template>
 
-        <template v-else>
-          <div class="flex items-start gap-2.5">
-            <Avatar :image="info.image" :label="info.title" size="xl" shape="square" />
-            <div class="min-w-0 flex-1">
-              <p class="truncate text-base font-medium text-ink-gray-9">{{ info.title }}</p>
-              <p class="truncate text-sm text-ink-gray-5">{{ info.doctype }} · {{ info.name }}</p>
-            </div>
-            <Badge v-if="info.status" :theme="info.status_tone" variant="subtle" size="sm">
-              {{ info.status }}
-            </Badge>
-          </div>
-
-          <dl
-            v-if="info.facts.length"
-            class="mt-3 divide-y divide-outline-gray-1 border-t border-outline-gray-1"
-          >
-            <div
-              v-for="fact in info.facts"
-              :key="fact.label"
-              class="flex items-center justify-between gap-3 py-1.5"
-            >
-              <dt class="shrink-0 text-sm text-ink-gray-5">{{ fact.label }}</dt>
-              <dd class="min-w-0 truncate text-right text-sm text-ink-gray-8">
-                <Badge
-                  v-if="fact.tone && fact.tone !== 'gray'"
-                  :theme="fact.tone"
-                  variant="subtle"
-                  size="sm"
-                >
-                  {{ fact.value }}
-                </Badge>
-                <template v-else>{{ fact.value }}</template>
-              </dd>
-            </div>
-          </dl>
-        </template>
+        <RecordCardBody v-else :info="info" />
       </div>
     </HoverCard>
   </Teleport>
@@ -137,6 +102,7 @@ import { Avatar, Badge, Button, HoverCard, Skeleton, createResource } from 'frap
 import { startCall } from '@/data/call'
 import { openChat, openMail } from '@/data/chat'
 import { session } from '@/data/session'
+import RecordCardBody from '@/components/Records/RecordCardBody.vue'
 
 const props = defineProps({
   reference: { type: Object, required: true },
@@ -215,6 +181,9 @@ function load() {
 }
 
 function openRecord() {
-  if (props.reference.url) window.open(props.reference.url, '_blank')
+  const url = props.reference.url
+  if (!url) return
+  if (internal.value) router.push(url.slice('/sop'.length))
+  else window.open(url, '_blank')
 }
 </script>

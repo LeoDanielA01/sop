@@ -8,6 +8,8 @@ from xml.etree import ElementTree
 import frappe
 from frappe import _
 
+from sop.api.mentions import record_url
+
 W = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
 ID_PATTERN = re.compile(r"\b((?:SOP|RA|LOG)-[A-Z]+-\d{3})\b")
 NUMBERED = re.compile(r"^\s*\d+[.)]\s*")
@@ -581,7 +583,7 @@ def run(file_url: str, space: str, processes: dict | str | None = None) -> dict:
 				"name": assessment.name,
 				"title": assessment.title,
 				"warnings": doc["warnings"],
-				"url": f"/app/sop-risk-assessment/{assessment.name}",
+				"url": record_url("SOP Risk Assessment", assessment.name),
 			}
 		)
 
